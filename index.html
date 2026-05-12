@@ -590,6 +590,97 @@
             font-weight: 650;
         }
 
+
+
+        .responsible-note {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 11px 13px;
+            margin: 12px 0 4px;
+            color: var(--muted);
+            line-height: 1.35;
+            font-size: .95rem;
+        }
+
+        .multiple-signup-box {
+            margin-top: 16px;
+            border-top: 1px solid var(--line);
+            padding-top: 14px;
+        }
+
+        .multiple-signup-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .multiple-signup-title {
+            font-weight: 850;
+            letter-spacing: -0.02em;
+        }
+
+        .multiple-signup-help {
+            margin: 4px 0 10px !important;
+            font-size: .93rem;
+            color: var(--muted);
+        }
+
+        .extra-people-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .extra-person-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            background: #fbfdff;
+        }
+
+        .extra-person-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .extra-person-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .extra-person-grid label {
+            margin-top: 0;
+        }
+
+        .extra-gela-options {
+            grid-column: 1 / -1;
+        }
+
+        .extra-gela-options .gela-options {
+            margin-top: 6px;
+        }
+
+        .small-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 7px 10px;
+            font-size: .85rem;
+        }
+
+        .small-danger:hover {
+            background: #fecaca;
+            color: #7f1d1d;
+            transform: none;
+        }
+
         #toast {
             width: min(420px, calc(100% - 32px));
             border-radius: 18px;
@@ -666,6 +757,10 @@
             }
 
             .shifts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .extra-person-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -781,6 +876,20 @@
             <label id="labelGela">Clase</label>
             <div id="gela_group" class="gela-options"></div>
 
+            <div class="responsible-note" id="responsibleNote">El email indicado se usará como contacto responsable. Si añades más personas, todas quedarán asociadas a este email para consultar, cambiar o borrar la inscripción.</div>
+
+            <section class="multiple-signup-box" aria-labelledby="extraPeopleTitle">
+                <div class="multiple-signup-head">
+                    <div>
+                        <div class="multiple-signup-title" id="extraPeopleTitle">¿Quieres apuntar a más personas en este mismo turno?</div>
+                        <p class="multiple-signup-help" id="extraPeopleHelp">Añade aquí a las personas adicionales. Tú aparecerás como primera inscripción y el resto usará tu email como responsable.</p>
+                    </div>
+                    <button type="button" class="secondary" id="addExtraPersonBtn" onclick="addExtraPerson()">+ Añadir persona</button>
+                </div>
+                <div id="extraPeopleList" class="extra-people-list"></div>
+            </section>
+
+
             <div class="actions">
                 <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
                 <button type="button" id="dlgSignupConfirm" onclick="signup()">Confirmar inscripción</button>
@@ -806,7 +915,7 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyvhcFUlR3ofrrU6ki3aQpKo03Qvs5RPDMUKAxqJholHKNGwFkHPYcENo-IycG6_5ei/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzyqail9Vk47hx2eiOhDRyDFYvd-VhrnLLePe1myxHAhJsJvmWg_dnI9zihNigtlSmn/exec";
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
 
@@ -831,6 +940,14 @@
                 labelEmail: "Email",
                 labelDni: "DNI",
                 labelGela: "Si tienes hij@s en la ikastola, indica en qué curso. Puedes seleccionar más de una opción",
+                responsibleNote: "El email indicado se usará como contacto responsable. Si añades más personas, todas quedarán asociadas a este email para consultar, cambiar o borrar la inscripción.",
+                extraPeopleTitle: "¿Quieres apuntar a más personas en este mismo turno?",
+                extraPeopleHelp: "Añade aquí a las personas adicionales. Tú aparecerás como primera inscripción y el resto usará tu email como responsable.",
+                addExtraPersonBtn: "+ Añadir persona",
+                removeExtraPerson: "Quitar",
+                extraPerson: n => `Persona adicional ${n}`,
+                confirmMultiple: (n, email) => `Vas a inscribir a ${n} personas en este turno. Todas quedarán asociadas al email ${email}. ¿Confirmas la inscripción?`,
+                toastSignupMultipleOk: n => `Inscripción realizada: ${n} personas apuntadas.`,
                 dlgSignupCancel: "Cancelar",
                 dlgSignupConfirm: "Confirmar inscripción",
                 dlgChangeTitle: "Cambiar turno",
@@ -884,6 +1001,14 @@
                 labelEmail: "Emaila",
                 labelDni: "NAN",
                 labelGela: "Ikastolan seme-alabak badituzu, adierazi zein mailatan. Aukera bat baino gehiago hauta ditzakezu",
+                responsibleNote: "Adierazitako emaila harremanetarako arduradun gisa erabiliko da. Pertsona gehiago gehitzen badituzu, guztiak email horri lotuta geratuko dira izen-ematea kontsultatu, aldatu edo ezabatzeko.",
+                extraPeopleTitle: "Pertsona gehiago apuntatu nahi dituzu txanda berean?",
+                extraPeopleHelp: "Gehitu hemen pertsona gehigarriak. Zu lehen izen-emate gisa agertuko zara eta gainerakoek zure emaila izango dute arduradun.",
+                addExtraPersonBtn: "+ Pertsona gehitu",
+                removeExtraPerson: "Kendu",
+                extraPerson: n => `Pertsona gehigarria ${n}`,
+                confirmMultiple: (n, email) => `${n} pertsona inskribatuko dituzu txanda honetan. Guztiak ${email} emailari lotuta geratuko dira. Baieztatu nahi duzu?`,
+                toastSignupMultipleOk: n => `Izen-ematea eginda: ${n} pertsona apuntatuta.`,
                 dlgSignupCancel: "Utzi",
                 dlgSignupConfirm: "Izena ematea baieztatu",
                 dlgChangeTitle: "Txanda aldatu",
@@ -920,7 +1045,7 @@
         };
 
         let lang = localStorage.getItem("lang") || "es";
-        const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {} };
+        const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {}, extraPeople: [] };
         const $ = id => document.getElementById(id);
 
         function t(key, ...args) {
@@ -945,6 +1070,7 @@
                 "mainTitle", "headerSubtitle", "myShiftsCta", "myPanelTitle", "myPanelSubtitle",
                 "labelMyEmail", "labelMyApellido", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelNombre", "labelApellido", "labelEmail", "labelDni", "labelGela",
+                "responsibleNote", "extraPeopleTitle", "extraPeopleHelp", "addExtraPersonBtn",
                 "dlgSignupCancel", "dlgSignupConfirm",
                 "dlgChangeTitle", "labelNewShift", "dlgChangeCancel", "dlgChangeConfirm"
             ];
@@ -1285,6 +1411,86 @@
             });
         }
 
+
+        function getSelectedGela(selector) {
+            return [...document.querySelectorAll(selector)]
+                .filter(cb => cb.checked)
+                .map(cb => cb.value)
+                .join(", ");
+        }
+
+        function createGelaCheckboxes(name, selectedValues = []) {
+            const selected = new Set(String(selectedValues || "").split(",").map(v => v.trim()).filter(Boolean));
+            return (state.opciones.gela || []).map(op => `
+                <label>
+                    <input type="checkbox" name="${name}" value="${escapeHtml(op)}" ${selected.has(op) ? "checked" : ""}>
+                    ${escapeHtml(op)}
+                </label>
+            `).join("");
+        }
+
+        function addExtraPerson() {
+            state.extraPeople.push({
+                uid: `extra_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                nombre: "",
+                apellido: "",
+                dni: "",
+                gela: ""
+            });
+            renderExtraPeople();
+        }
+
+        function removeExtraPerson(uid) {
+            state.extraPeople = state.extraPeople.filter(p => p.uid !== uid);
+            renderExtraPeople();
+        }
+
+        function collectExtraPeopleFromDom() {
+            state.extraPeople = state.extraPeople.map(person => {
+                const root = document.querySelector(`[data-extra-person="${CSS.escape(person.uid)}"]`);
+                if (!root) return person;
+                return {
+                    uid: person.uid,
+                    nombre: root.querySelector("[data-extra-nombre]").value.trim(),
+                    apellido: root.querySelector("[data-extra-apellido]").value.trim(),
+                    dni: root.querySelector("[data-extra-dni]").value.trim(),
+                    gela: getSelectedGela(`input[name="gela_${person.uid}"]:checked`)
+                };
+            });
+        }
+
+        function renderExtraPeople() {
+            const list = $("extraPeopleList");
+            if (!list) return;
+
+            list.innerHTML = state.extraPeople.map((person, index) => `
+                <div class="extra-person-card" data-extra-person="${escapeHtml(person.uid)}">
+                    <div class="extra-person-header">
+                        <span>${t("extraPerson", index + 1)}</span>
+                        <button type="button" class="small-danger" onclick="removeExtraPerson('${escapeHtml(person.uid)}')">${t("removeExtraPerson")}</button>
+                    </div>
+                    <div class="extra-person-grid">
+                        <div>
+                            <label>${t("labelNombre")}<span class="required-star">*</span></label>
+                            <input data-extra-nombre required value="${escapeHtml(person.nombre)}" />
+                        </div>
+                        <div>
+                            <label>${t("labelApellido")}<span class="required-star">*</span></label>
+                            <input data-extra-apellido required value="${escapeHtml(person.apellido)}" />
+                        </div>
+                        <div>
+                            <label>${t("labelDni")}<span class="required-star">*</span></label>
+                            <input data-extra-dni required value="${escapeHtml(person.dni)}" />
+                        </div>
+                        <div class="extra-gela-options">
+                            <label>${t("labelGela")}</label>
+                            <div class="gela-options">${createGelaCheckboxes(`gela_${person.uid}`, person.gela)}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        }
+
         function openSignup(idTurno) {
             const shift = state.shifts.find(s => s.id_turno === idTurno);
             if (!shift) return;
@@ -1299,6 +1505,7 @@
             `;
 
             ["nombre", "apellido", "email", "dni"].forEach(id => $(id).value = "");
+            state.extraPeople = [];
 
             const group = $("gela_group");
             group.innerHTML = "";
@@ -1314,6 +1521,7 @@
                 group.appendChild(label);
             });
 
+            renderExtraPeople();
             applyTexts();
             $("signupDialog").showModal();
         }
@@ -1324,24 +1532,54 @@
             const apellido = $("apellido").value.trim();
             const email = $("email").value.trim();
             const dni = $("dni").value.trim();
-            const checked = [...document.querySelectorAll('input[name="gela"]:checked')];
-            const gela = checked.map(cb => cb.value).join(", ");
+            const gela = getSelectedGela('input[name="gela"]:checked');
+
+            collectExtraPeopleFromDom();
 
             if (!validateRequired(["nombre", "apellido", "email", "dni"])) return;
             if (!isValidEmail(email)) return showToast(t("invalidEmail"));
 
+            const extraRoots = [...document.querySelectorAll("[data-extra-person]")];
+            let firstInvalidExtra = null;
+            extraRoots.forEach(root => {
+                ["[data-extra-nombre]", "[data-extra-apellido]", "[data-extra-dni]"].forEach(selector => {
+                    const input = root.querySelector(selector);
+                    const empty = !String(input.value || "").trim();
+                    input.classList.toggle("user-invalid", empty);
+                    if (empty && !firstInvalidExtra) firstInvalidExtra = input;
+                });
+            });
+
+            if (firstInvalidExtra) {
+                firstInvalidExtra.focus();
+                showToast(t("fillAllFields"));
+                return;
+            }
+
+            const personas = [
+                { nombre, apellido, dni, gela, es_responsable: "si" },
+                ...state.extraPeople.map(p => ({
+                    nombre: p.nombre,
+                    apellido: p.apellido,
+                    dni: p.dni,
+                    gela: p.gela,
+                    es_responsable: "no"
+                }))
+            ];
+
+            if (personas.length > 1 && !confirm(t("confirmMultiple", personas.length, email))) return;
+
             btn.disabled = true;
             try {
-                await api("inscribir", {
+                await api("inscribirMultiple", {
                     id_turno: $("signupShiftId").value,
-                    nombre,
-                    apellido,
+                    responsable_nombre: nombre,
+                    responsable_apellido: apellido,
                     email,
-                    dni,
-                    gela
+                    personas
                 });
                 $("signupDialog").close();
-                showToast(t("toastSignupOk"));
+                showToast(personas.length > 1 ? t("toastSignupMultipleOk", personas.length) : t("toastSignupOk"));
                 await loadData();
             } catch (error) {
                 showToast(error.message);
@@ -1383,7 +1621,8 @@
             box.innerHTML = state.myInscriptions.map(item => `
                 <div class="my-shift">
                     <div>
-                        <strong>${escapeHtml(item.dia)}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(item.tipo)}</strong><br />
+                        <strong>${escapeHtml(item.nombre || "")} ${escapeHtml(item.apellido || "")}</strong><br />
+                        <span>${escapeHtml(item.dia)}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(item.tipo)}</span><br />
                         <span class="time">${escapeHtml(item.hora_inicio)}–${escapeHtml(item.hora_fin)}</span>
                     </div>
                     <button class="secondary" data-change="${item.id_inscripcion}">${t("btnChange")}</button>
