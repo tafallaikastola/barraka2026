@@ -445,7 +445,7 @@
             border: 0;
             border-radius: 22px;
             padding: 0;
-            width: min(720px, calc(100% - 28px));
+            width: min(860px, calc(100% - 28px));
             box-shadow: 0 24px 80px rgba(15, 23, 42, .35);
         }
 
@@ -563,7 +563,7 @@
 
         .my-shift {
             display: grid;
-            grid-template-columns: 1fr auto auto;
+            grid-template-columns: 1fr auto auto auto;
             gap: 10px;
             align-items: center;
             border-top: 1px solid var(--line);
@@ -592,93 +592,83 @@
 
 
 
-        .responsible-note {
-            background: #f8fafc;
+        .check-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
             border: 1px solid var(--line);
             border-radius: 14px;
-            padding: 11px 13px;
-            margin: 12px 0 4px;
+            background: #f8fafc;
+            padding: 12px 14px;
+            margin-top: 14px;
+        }
+
+        .check-card.disabled {
+            opacity: .55;
+        }
+
+        .check-card.hidden {
+            display: none;
+        }
+
+        .check-card label {
+            margin: 0 0 3px;
+            cursor: pointer;
+        }
+
+        .check-card small {
+            display: block;
             color: var(--muted);
+            font-weight: 650;
             line-height: 1.35;
-            font-size: .95rem;
         }
 
-        .multiple-signup-box {
-            margin-top: 16px;
-            border-top: 1px solid var(--line);
-            padding-top: 14px;
-        }
-
-        .multiple-signup-head {
+        .signup-section-title {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
         }
 
-        .multiple-signup-title {
-            font-weight: 850;
-            letter-spacing: -0.02em;
+        .signup-section-title h4 {
+            margin: 0;
+            font-size: 1rem;
         }
 
-        .multiple-signup-help {
-            margin: 4px 0 10px !important;
-            font-size: .93rem;
-            color: var(--muted);
-        }
-
-        .extra-people-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .extra-person-card {
+        .additional-person-card {
             border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 12px;
+            border-radius: 16px;
+            padding: 14px;
+            margin-top: 12px;
             background: #fbfdff;
         }
 
-        .extra-person-header {
+        .additional-person-head {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             align-items: center;
-            gap: 10px;
             margin-bottom: 8px;
-            font-weight: 800;
         }
 
-        .extra-person-grid {
+        .additional-person-head strong {
+            color: var(--primary-dark);
+        }
+
+        .mini-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px 12px;
         }
 
-        .extra-person-grid label {
-            margin-top: 0;
-        }
-
-        .extra-gela-options {
-            grid-column: 1 / -1;
-        }
-
-        .extra-gela-options .gela-options {
-            margin-top: 6px;
-        }
-
-        .small-danger {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 7px 10px;
-            font-size: .85rem;
-        }
-
-        .small-danger:hover {
-            background: #fecaca;
-            color: #7f1d1d;
-            transform: none;
+        .my-shift-meta {
+            color: var(--muted);
+            font-size: .9rem;
+            font-weight: 650;
+            margin-top: 4px;
         }
 
         #toast {
@@ -760,10 +750,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .extra-person-grid {
-                grid-template-columns: 1fr;
-            }
-
             .shift-summary,
             .shift-summary-row {
                 display: block;
@@ -790,13 +776,19 @@
 
             <h1 id="mainTitle">Turnos barraka ikastola</h1>
 
-            <button class="my-shifts-cta" onclick="scrollToMyShifts()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-                <span id="myShiftsCta">Consultar / cambiar mis turnos</span>
-            </button>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+                <button class="my-shifts-cta" onclick="openHelp()" aria-label="Ayuda" title="Ayuda / Laguntza" style="padding:8px 14px;gap:6px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span id="helpBtn">Ayuda</span>
+                </button>
+                <button class="my-shifts-cta" onclick="scrollToMyShifts()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                    <span id="myShiftsCta">Consultar / cambiar mis turnos</span>
+                </button>
+            </div>
         </div>
 
         <p class="subtitle" id="headerSubtitle">Consulta los turnos disponibles y apúntate. En cada turno aparecerá el nombre y apellidos de las personas inscritas.</p>
@@ -860,6 +852,7 @@
             </div>
 
             <input type="hidden" id="signupShiftId" />
+            <input type="hidden" id="signupGestorId" />
 
             <label for="nombre"><span id="labelNombre">Nombre</span><span class="required-star">*</span></label>
             <input id="nombre" required autocomplete="given-name" />
@@ -872,23 +865,27 @@
 
             <label for="dni"><span id="labelDni">DNI / NAN</span><span class="required-star">*</span></label>
             <input id="dni" required />
+            <p id="dniNotice" style="margin:-6px 0 10px;font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:#f59e0b"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span id="dniNoticeText">El DNI es obligatorio para el seguro de voluntarios.</span>
+            </p>
 
             <label id="labelGela">Clase</label>
             <div id="gela_group" class="gela-options"></div>
 
-            <div class="responsible-note" id="responsibleNote">El email indicado se usará como contacto responsable. Si añades más personas, todas quedarán asociadas a este email para consultar, cambiar o borrar la inscripción.</div>
-
-            <section class="multiple-signup-box" aria-labelledby="extraPeopleTitle">
-                <div class="multiple-signup-head">
-                    <div>
-                        <div class="multiple-signup-title" id="extraPeopleTitle">¿Quieres apuntar a más personas en este mismo turno?</div>
-                        <p class="multiple-signup-help" id="extraPeopleHelp">Añade aquí a las personas adicionales. Tú aparecerás como primera inscripción y el resto usará tu email como responsable.</p>
-                    </div>
-                    <button type="button" class="secondary" id="addExtraPersonBtn" onclick="addExtraPerson()">+ Añadir persona</button>
+            <div class="check-card" id="signupResponsableBox">
+                <input id="responsableTurno" type="checkbox" />
+                <div>
+                    <label for="responsableTurno" id="labelResponsableTurno">Quiero realizar la función de responsable del turno</label>
+                    <small id="responsableTurnoHelp"></small>
                 </div>
-                <div id="extraPeopleList" class="extra-people-list"></div>
-            </section>
+            </div>
 
+            <div class="signup-section-title">
+                <h4 id="additionalPeopleTitle">Otras personas que quieres apuntar</h4>
+                <button type="button" class="secondary" id="btnAddAdditionalPerson" onclick="addAdditionalPerson()">Añadir otra persona</button>
+            </div>
+            <div id="additionalPeople"></div>
 
             <div class="actions">
                 <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
@@ -907,6 +904,15 @@
             <input type="hidden" id="changeInscriptionId" />
             <label for="newShiftId"><span id="labelNewShift">Nuevo turno</span><span class="required-star">*</span></label>
             <select id="newShiftId" required></select>
+
+            <div class="check-card" id="changeResponsableBox">
+                <input id="changeResponsableTurno" type="checkbox" />
+                <div>
+                    <label for="changeResponsableTurno" id="labelChangeResponsableTurno">Quiero realizar la función de responsable del turno</label>
+                    <small id="changeResponsableTurnoHelp"></small>
+                </div>
+            </div>
+
             <div class="actions">
                 <button type="button" class="secondary" id="dlgChangeCancel" onclick="$('changeDialog').close()">Cancelar</button>
                 <button type="button" id="dlgChangeConfirm" onclick="changeInscription()">Cambiar</button>
@@ -914,8 +920,18 @@
         </div>
     </dialog>
 
+    <dialog id="helpDialog" aria-labelledby="helpTitle">
+        <div class="modal-inner" style="max-height:85vh;overflow-y:auto;">
+            <div class="modal-header">
+                <h2 id="helpTitle">Ayuda</h2>
+                <button class="close-btn" onclick="$('helpDialog').close()" aria-label="Cerrar">✕</button>
+            </div>
+            <div id="helpContent"></div>
+        </div>
+    </dialog>
+
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzyqail9Vk47hx2eiOhDRyDFYvd-VhrnLLePe1myxHAhJsJvmWg_dnI9zihNigtlSmn/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby0pVDNmhHG7rbieSFQ3RO4mJEE7z6WW035c5YbJy4KsPJWURrfJPXfqLMKon666m38/exec";
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
 
@@ -940,14 +956,21 @@
                 labelEmail: "Email",
                 labelDni: "DNI",
                 labelGela: "Si tienes hij@s en la ikastola, indica en qué curso. Puedes seleccionar más de una opción",
-                responsibleNote: "El email indicado se usará como contacto responsable. Si añades más personas, todas quedarán asociadas a este email para consultar, cambiar o borrar la inscripción.",
-                extraPeopleTitle: "¿Quieres apuntar a más personas en este mismo turno?",
-                extraPeopleHelp: "Añade aquí a las personas adicionales. Tú aparecerás como primera inscripción y el resto usará tu email como responsable.",
-                addExtraPersonBtn: "+ Añadir persona",
-                removeExtraPerson: "Quitar",
-                extraPerson: n => `Persona adicional ${n}`,
-                confirmMultiple: (n, email) => `Vas a inscribir a ${n} personas en este turno. Todas quedarán asociadas al email ${email}. ¿Confirmas la inscripción?`,
-                toastSignupMultipleOk: n => `Inscripción realizada: ${n} personas apuntadas.`,
+                labelResponsableTurno: "Quiero realizar la función de responsable del turno",
+                labelChangeResponsableTurno: "Quiero realizar la función de responsable del turno",
+                additionalPeopleTitle: "Otras personas que quieres apuntar",
+                btnAddAdditionalPerson: "Añadir otra persona",
+                additionalPersonTitle: n => `Persona adicional ${n}`,
+                btnRemovePerson: "Quitar",
+                responsableAvailable: n => n === 1 ? "Queda 1 plaza de responsable." : `Quedan ${n} plazas de responsable.`,
+                responsableFull: "No quedan plazas de responsable en este turno.",
+                responsableCurrent: "Esta inscripción ya ocupa una plaza de responsable.",
+                responsibleLimit: n => n === 1 ? "Solo queda 1 plaza de responsable para este turno." : `Solo quedan ${n} plazas de responsable para este turno.`,
+                signupMultipleOk: n => n === 1 ? "Inscripción realizada." : `${n} inscripciones realizadas.`,
+                backendNeedsId: "Para apuntar varias personas, Apps Script debe devolver id_inscripcion en la respuesta del alta principal.",
+                btnAddPerson: "Añadir persona",
+                responsibleLabel: "Responsable del turno",
+                managedByMeLabel: "Gestionada por ti",
                 dlgSignupCancel: "Cancelar",
                 dlgSignupConfirm: "Confirmar inscripción",
                 dlgChangeTitle: "Cambiar turno",
@@ -979,7 +1002,38 @@
                 changePrefix: "Vas a cambiar:",
                 fillAllFields: "Rellena todos los campos.",
                 invalidEmail: "El email no es válido.",
-                invalidSurname: "Introduce un apellido válido."
+                invalidSurname: "Introduce un apellido válido.",
+                helpBtn: "Ayuda",
+                helpTitle: "Ayuda",
+                dniNoticeText: "El DNI es obligatorio para el seguro de voluntarios.",
+                helpContent: `
+                    <p style="color:var(--muted);margin:0 0 20px">Guía rápida para gestionar tu participación en los turnos de la barraka.</p>
+                    <div style="display:grid;gap:16px;">
+                        <div style="background:#f0f9ff;border-left:4px solid #2563eb;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">📋 Ver los turnos disponibles</strong>
+                            En la página principal puedes ver todos los turnos organizados por día. Cada turno muestra el horario, las plazas disponibles y las personas ya inscritas. Usa el resumen superior para saltar directamente a un día concreto.
+                        </div>
+                        <div style="background:#f0fdf4;border-left:4px solid #15803d;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">✅ Apuntarme a un turno</strong>
+                            Pulsa el botón <em>Apuntarme</em> en el turno que quieras. Rellena tu nombre, apellido, email y DNI. El DNI es obligatorio para el seguro de voluntarios. También puedes apuntar a otras personas del grupo desde el mismo formulario usando <em>Añadir otra persona</em>.
+                        </div>
+                        <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">👤 Responsable del turno</strong>
+                            En algunos turnos hay plazas de responsable. Si quieres asumir esa función, marca la casilla correspondiente al inscribirte. Cada turno tiene un número limitado de plazas de responsable.
+                        </div>
+                        <div style="background:#faf5ff;border-left:4px solid #7c3aed;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">🔍 Ver mis inscripciones</strong>
+                            Pulsa el botón <em>Consultar / cambiar mis turnos</em> en la parte superior. Introduce el email y el apellido con los que te inscribiste. Verás todas tus inscripciones activas y las de las personas que gestionas.
+                        </div>
+                        <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">✏️ Cambiar o borrar una inscripción</strong>
+                            Desde el panel <em>Mis turnos</em> puedes cambiar el turno asignado, modificar si quieres ser responsable, o borrar la inscripción. Para cambiar solo necesitas tu email y apellido.
+                        </div>
+                        <div style="background:#f8fafc;border-left:4px solid #64748b;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">❓ ¿Problemas?</strong>
+                            Si hay algún error o no encuentras tu inscripción, prueba a refrescar la página con el botón <em>Actualizar</em>. Asegúrate de usar el mismo email y apellido con los que te diste de alta.
+                        </div>
+                    </div>`
             },
             eu: {
                 mainTitle: "Ikastolako barrakako txandak",
@@ -1001,14 +1055,21 @@
                 labelEmail: "Emaila",
                 labelDni: "NAN",
                 labelGela: "Ikastolan seme-alabak badituzu, adierazi zein mailatan. Aukera bat baino gehiago hauta ditzakezu",
-                responsibleNote: "Adierazitako emaila harremanetarako arduradun gisa erabiliko da. Pertsona gehiago gehitzen badituzu, guztiak email horri lotuta geratuko dira izen-ematea kontsultatu, aldatu edo ezabatzeko.",
-                extraPeopleTitle: "Pertsona gehiago apuntatu nahi dituzu txanda berean?",
-                extraPeopleHelp: "Gehitu hemen pertsona gehigarriak. Zu lehen izen-emate gisa agertuko zara eta gainerakoek zure emaila izango dute arduradun.",
-                addExtraPersonBtn: "+ Pertsona gehitu",
-                removeExtraPerson: "Kendu",
-                extraPerson: n => `Pertsona gehigarria ${n}`,
-                confirmMultiple: (n, email) => `${n} pertsona inskribatuko dituzu txanda honetan. Guztiak ${email} emailari lotuta geratuko dira. Baieztatu nahi duzu?`,
-                toastSignupMultipleOk: n => `Izen-ematea eginda: ${n} pertsona apuntatuta.`,
+                labelResponsableTurno: "Txandako arduradun lana egin nahi dut",
+                labelChangeResponsableTurno: "Txandako arduradun lana egin nahi dut",
+                additionalPeopleTitle: "Izena eman nahi diezun beste pertsonak",
+                btnAddAdditionalPerson: "Beste pertsona bat gehitu",
+                additionalPersonTitle: n => `Pertsona gehigarria ${n}`,
+                btnRemovePerson: "Kendu",
+                responsableAvailable: n => n === 1 ? "Arduradun plaza 1 geratzen da." : `${n} arduradun plaza geratzen dira.`,
+                responsableFull: "Txanda honetan ez dago arduradun plazarik libre.",
+                responsableCurrent: "Izen-emate honek arduradun plaza bat dauka.",
+                responsibleLimit: n => n === 1 ? "Txanda honetarako arduradun plaza 1 bakarrik geratzen da." : `Txanda honetarako ${n} arduradun plaza bakarrik geratzen dira.`,
+                signupMultipleOk: n => n === 1 ? "Izena ematea burutu da." : `${n} izen-emate burutu dira.`,
+                backendNeedsId: "Pertsona bat baino gehiago apuntatzeko, Apps Script-ek alta nagusiaren erantzunean id_inscripcion itzuli behar du.",
+                btnAddPerson: "Pertsona gehitu",
+                responsibleLabel: "Txandako arduraduna",
+                managedByMeLabel: "Zuk kudeatua",
                 dlgSignupCancel: "Utzi",
                 dlgSignupConfirm: "Izena ematea baieztatu",
                 dlgChangeTitle: "Txanda aldatu",
@@ -1040,12 +1101,43 @@
                 changePrefix: "Aldatuko duzu:",
                 fillAllFields: "Bete eremu guztiak.",
                 invalidEmail: "Emaila ez da baliozkoa.",
-                invalidSurname: "Sartu baliozko abizena."
+                invalidSurname: "Sartu baliozko abizena.",
+                helpBtn: "Laguntza",
+                helpTitle: "Laguntza",
+                dniNoticeText: "NANa nahitaezkoa da boluntarioen aseguruarako.",
+                helpContent: `
+                    <p style="color:var(--muted);margin:0 0 20px">Barraka txandetan parte hartzeko gida azkarra.</p>
+                    <div style="display:grid;gap:16px;">
+                        <div style="background:#f0f9ff;border-left:4px solid #2563eb;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">📋 Txanda erabilgarriak ikusi</strong>
+                            Orri nagusian txanda guztiak egunaren arabera antolatuta ikus ditzakezu. Txanda bakoitzak ordutegia, plaza erabilgarriak eta izena emandako pertsonak erakusten ditu. Erabili goiko laburpena egun zehatz batera joateko.
+                        </div>
+                        <div style="background:#f0fdf4;border-left:4px solid #15803d;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">✅ Txanda batean izena eman</strong>
+                            Sakatu nahi duzun txandako <em>Izena eman</em> botoia. Bete zure izena, abizena, emaila eta NANa. NANa nahitaezkoa da boluntarioen aseguruarako. Taldetik beste pertsonak ere apunta ditzakezu <em>Pertsona bat gehitu</em> erabiliz.
+                        </div>
+                        <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">👤 Txandako arduraduna</strong>
+                            Txanda batzuetan arduradun plazak daude. Eginkizun hori hartu nahi baduzu, markatu dagokion laukia izena ematerakoan. Txanda bakoitzak arduradun plaza kopuru mugatua du.
+                        </div>
+                        <div style="background:#faf5ff;border-left:4px solid #7c3aed;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">🔍 Nire izen-emateak ikusi</strong>
+                            Sakatu goian dagoen <em>Nire txandak kontsultatu / aldatu</em> botoia. Sartu izena ematean erabilitako emaila eta abizena. Zure izen-emate aktibo guztiak eta kudeatzen dituzunak ikusiko dituzu.
+                        </div>
+                        <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">✏️ Izen-ematea aldatu edo ezabatu</strong>
+                            <em>Nire txandak</em> paneletik txanda aldatu, arduradun izateko aukera aldatu edo izen-ematea ezabatu dezakezu. Aldaketa egiteko zure emaila eta abizena besterik ez dituzu behar.
+                        </div>
+                        <div style="background:#f8fafc;border-left:4px solid #64748b;border-radius:10px;padding:14px 16px;">
+                            <strong style="display:block;margin-bottom:6px;">❓ Arazoren bat?</strong>
+                            Erroreren bat badago edo zure izen-ematea ez baduzu aurkitzen, saiatu orria freskatzen <em>Eguneratu</em> botoiarekin. Ziurtatu izena ematean erabilitako email eta abizen berdinak erabiltzen ari zarela.
+                        </div>
+                    </div>`
             }
         };
 
         let lang = localStorage.getItem("lang") || "es";
-        const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {}, extraPeople: [] };
+        const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {} };
         const $ = id => document.getElementById(id);
 
         function t(key, ...args) {
@@ -1070,9 +1162,10 @@
                 "mainTitle", "headerSubtitle", "myShiftsCta", "myPanelTitle", "myPanelSubtitle",
                 "labelMyEmail", "labelMyApellido", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelNombre", "labelApellido", "labelEmail", "labelDni", "labelGela",
-                "responsibleNote", "extraPeopleTitle", "extraPeopleHelp", "addExtraPersonBtn",
+                "labelResponsableTurno", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
-                "dlgChangeTitle", "labelNewShift", "dlgChangeCancel", "dlgChangeConfirm"
+                "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
+                "helpBtn", "dniNoticeText"
             ];
 
             ids.forEach(id => {
@@ -1095,6 +1188,13 @@
             clearInvalidFields(["myEmail", "myApellido"]);
             $("myShiftsDialog").showModal();
             setTimeout(() => $("myEmail").focus(), 80);
+        }
+
+        function openHelp() {
+            $("helpTitle").textContent = t("helpTitle");
+            $("helpContent").innerHTML = t("helpContent");
+            applyTexts();
+            $("helpDialog").showModal();
         }
 
         function showToast(message) {
@@ -1239,6 +1339,161 @@
             return color || DEFAULT_SHIFT_COLOR;
         }
 
+
+        function isResponsibleValue(value) {
+            return ["si", "sí", "s", "true", "1", "yes"].includes(normalizeText(value));
+        }
+
+        function getResponsibleFree(shift) {
+            if (!shift) return 0;
+            if (shift.plazas_responsable_disponibles !== undefined) {
+                return Math.max(Number(shift.plazas_responsable_disponibles) || 0, 0);
+            }
+            const total = Number(shift.plazas_responsable) || 0;
+            const used = Number(shift.plazas_responsable_ocupadas) || 0;
+            return Math.max(total - used, 0);
+        }
+
+        function updateSignupResponsibleAvailability(shift, allowResponsible = true) {
+            const cb = $("responsableTurno");
+            const box = $("signupResponsableBox");
+            const help = $("responsableTurnoHelp");
+            if (!cb || !box || !help) return;
+
+            const available = allowResponsible && getResponsibleFree(shift) > 0;
+            cb.disabled = !available;
+            if (!available) cb.checked = false;
+            box.classList.toggle("hidden", !available);
+            box.classList.remove("disabled");
+            help.textContent = "";
+        }
+
+        function updateChangeResponsibleAvailability() {
+            const current = state.myInscriptions.find(i => i.id_inscripcion === $("changeInscriptionId").value);
+            const shift = state.shifts.find(s => s.id_turno === $("newShiftId").value);
+            const cb = $("changeResponsableTurno");
+            const box = $("changeResponsableBox");
+            const help = $("changeResponsableTurnoHelp");
+            if (!current || !shift || !cb || !box || !help) return;
+
+            const isCurrentResponsible = isResponsibleValue(current.responsable_turno) && current.id_turno === shift.id_turno;
+            const available = isCurrentResponsible || getResponsibleFree(shift) > 0;
+            cb.disabled = !available;
+            if (!available) cb.checked = false;
+            box.classList.toggle("hidden", !available);
+            box.classList.remove("disabled");
+            help.textContent = "";
+        }
+
+        function renderGelaOptions(container, name) {
+            container.innerHTML = "";
+            (state.opciones.gela || []).forEach(op => {
+                const label = document.createElement("label");
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.value = op;
+                cb.name = name;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(op));
+                container.appendChild(label);
+            });
+        }
+
+        function selectedGela(name) {
+            return [...document.querySelectorAll(`input[name="${CSS.escape(name)}"]:checked`)].map(cb => cb.value).join(", ");
+        }
+
+        function clearAdditionalPeople() {
+            const box = $("additionalPeople");
+            if (box) box.innerHTML = "";
+        }
+
+        function addAdditionalPerson() {
+            const box = $("additionalPeople");
+            if (!box) return;
+            const index = box.querySelectorAll(".additional-person-card").length + 1;
+            const uid = `extra_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const card = document.createElement("div");
+            card.className = "additional-person-card";
+            card.dataset.uid = uid;
+            card.innerHTML = `
+                <div class="additional-person-head">
+                    <strong>${escapeHtml(t("additionalPersonTitle", index))}</strong>
+                    <button type="button" class="secondary" data-remove-extra>${escapeHtml(t("btnRemovePerson"))}</button>
+                </div>
+                <div class="mini-grid">
+                    <div>
+                        <label>${escapeHtml(t("labelNombre"))}<span class="required-star">*</span></label>
+                        <input data-extra-field="nombre" required autocomplete="given-name" />
+                    </div>
+                    <div>
+                        <label>${escapeHtml(t("labelApellido"))}<span class="required-star">*</span></label>
+                        <input data-extra-field="apellido" required autocomplete="family-name" />
+                    </div>
+                    <div>
+                        <label>${escapeHtml(t("labelDni"))}<span class="required-star">*</span></label>
+                        <input data-extra-field="dni" required />
+                    </div>
+                </div>
+                <label>${escapeHtml(t("labelGela"))}</label>
+                <div class="gela-options" data-extra-gela></div>
+            `;
+            box.appendChild(card);
+            renderGelaOptions(card.querySelector("[data-extra-gela]"), `${uid}_gela`);
+            card.querySelector("[data-remove-extra]").addEventListener("click", () => card.remove());
+        }
+
+        function getAdditionalPeopleData() {
+            return [...document.querySelectorAll("#additionalPeople .additional-person-card")].map(card => {
+                const get = field => card.querySelector(`[data-extra-field="${field}"]`);
+                return {
+                    nombre: get("nombre").value.trim(),
+                    apellido: get("apellido").value.trim(),
+                    dni: get("dni").value.trim(),
+                    gela: [...card.querySelectorAll('[data-extra-gela] input:checked')].map(cb => cb.value).join(", "),
+                    responsable_turno: "no",
+                    _card: card
+                };
+            });
+        }
+
+        function validateAdditionalPeople(people) {
+            for (const person of people) {
+                const fields = ["nombre", "apellido",  "dni"];
+                let firstInvalid = null;
+                fields.forEach(field => {
+                    const input = person._card.querySelector(`[data-extra-field="${field}"]`);
+                    const invalid = !String(input.value || "").trim();
+                    input.classList.toggle("user-invalid", invalid);
+                    if (invalid && !firstInvalid) firstInvalid = input;
+                });
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    showToast(t("fillAllFields"));
+                    return false;
+                }
+               
+            }
+            return true;
+        }
+
+        function countRequestedResponsible(mainPerson, extraPeople) {
+            return isResponsibleValue(mainPerson.responsable_turno) ? 1 : 0;
+        }
+
+        function getGestorIdForNewPerson(item) {
+            return String(item.id_inscripcion_gestor || item.id_inscripcion || "").trim();
+        }
+
+        function getMyShiftMeta(item) {
+            const parts = [];
+            const name = [item.nombre, item.apellido].filter(Boolean).join(" ");
+            if (name) parts.push(name);
+            if (isResponsibleValue(item.responsable_turno)) parts.push(t("responsibleLabel"));
+            if (item.id_inscripcion_gestor && item.id_inscripcion_gestor !== item.id_inscripcion) parts.push(t("managedByMeLabel"));
+            return parts.length ? `<div class="my-shift-meta">${parts.map(escapeHtml).join(" · ")}</div>` : "";
+        }
+
         function getShiftStats() {
             return state.shifts.reduce((acc, shift) => {
                 const plazas = Number(shift.plazas) || 0;
@@ -1373,7 +1628,7 @@
                     const people = inscritos.length
                         ? `<p class="names-label">${t("namesLabel")}</p>
                            <ul class="names">
-                               ${inscritos.map(p => `<li>${escapeHtml(p.nombre)} ${escapeHtml(p.apellido)}</li>`).join("")}
+                               ${inscritos.map(p => `<li>${escapeHtml(p.nombre)} ${escapeHtml(p.apellido)}${isResponsibleValue(p.responsable_turno) ? " ⭐" : ""}</li>`).join("")}
                            </ul>`
                         : `<p class="empty">${t("noSignups")}</p>`;
 
@@ -1411,93 +1666,17 @@
             });
         }
 
-
-        function getSelectedGela(selector) {
-            return [...document.querySelectorAll(selector)]
-                .filter(cb => cb.checked)
-                .map(cb => cb.value)
-                .join(", ");
-        }
-
-        function createGelaCheckboxes(name, selectedValues = []) {
-            const selected = new Set(String(selectedValues || "").split(",").map(v => v.trim()).filter(Boolean));
-            return (state.opciones.gela || []).map(op => `
-                <label>
-                    <input type="checkbox" name="${name}" value="${escapeHtml(op)}" ${selected.has(op) ? "checked" : ""}>
-                    ${escapeHtml(op)}
-                </label>
-            `).join("");
-        }
-
-        function addExtraPerson() {
-            state.extraPeople.push({
-                uid: `extra_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-                nombre: "",
-                apellido: "",
-                dni: "",
-                gela: ""
-            });
-            renderExtraPeople();
-        }
-
-        function removeExtraPerson(uid) {
-            state.extraPeople = state.extraPeople.filter(p => p.uid !== uid);
-            renderExtraPeople();
-        }
-
-        function collectExtraPeopleFromDom() {
-            state.extraPeople = state.extraPeople.map(person => {
-                const root = document.querySelector(`[data-extra-person="${CSS.escape(person.uid)}"]`);
-                if (!root) return person;
-                return {
-                    uid: person.uid,
-                    nombre: root.querySelector("[data-extra-nombre]").value.trim(),
-                    apellido: root.querySelector("[data-extra-apellido]").value.trim(),
-                    dni: root.querySelector("[data-extra-dni]").value.trim(),
-                    gela: getSelectedGela(`input[name="gela_${person.uid}"]:checked`)
-                };
-            });
-        }
-
-        function renderExtraPeople() {
-            const list = $("extraPeopleList");
-            if (!list) return;
-
-            list.innerHTML = state.extraPeople.map((person, index) => `
-                <div class="extra-person-card" data-extra-person="${escapeHtml(person.uid)}">
-                    <div class="extra-person-header">
-                        <span>${t("extraPerson", index + 1)}</span>
-                        <button type="button" class="small-danger" onclick="removeExtraPerson('${escapeHtml(person.uid)}')">${t("removeExtraPerson")}</button>
-                    </div>
-                    <div class="extra-person-grid">
-                        <div>
-                            <label>${t("labelNombre")}<span class="required-star">*</span></label>
-                            <input data-extra-nombre required value="${escapeHtml(person.nombre)}" />
-                        </div>
-                        <div>
-                            <label>${t("labelApellido")}<span class="required-star">*</span></label>
-                            <input data-extra-apellido required value="${escapeHtml(person.apellido)}" />
-                        </div>
-                        <div>
-                            <label>${t("labelDni")}<span class="required-star">*</span></label>
-                            <input data-extra-dni required value="${escapeHtml(person.dni)}" />
-                        </div>
-                        <div class="extra-gela-options">
-                            <label>${t("labelGela")}</label>
-                            <div class="gela-options">${createGelaCheckboxes(`gela_${person.uid}`, person.gela)}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function openSignup(idTurno) {
+        function openSignup(idTurno, idGestor = "") {
             const shift = state.shifts.find(s => s.id_turno === idTurno);
             if (!shift) return;
 
             clearInvalidFields(["nombre", "apellido", "email", "dni"]);
+            clearAdditionalPeople();
 
             $("signupShiftId").value = idTurno;
+            $("signupGestorId").value = idGestor || "";
+            $("responsableTurno").checked = false;
+            updateSignupResponsibleAvailability(shift, !idGestor);
             $("signupShiftText").innerHTML = `
                 <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(shift.dia)}, ${normalizeDateLabel(shift.fecha)}</span></span>
                 <span class="shift-summary-row"><span>${t("signupShift")}:</span><span>${escapeHtml(shift.tipo)}</span></span>
@@ -1505,89 +1684,82 @@
             `;
 
             ["nombre", "apellido", "email", "dni"].forEach(id => $(id).value = "");
-            state.extraPeople = [];
+            renderGelaOptions($("gela_group"), "gela");
 
-            const group = $("gela_group");
-            group.innerHTML = "";
-
-            (state.opciones.gela || []).forEach(op => {
-                const label = document.createElement("label");
-                const cb = document.createElement("input");
-                cb.type = "checkbox";
-                cb.value = op;
-                cb.name = "gela";
-                label.appendChild(cb);
-                label.appendChild(document.createTextNode(op));
-                group.appendChild(label);
-            });
-
-            renderExtraPeople();
             applyTexts();
             $("signupDialog").showModal();
         }
 
-        async function signup() {
-            const btn = $("dlgSignupConfirm");
-            const nombre = $("nombre").value.trim();
-            const apellido = $("apellido").value.trim();
-            const email = $("email").value.trim();
-            const dni = $("dni").value.trim();
-            const gela = getSelectedGela('input[name="gela"]:checked');
+			async function signup() {
+    const btn = $("dlgSignupConfirm");
+    const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
 
-            collectExtraPeopleFromDom();
+    const mainPerson = {
+        id_turno: $("signupShiftId").value,
+        nombre: $("nombre").value.trim(),
+        apellido: $("apellido").value.trim(),
+        email: $("email").value.trim(),
+        dni: $("dni").value.trim(),
+        gela: selectedGela("gela"),
+        responsable_turno: $("responsableTurno") && $("responsableTurno").checked ? "si" : "no"
+    };
 
-            if (!validateRequired(["nombre", "apellido", "email", "dni"])) return;
-            if (!isValidEmail(email)) return showToast(t("invalidEmail"));
+    const extraPeople = getAdditionalPeopleData();
 
-            const extraRoots = [...document.querySelectorAll("[data-extra-person]")];
-            let firstInvalidExtra = null;
-            extraRoots.forEach(root => {
-                ["[data-extra-nombre]", "[data-extra-apellido]", "[data-extra-dni]"].forEach(selector => {
-                    const input = root.querySelector(selector);
-                    const empty = !String(input.value || "").trim();
-                    input.classList.toggle("user-invalid", empty);
-                    if (empty && !firstInvalidExtra) firstInvalidExtra = input;
-                });
-            });
+    if (!validateRequired(["nombre", "apellido", "email", "dni"])) return;
+    if (!isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
+    if (!validateAdditionalPeople(extraPeople)) return;
 
-            if (firstInvalidExtra) {
-                firstInvalidExtra.focus();
-                showToast(t("fillAllFields"));
-                return;
-            }
+    const requestedResponsible = mainPerson.responsable_turno === "si" ? 1 : 0;
+    const freeResponsible = getResponsibleFree(shift);
 
-            const personas = [
-                { nombre, apellido, dni, gela, es_responsable: "si" },
-                ...state.extraPeople.map(p => ({
-                    nombre: p.nombre,
-                    apellido: p.apellido,
-                    dni: p.dni,
-                    gela: p.gela,
-                    es_responsable: "no"
-                }))
-            ];
+    if (requestedResponsible > freeResponsible) {
+        showToast(t("responsibleLimit", freeResponsible));
+        return;
+    }
 
-            if (personas.length > 1 && !confirm(t("confirmMultiple", personas.length, email))) return;
+    btn.disabled = true;
 
-            btn.disabled = true;
-            try {
-                await api("inscribirMultiple", {
-                    id_turno: $("signupShiftId").value,
-                    responsable_nombre: nombre,
-                    responsable_apellido: apellido,
-                    email,
-                    personas
-                });
-                $("signupDialog").close();
-                showToast(personas.length > 1 ? t("toastSignupMultipleOk", personas.length) : t("toastSignupOk"));
-                await loadData();
-            } catch (error) {
-                showToast(error.message);
-            } finally {
-                btn.disabled = false;
-            }
+    try {
+        const existingGestorId = $("signupGestorId").value.trim();
+
+        const personasAdicionales = extraPeople.map(person => {
+            const { _card, ...payload } = person;
+
+            return {
+                nombre: payload.nombre,
+                apellido: payload.apellido,
+                email: payload.email,
+                dni: payload.dni,
+                gela: payload.gela,
+                responsable_turno: "no"
+            };
+        });
+
+        const response = await api("inscribir", {
+            ...mainPerson,
+            id_inscripcion_gestor: existingGestorId,
+            personas_adicionales: personasAdicionales
+        });
+
+        const total = response.total || (1 + personasAdicionales.length);
+
+        $("signupDialog").close();
+        showToast(t("signupMultipleOk", total));
+
+        await loadData();
+
+        if (state.myIdentity) {
+            const data = await api("misTurnos", state.myIdentity);
+            state.myInscriptions = data.inscripciones || [];
+            renderMyShifts();
         }
-
+    } catch (error) {
+        showToast(error.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
         async function loadMyShifts() {
             const btn = $("myFormBtn");
             const email = $("myEmail").value.trim();
@@ -1621,19 +1793,28 @@
             box.innerHTML = state.myInscriptions.map(item => `
                 <div class="my-shift">
                     <div>
-                        <strong>${escapeHtml(item.nombre || "")} ${escapeHtml(item.apellido || "")}</strong><br />
-                        <span>${escapeHtml(item.dia)}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(item.tipo)}</span><br />
+                        <strong>${escapeHtml(item.dia)}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(item.tipo)}</strong><br />
                         <span class="time">${escapeHtml(item.hora_inicio)}–${escapeHtml(item.hora_fin)}</span>
+                        ${getMyShiftMeta(item)}
                     </div>
+                    <button class="secondary" data-add-person="${item.id_inscripcion}">${t("btnAddPerson")}</button>
                     <button class="secondary" data-change="${item.id_inscripcion}">${t("btnChange")}</button>
                     <button class="danger" data-delete="${item.id_inscripcion}">${t("btnDelete")}</button>
                 </div>
             `).join("");
 
+            document.querySelectorAll("[data-add-person]").forEach(b =>
+                b.addEventListener("click", () => openAddPerson(b.dataset.addPerson)));
             document.querySelectorAll("[data-change]").forEach(b =>
                 b.addEventListener("click", () => openChange(b.dataset.change)));
             document.querySelectorAll("[data-delete]").forEach(b =>
                 b.addEventListener("click", () => deleteInscription(b.dataset.delete, b)));
+        }
+
+        function openAddPerson(idInscripcion) {
+            const current = state.myInscriptions.find(i => i.id_inscripcion === idInscripcion);
+            if (!current) return;
+            openSignup(current.id_turno, getGestorIdForNewPerson(current));
         }
 
         function openChange(idInscripcion) {
@@ -1644,15 +1825,17 @@
             $("changeShiftText").textContent = `${t("changePrefix")} ${current.dia}, ${normalizeDateLabel(current.fecha)} · ${current.tipo}`;
 
             const options = state.shifts
-                .filter(s => s.id_turno !== current.id_turno)
-                .filter(s => Number(s.inscritos.length) < Number(s.plazas))
+                .filter(s => s.id_turno === current.id_turno || Number((s.inscritos || []).length) < Number(s.plazas))
                 .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora_inicio).localeCompare(String(b.hora_inicio)))
-                .map(s => `<option value="${s.id_turno}">${s.dia}, ${normalizeDateLabel(s.fecha)} · ${s.tipo} · ${s.hora_inicio}–${s.hora_fin}</option>`)
+                .map(s => `<option value="${s.id_turno}" ${s.id_turno === current.id_turno ? "selected" : ""}>${s.dia}, ${normalizeDateLabel(s.fecha)} · ${s.tipo} · ${s.hora_inicio}–${s.hora_fin}</option>`)
                 .join("");
 
             const hasOptions = Boolean(options);
             $("newShiftId").innerHTML = options || `<option value="">${t("noAvailable")}</option>`;
+            $("changeResponsableTurno").checked = isResponsibleValue(current.responsable_turno);
             $("dlgChangeConfirm").disabled = !hasOptions;
+            $("newShiftId").onchange = updateChangeResponsibleAvailability;
+            updateChangeResponsibleAvailability();
             applyTexts();
             $("changeDialog").showModal();
         }
@@ -1666,7 +1849,8 @@
                 await api("cambiar", {
                     ...state.myIdentity,
                     id_inscripcion: $("changeInscriptionId").value,
-                    nuevo_id_turno: $("newShiftId").value
+                    nuevo_id_turno: $("newShiftId").value,
+                    responsable_turno: $("changeResponsableTurno").checked ? "si" : "no"
                 });
                 $("changeDialog").close();
                 showToast(t("toastChangeOk"));
