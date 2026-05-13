@@ -1684,6 +1684,8 @@
             `;
 
             ["nombre", "apellido", "email", "dni"].forEach(id => $(id).value = "");
+			if (idGestor && state.myIdentity) $("email").value = state.myIdentity.email;
+				else $("email").value = "";
             renderGelaOptions($("gela_group"), "gela");
 
             applyTexts();
