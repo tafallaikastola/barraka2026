@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel de Gestión · Barraka Txandak</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal:    #00b4b4;
+      --teal-dk: #008a8a;
+      --teal-lt: #e0f7f7;
+      --bg:      #f2f4f6;
+      --card:    #ffffff;
+      --text:    #111827;
+      --muted:   #6b7280;
+      --line:    #d1d5db;
+      --empty:   #f9fafb;
+      --danger:  #dc2626;
+      --danger-lt:#fef2f2;
+      --ok:      #15803d;
+      --ok-lt:   #dcfce7;
+      --warn:    #d97706;
+      --warn-lt: #fef3c7;
+      --radius:  12px;
+      --shadow:  0 12px 32px rgba(15, 23, 42, .08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #eefafa 0%, var(--bg) 240px);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* ── LOGIN ─────────────────────────────────────── */
+    #loginScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 20px;
+      background: linear-gradient(135deg, #00b4b4 0%, #005f8a 100%);
+    }
+
+    .login-box {
+      background: white;
+      border-radius: 20px;
+      padding: 44px 40px;
+      width: min(400px, 92vw);
+      box-shadow: 0 24px 60px rgba(0,0,0,.20);
+      text-align: center;
+    }
+
+    .login-box .logo {
+      font-size: 2.8rem;
+      margin-bottom: 8px;
+    }
+
+    .login-box h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--teal-dk);
+      margin-bottom: 6px;
+    }
+
+    .login-box p {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 28px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 1.05rem;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border .2s;
+      text-align: center;
+      letter-spacing: .12em;
+    }
+
+    .login-box input:focus { border-color: var(--teal); }
+
+    .login-box button {
+      width: 100%;
+      padding: 13px;
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+
+    .login-box button:hover { background: var(--teal-dk); transform: translateY(-1px); }
+
+    .login-error {
+      color: var(--danger);
+      font-size: .88rem;
+      margin-top: 10px;
+      min-height: 18px;
+    }
+
+    /* ── MAIN APP ──────────────────────────────────── */
+    #app { display: none; }
+
+    header {
+      background: var(--teal);
+      color: white;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header .brand { display: flex; align-items: center; gap: 12px; }
+    header .brand span { font-size: 1.8rem; }
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    header h1 small {
+      display: block;
+      font-size: .78rem;
+      font-weight: 400;
+      opacity: .8;
+      letter-spacing: .05em;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+    #lastUpdate {
+      font-size: .8rem;
+      opacity: .85;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .btn-reload {
+      background: rgba(255,255,255,.2);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,.4);
+      border-radius: 999px;
+      padding: 7px 18px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-reload:hover { background: rgba(255,255,255,.35); }
+
+    .btn-back {
+      background: rgba(255,255,255,.15);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: .82rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .2s;
+    }
+
+    .btn-back:hover { background: rgba(255,255,255,.3); }
+
+    /* ── LOADING ───────────────────────────────────── */
+    #loadingState {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      gap: 16px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid var(--teal-lt);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SUMMARY BAR ───────────────────────────────── */
+    #summaryBar {
+      display: flex;
+      gap: 12px;
+      padding: 18px 32px 4px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: .88rem;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .stat-pill strong { font-weight: 800; font-size: 1rem; color: var(--teal-dk); }
+
+
+    /* ── MANAGEMENT TOOLS ───────────────────────────── */
+    #managementTools {
+      padding: 12px 32px 4px;
+      display: grid;
+      grid-template-columns: minmax(260px, 1.4fr) minmax(260px, .9fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .tool-card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .tool-card h2 {
+      font-size: .95rem;
+      margin-bottom: 8px;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+
+    .tool-help {
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .filter-row, .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-chip, .copy-btn {
+      border: 1.5px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: .84rem;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+
+    .filter-chip:hover, .copy-btn:hover {
+      border-color: var(--teal);
+      color: var(--teal-dk);
+      transform: translateY(-1px);
+    }
+
+    .filter-chip.active {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    .copy-btn.primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: white;
+    }
+
+    .copy-btn.primary:hover { background: var(--teal-dk); color: white; }
+
+    .priority-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .priority-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #fee2e2;
+      background: #fff7f7;
+      border-radius: 12px;
+      padding: 9px 11px;
+      font-size: .88rem;
+    }
+
+    .priority-item strong { color: var(--danger); }
+    .priority-item button {
+      border: 0;
+      background: transparent;
+      color: var(--teal-dk);
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .priority-empty {
+      color: var(--ok);
+      background: var(--ok-lt);
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+
+    /* ── COMPACT MANAGEMENT OVERVIEW ───────────────────── */
+    #managementTools.compact-tools {
+      grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 1.4fr);
+    }
+
+    .tool-card.compact {
+      padding: 12px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+    }
+
+    .tool-card.compact h2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .compact-note {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    .coverage-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .coverage-day {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 13px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, transform .15s, box-shadow .15s;
+    }
+
+    .coverage-day:hover {
+      border-color: var(--teal);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,180,180,.10);
+    }
+
+    .coverage-day.active {
+      border-color: var(--teal);
+      box-shadow: inset 0 0 0 2px var(--teal-lt);
+    }
+
+    .coverage-day-title {
+      font-weight: 800;
+      font-size: .88rem;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .coverage-day-title small {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .72rem;
+    }
+
+    .mini-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin: 8px 0 6px;
+    }
+
+    .mini-progress span {
+      display: block;
+      height: 100%;
+      background: var(--teal);
+      border-radius: 999px;
+    }
+
+    .mini-progress span.warn { background: var(--warn); }
+    .mini-progress span.danger { background: var(--danger); }
+
+    .coverage-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      color: var(--muted);
+      font-size: .74rem;
+      line-height: 1.25;
+    }
+
+    .coverage-meta strong { color: var(--text); }
+
+    .urgency-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      max-height: 280px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .urgency-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: .84rem;
+    }
+
+    .urgency-rank {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: inline-grid;
+      place-items: center;
+      background: var(--teal-lt);
+      color: var(--teal-dk);
+      font-weight: 800;
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+    }
+
+    .urgency-row.high { border-color: #fecaca; background: #fff7f7; }
+    .urgency-row.high .urgency-rank { background: var(--danger); color: white; }
+    .urgency-row.medium { border-color: #fde68a; background: #fffbeb; }
+    .urgency-row.medium .urgency-rank { background: var(--warn); color: white; }
+
+    .urgency-title {
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .urgency-sub {
+      color: var(--muted);
+      font-size: .78rem;
+      margin-top: 2px;
+    }
+
+    .urgency-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .urgency-tag {
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: #f3f4f6;
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .urgency-tag.danger { background: var(--danger-lt); color: var(--danger); }
+    .urgency-tag.warn { background: var(--warn-lt); color: #92400e; }
+
+    @media (max-width: 900px) {
+      #managementTools.compact-tools { grid-template-columns: 1fr; }
+      .urgency-row { grid-template-columns: auto 1fr; }
+      .urgency-tags { grid-column: 2; justify-content: flex-start; }
+    }
+
+    .shift-col.hidden-by-filter { display: none; }
+
+    .shift-status-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .75rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .shift-status-badge.ok { background: var(--ok-lt); color: var(--ok); }
+    .shift-status-badge.warn { background: var(--warn-lt); color: #92400e; }
+    .shift-status-badge.danger { background: var(--danger-lt); color: var(--danger); }
+
+    .shift-actions {
+      padding: 0 16px 10px;
+    }
+
+    .shift-actions .copy-btn {
+      width: 100%;
+      justify-content: center;
+      display: inline-flex;
+    }
+
+    /* ── DAY NAVIGATION ────────────────────────────── */
+    #dayNav {
+      display: flex;
+      gap: 8px;
+      padding: 14px 32px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    #dayNav::-webkit-scrollbar { display: none; }
+
+    .day-tab {
+      flex-shrink: 0;
+      background: white;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 18px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--muted);
+      transition: all .2s;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .day-tab small {
+      display: block;
+      font-weight: 400;
+      font-size: .75rem;
+    }
+
+    .day-tab:hover { border-color: var(--teal); color: var(--teal-dk); }
+    .day-tab.active { background: var(--teal); border-color: var(--teal); color: white; }
+
+    /* ── DAY SECTION ───────────────────────────────── */
+    #content { padding: 0 32px 48px; }
+
+    .day-section { display: none; }
+    .day-section.visible { display: block; }
+
+    .day-header {
+      background: var(--teal);
+      color: white;
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .day-header .day-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .day-header .day-date {
+      font-family: 'DM Mono', monospace;
+      font-size: .88rem;
+      opacity: .85;
+    }
+
+    /* ── SHIFTS GRID ───────────────────────────────── */
+    .shifts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 0;
+      border: 1.5px solid var(--teal);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+      background: var(--line);
+    }
+
+    /* ── SHIFT COLUMN ──────────────────────────────── */
+    .shift-col {
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shift-col + .shift-col {
+      border-left: 1.5px solid var(--teal);
+    }
+
+    /* shift header */
+    .shift-header {
+      background: var(--teal-lt);
+      border-bottom: 2px solid var(--teal);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .shift-tipo {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--teal-dk);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .shift-hours {
+      font-family: 'DM Mono', monospace;
+      font-size: .88rem;
+      color: var(--teal-dk);
+      font-weight: 500;
+    }
+
+    /* progress bar */
+    .shift-progress-wrap {
+      padding: 8px 16px 4px;
+    }
+
+    .progress-bar-bg {
+      background: #e5e7eb;
+      border-radius: 999px;
+      height: 7px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--teal);
+      transition: width .4s ease;
+    }
+
+    .progress-bar-fill.full { background: var(--danger); }
+    .progress-bar-fill.warn { background: var(--warn); }
+
+    .progress-label {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* people table */
+    .people-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    .people-table tr { border-bottom: 1px solid var(--line); }
+    .people-table tr:last-child { border-bottom: none; }
+
+    /* row number cell */
+    .people-table td.num {
+      width: 34px;
+      text-align: right;
+      padding: 7px 6px 7px 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: .8rem;
+      vertical-align: middle;
+      user-select: none;
+    }
+
+    .people-table td.name {
+      padding: 7px 12px 7px 6px;
+      vertical-align: middle;
+    }
+
+    /* filled row */
+    tr.row-filled { background: white; }
+    tr.row-filled:hover { background: #f0fafa; }
+
+    /* responsible row */
+    tr.row-resp {
+      background: var(--teal-lt);
+    }
+
+    tr.row-resp td.name {
+      font-weight: 700;
+      color: var(--teal-dk);
+    }
+
+    .resp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--teal);
+      color: white;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 1px 8px 1px 5px;
+      margin-left: 7px;
+      vertical-align: middle;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    /* empty row */
+    tr.row-empty { background: var(--empty); }
+    tr.row-empty td { color: #9ca3af; font-style: italic; }
+
+    /* empty-responsible row (missing!) */
+    tr.row-empty-resp {
+      background: var(--danger-lt);
+    }
+
+    tr.row-empty-resp td { color: var(--danger); font-style: italic; }
+
+    .missing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--danger);
+      color: white;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 1px 8px 1px 5px;
+      margin-left: 7px;
+      vertical-align: middle;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    /* shift footer */
+    .shift-footer {
+      margin-top: auto;
+      border-top: 2px solid var(--line);
+      padding: 10px 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: .82rem;
+    }
+
+    .footer-stat { color: var(--muted); }
+    .footer-stat strong { color: var(--text); font-weight: 700; }
+    .footer-stat.ok strong { color: var(--ok); }
+    .footer-stat.danger strong { color: var(--danger); }
+    .footer-stat.warn strong { color: var(--warn); }
+
+    /* ── ERROR ─────────────────────────────────────── */
+    .error-box {
+      background: var(--danger-lt);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin: 20px 32px;
+      font-weight: 600;
+    }
+
+    /* ── RESPONSIVE ────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      #summaryBar, #dayNav, #content, #managementTools { padding-left: 16px; padding-right: 16px; }
+      #managementTools { grid-template-columns: 1fr; }
+      .shifts-grid { grid-template-columns: 1fr; }
+      .shift-col + .shift-col { border-left: none; border-top: 1.5px solid var(--teal); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ═══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">🏕️</div>
+    <h1>Panel de Gestión</h1>
+    <p>Introduce la contraseña para acceder</p>
+    <input type="password" id="pwdInput" placeholder="••••••••"
+           autocomplete="current-password" />
+    <button onclick="checkPassword()">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══ APP ══════════════════════════════════════════════ -->
+<div id="app">
+
+  <header>
+    <div class="brand">
+      <span>🏕️</span>
+      <h1>
+        Panel de Gestión
+        <small>BARRAKA IKASTOLA · TXANDAK</small>
+      </h1>
+    </div>
+    <div class="header-right">
+      <span id="lastUpdate"></span>
+      <button class="btn-reload" onclick="loadData()">↻ Actualizar</button>
+      <a class="btn-back" href="index.html">← Volver a la web</a>
+    </div>
+  </header>
+
+  <div id="summaryBar"></div>
+  <div id="dayNav"></div>
+  <div id="managementTools"></div>
+  <div id="content">
+    <div id="loadingState">
+      <div class="spinner"></div>
+      <span>Cargando datos…</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────
+  const API_URL   = 'https://script.google.com/macros/s/AKfycby4iAxS1YEWj21ugYHSKzfOOILwSFqTYBo1KOud9WtGQXMzmIjh3dKXGG_t1jdqummk/exec';
+  // ───────────────────────────────────────────────────────
+
+  let activeDayKey = null;
+  let sessionPassword = '';
+  let allTurnos = [];
+  let filterMode = 'all';
+
+  // ── Login ────────────────────────────────────────────
+  async function checkPassword() {
+  const val = document.getElementById('pwdInput').value;
+  if (!val.trim()) return;
+
+  const btn = document.querySelector('.login-box button');
+  btn.textContent = 'Verificando…';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${API_URL}?action=getAdminData&pwd=${encodeURIComponent(val)}`);
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.error || 'Contraseña incorrecta.');
+
+    // Contraseña válida → guardar en sesión y mostrar app
+    sessionPassword = val;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    render(data.turnos || []);
+    document.getElementById('lastUpdate').textContent =
+      'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
+
+  } catch (err) {
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = err.message;
+    document.getElementById('pwdInput').value = '';
+    setTimeout(() => errEl.textContent = '', 3000);
+  } finally {
+    btn.textContent = 'Entrar';
+    btn.disabled = false;
+  }
+}
+
+  document.getElementById('pwdInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  // ── API ──────────────────────────────────────────────
+  async function loadData() {
+  showLoading();
+  try {
+    const res  = await fetch(`${API_URL}?action=getAdminData&pwd=${encodeURIComponent(sessionPassword)}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    render(data.turnos || []);
+    document.getElementById('lastUpdate').textContent =
+      'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      `<div class="error-box">⚠ Error: ${err.message}</div>`;
+  }
+}
+  function showLoading() {
+    document.getElementById('content').innerHTML = `
+      <div id="loadingState">
+        <div class="spinner"></div>
+        <span>Cargando datos…</span>
+      </div>`;
+    document.getElementById('summaryBar').innerHTML = '';
+    document.getElementById('dayNav').innerHTML = '';
+    document.getElementById('managementTools').innerHTML = '';
+  }
+
+  // ── Render ───────────────────────────────────────────
+  function render(turnos) {
+    allTurnos = Array.isArray(turnos) ? turnos : [];
+    // Group by day key (fecha)
+    const days = {};
+    turnos.forEach(t => {
+      const key = t.fecha;
+      if (!days[key]) days[key] = { dia: t.dia, fecha: t.fecha, turnos: [] };
+      days[key].turnos.push(t);
+    });
+
+    const dayKeys = Object.keys(days).sort();
+
+    // Summary bar
+    const totalPersonas    = turnos.reduce((s, t) => s + t.plazas, 0);
+    const totalApuntadas   = turnos.reduce((s, t) => s + t.plazas_ocupadas, 0);
+    const totalLibres      = turnos.reduce((s, t) => s + t.plazas_disponibles, 0);
+    const sinResponsable   = turnos.filter(t =>
+      t.plazas_responsable > 0 && t.plazas_responsable_disponibles > 0).length;
+
+    document.getElementById('summaryBar').innerHTML = `
+      <div class="stat-pill">📅 <strong>${dayKeys.length}</strong> días</div>
+      <div class="stat-pill">👥 <strong>${totalApuntadas}</strong> / ${totalPersonas} personas</div>
+      <div class="stat-pill">🟢 <strong>${totalLibres}</strong> plazas libres</div>
+      ${sinResponsable > 0
+        ? `<div class="stat-pill" style="border-color:var(--danger);color:var(--danger)">⚠ <strong>${sinResponsable}</strong> turnos sin responsable</div>`
+        : `<div class="stat-pill" style="border-color:var(--ok);color:var(--ok)">✔ Todos los responsables cubiertos</div>`}
+    `;
+
+    // Day tabs
+    if (!activeDayKey || !days[activeDayKey]) activeDayKey = dayKeys[0];
+
+    document.getElementById('dayNav').innerHTML = dayKeys.map(k => {
+      const missing = days[k].turnos.reduce((s, t) => s + Math.max(Number(t.plazas_disponibles) || 0, 0), 0);
+      return `
+      <button class="day-tab ${k === activeDayKey ? 'active' : ''}"
+              onclick="switchDay('${k}')">
+        ${days[k].dia}
+        <small>${formatDate(k)}${missing ? ` · faltan ${missing}` : ''}</small>
+      </button>`;
+    }).join('');
+
+    renderManagementTools(days);
+
+    // Day sections
+    document.getElementById('content').innerHTML = dayKeys.map(k =>
+      renderDay(k, days[k])
+    ).join('');
+
+    highlightActiveDay();
+  }
+
+  function switchDay(key) {
+    activeDayKey = key;
+    highlightActiveDay();
+    document.querySelectorAll('.day-tab').forEach((btn, i) => {
+      const keys = [...document.querySelectorAll('.day-section')].map(s => s.dataset.key);
+      btn.classList.toggle('active', keys[i] === key);
+    });
+  }
+
+  function highlightActiveDay() {
+    document.querySelectorAll('.day-section').forEach(el => {
+      el.classList.toggle('visible', el.dataset.key === activeDayKey);
+    });
+    applyFilter();
+  }
+
+  function renderManagementTools(days) {
+    const dayEntries = Object.entries(days)
+      .sort(([a], [b]) => String(a).localeCompare(String(b)));
+
+    const dayCards = dayEntries.map(([key, day]) => {
+      const total = day.turnos.reduce((s, t) => s + (Number(t.plazas) || 0), 0);
+      const occupied = day.turnos.reduce((s, t) => s + (Number(t.plazas_ocupadas) || 0), 0);
+      const free = day.turnos.reduce((s, t) => s + (Number(t.plazas_disponibles) || 0), 0);
+      const respMissing = day.turnos.filter(t =>
+        (Number(t.plazas_responsable) || 0) > 0 &&
+        (Number(t.plazas_responsable_disponibles) || 0) > 0
+      ).length;
+      const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+      const level = pct < 50 || respMissing >= 3 ? 'danger' : pct < 75 || respMissing > 0 ? 'warn' : '';
+      return { key, day, total, occupied, free, respMissing, pct, level };
+    });
+
+    const urgency = allTurnos
+      .map(t => {
+        const plazas = Number(t.plazas) || 0;
+        const occupied = Number(t.plazas_ocupadas) || 0;
+        const free = Number(t.plazas_disponibles) || 0;
+        const respMissing = (Number(t.plazas_responsable) || 0) > 0 && (Number(t.plazas_responsable_disponibles) || 0) > 0;
+        const pct = plazas > 0 ? occupied / plazas : 1;
+
+        // Score: no muestra "todo lo que falta", sino lo más accionable.
+        // Responsable pendiente pesa más; después, turnos con poca cobertura.
+        let score = 0;
+        if (respMissing) score += 100;
+        score += Math.round((1 - pct) * 60);
+        score += Math.min(free, 6) * 3;
+
+        return { t, plazas, occupied, free, respMissing, pct, score };
+      })
+      .filter(item => item.score >= 35)
+      .sort((a, b) => b.score - a.score || String(a.t.fecha).localeCompare(String(b.t.fecha)) || String(a.t.hora_inicio).localeCompare(String(b.t.hora_inicio)))
+      .slice(0, 8);
+
+    const tools = document.getElementById('managementTools');
+    tools.className = 'compact-tools';
+    tools.innerHTML = `
+      <section class="tool-card compact">
+        <h2>
+          Mapa de cobertura
+          <span class="compact-note">por día</span>
+        </h2>
+        <p class="tool-help">Sustituye la lista grande de avisos por una lectura rápida: cobertura total, huecos y responsables pendientes por día.</p>
+        <div class="coverage-map">
+          ${dayCards.map(d => `
+            <button class="coverage-day ${d.key === activeDayKey ? 'active' : ''}" onclick="switchDay('${escAttr(d.key)}')">
+              <div class="coverage-day-title">
+                <span>${escHtml(d.day.dia)}</span>
+                <small>${formatDate(d.key)}</small>
+              </div>
+              <div class="mini-progress"><span class="${d.level}" style="width:${d.pct}%"></span></div>
+              <div class="coverage-meta">
+                <span><strong>${d.pct}%</strong> cubierto</span>
+                <span>· faltan <strong>${d.free}</strong></span>
+                ${d.respMissing ? `<span>· resp. <strong>${d.respMissing}</strong></span>` : `<span>· resp. OK</span>`}
+              </div>
+            </button>
+          `).join('')}
+        </div>
+      </section>
+
+      <section class="tool-card compact">
+        <h2>
+          Focos de acción
+          <span class="compact-note">máx. 8</span>
+        </h2>
+        <p class="tool-help">No lista todos los turnos incompletos: ordena por urgencia real, dando más peso a responsables pendientes y baja cobertura.</p>
+        <div class="filter-row">
+          <button class="filter-chip ${filterMode === 'all' ? 'active' : ''}" onclick="setFilter('all')">Todos</button>
+          <button class="filter-chip ${filterMode === 'missing' ? 'active' : ''}" onclick="setFilter('missing')">Con huecos</button>
+          <button class="filter-chip ${filterMode === 'responsible' ? 'active' : ''}" onclick="setFilter('responsible')">Sin responsable</button>
+          <button class="copy-btn primary" onclick="copyActiveDayReminder()">Copiar WhatsApp del día</button>
+        </div>
+        <div class="urgency-list">
+          ${urgency.length ? urgency.map((item, idx) => {
+            const t = item.t;
+            const cls = item.respMissing ? 'high' : item.pct < .6 ? 'medium' : '';
+            const pctText = Math.round(item.pct * 100);
+            return `
+              <div class="urgency-row ${cls}">
+                <span class="urgency-rank">${idx + 1}</span>
+                <div>
+                  <div class="urgency-title">${escHtml(t.dia)} · ${escHtml(t.tipo)} ${escHtml(t.hora_inicio)}-${escHtml(t.hora_fin)}</div>
+                  <div class="urgency-sub">${formatDate(t.fecha)} · ${item.occupied}/${item.plazas} personas · ${pctText}% cubierto</div>
+                </div>
+                <div class="urgency-tags">
+                  ${item.respMissing ? `<span class="urgency-tag danger">responsable</span>` : ''}
+                  ${item.free ? `<span class="urgency-tag warn">faltan ${item.free}</span>` : ''}
+                  <button class="copy-btn" onclick="copyShiftReminder('${escAttr(t.fecha)}','${escAttr(t.tipo)}','${escAttr(t.hora_inicio)}','${escAttr(t.hora_fin)}')">Copiar</button>
+                </div>
+              </div>`;
+          }).join('') : `<div class="priority-empty">✔ No hay focos urgentes. Puedes usar los filtros si quieres revisar todos los huecos.</div>`}
+        </div>
+      </section>`;
+  }
+
+  function setFilter(mode) {
+    filterMode = mode;
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+      const text = btn.textContent.toLowerCase();
+      btn.classList.toggle('active',
+        (mode === 'all' && text.includes('todos')) ||
+        (mode === 'missing' && text.includes('plazas')) ||
+        (mode === 'responsible' && text.includes('responsable'))
+      );
+    });
+    applyFilter();
+  }
+
+  function applyFilter() {
+    document.querySelectorAll('.shift-col').forEach(card => {
+      const needsPeople = card.dataset.needsPeople === '1';
+      const needsResponsible = card.dataset.needsResponsible === '1';
+      const hide = (filterMode === 'missing' && !needsPeople) || (filterMode === 'responsible' && !needsResponsible);
+      card.classList.toggle('hidden-by-filter', hide);
+    });
+  }
+
+  function copyActiveDayReminder() {
+    const turnosDia = allTurnos.filter(t => t.fecha === activeDayKey && (Number(t.plazas_disponibles) || 0) > 0);
+    const msg = buildReminderText(turnosDia);
+    copyText(msg);
+  }
+
+  function copyShiftReminder(fecha, tipo, inicio, fin) {
+    const match = allTurnos.find(t => String(t.fecha) === String(fecha) && String(t.tipo) === String(tipo) && String(t.hora_inicio) === String(inicio) && String(t.hora_fin) === String(fin));
+    copyText(buildReminderText(match ? [match] : []));
+  }
+
+  function getPublicShiftUrl(t) {
+    const url = new URL('index.html', window.location.href);
+    if (t && t.id_turno) url.searchParams.set('turno', t.id_turno);
+    url.searchParams.set('apuntar', '1');
+    return url.toString();
+  }
+
+  function buildReminderText(turnos) {
+    if (!turnos.length) return 'Ahora mismo no hay plazas libres en los turnos seleccionados. Eskerrik asko!';
+    const first = turnos[0];
+    const lines = turnos.map(t => {
+      const libres = Number(t.plazas_disponibles) || 0;
+      const resp = ((Number(t.plazas_responsable) || 0) > 0 && (Number(t.plazas_responsable_disponibles) || 0) > 0) ? ' · falta responsable' : '';
+      const link = getPublicShiftUrl(t);
+      return `• ${t.dia} ${formatDate(t.fecha)} · ${t.tipo} ${t.hora_inicio}-${t.hora_fin}: faltan ${libres} persona(s)${resp}
+  Apúntate aquí: ${link}`;
+    });
+    return `Kaixo! Necesitamos ayuda para cubrir turnos de la barraka de la ikastola:
+
+${lines.join('\n\n')}
+
+Mila esker!`;
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Texto copiado. Ya puedes pegarlo en WhatsApp, email o el grupo que quieras.');
+    } catch (err) {
+      window.prompt('Copia este texto:', text);
+    }
+  }
+
+  function renderDay(key, day) {
+    return `
+      <div class="day-section" data-key="${key}">
+        <div class="day-header">
+          <span class="day-title">${day.dia.toUpperCase()}</span>
+          <span class="day-date">${formatDate(key)}</span>
+        </div>
+        <div class="shifts-grid">
+          ${day.turnos.map(renderShift).join('')}
+        </div>
+      </div>`;
+  }
+
+  function renderShift(t) {
+    const plazas   = t.plazas || 0;
+    const ocupadas = t.plazas_ocupadas || 0;
+    const libres   = t.plazas_disponibles || 0;
+    const pct      = plazas > 0 ? Math.round((ocupadas / plazas) * 100) : 0;
+    const fillClass = pct >= 100 ? 'full' : pct >= 75 ? 'warn' : '';
+    const plazasResp = Number(t.plazas_responsable) || 0;
+    const needsPeople = libres > 0;
+    const needsResponsible = plazasResp > 0 && (Number(t.plazas_responsable_disponibles) || 0) > 0;
+    const statusClass = needsResponsible ? 'danger' : needsPeople ? 'warn' : 'ok';
+    const statusText = needsResponsible ? 'Falta responsable' : needsPeople ? `Faltan ${libres}` : 'Cubierto';
+
+    // Separate responsible and regular enrolled
+    const responsable = (t.inscritos || []).find(i => i.responsable_turno === 'si');
+    const resto       = (t.inscritos || []).filter(i => i.responsable_turno !== 'si');
+
+    // Build ordered list: responsible first, then rest, then empties
+    const rows = [];
+
+    // Responsible slot
+    if (plazasResp > 0) {
+      if (responsable) {
+        rows.push({ type: 'resp', persona: responsable });
+      } else {
+        rows.push({ type: 'empty-resp' });
+      }
+    }
+
+    // Regular slots
+    resto.forEach(p => rows.push({ type: 'filled', persona: p }));
+    const slotsRegular = plazas - plazasResp;
+    const emptyRegular = slotsRegular - resto.length;
+    for (let i = 0; i < emptyRegular; i++) rows.push({ type: 'empty' });
+
+    let num = 0;
+    const tableRows = rows.map(row => {
+      num++;
+      if (row.type === 'resp') {
+        return `<tr class="row-resp">
+          <td class="num">${num}</td>
+          <td class="name">
+            ${escHtml(row.persona.nombre)} ${escHtml(row.persona.apellido)}
+            <span class="resp-badge">⭐ Responsable</span>
+          </td>
+        </tr>`;
+      }
+      if (row.type === 'empty-resp') {
+        return `<tr class="row-empty-resp">
+          <td class="num">${num}</td>
+          <td class="name">
+            — plaza libre —
+            <span class="missing-badge">⚠ Falta responsable</span>
+          </td>
+        </tr>`;
+      }
+      if (row.type === 'filled') {
+        return `<tr class="row-filled">
+          <td class="num">${num}</td>
+          <td class="name">${escHtml(row.persona.nombre)} ${escHtml(row.persona.apellido)}</td>
+        </tr>`;
+      }
+      // empty
+      return `<tr class="row-empty">
+        <td class="num">${num}</td>
+        <td class="name">— libre —</td>
+      </tr>`;
+    }).join('');
+
+    // Footer stats
+    const respCubierto = plazasResp > 0 && t.plazas_responsable_disponibles === 0;
+    const respClass    = plazasResp === 0 ? '' : respCubierto ? 'ok' : 'danger';
+
+    return `
+      <div class="shift-col" data-needs-people="${needsPeople ? '1' : '0'}" data-needs-responsible="${needsResponsible ? '1' : '0'}">
+        <div class="shift-header">
+          <span class="shift-tipo">${escHtml(t.tipo)}</span>
+          <span class="shift-hours">${escHtml(t.hora_inicio)} – ${escHtml(t.hora_fin)}</span>
+          <span class="shift-status-badge ${statusClass}">${escHtml(statusText)}</span>
+        </div>
+        <div class="shift-progress-wrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill ${fillClass}" style="width:${pct}%"></div>
+          </div>
+          <div class="progress-label">${ocupadas} / ${plazas} personas · ${pct}%</div>
+        </div>
+        <table class="people-table">
+          ${tableRows}
+        </table>
+        ${needsPeople ? `<div class="shift-actions"><button class="copy-btn" onclick="copyShiftReminder('${escAttr(t.fecha)}','${escAttr(t.tipo)}','${escAttr(t.hora_inicio)}','${escAttr(t.hora_fin)}')">Copiar WhatsApp de este turno</button></div>` : ''}
+        <div class="shift-footer">
+          <span class="footer-stat ${libres === 0 ? 'danger' : libres <= 3 ? 'warn' : 'ok'}">
+            Libres: <strong>${libres}</strong>
+          </span>
+          ${plazasResp > 0 ? `
+          <span class="footer-stat ${respClass}">
+            Responsable: <strong>${respCubierto ? '✔ Cubierto' : '✘ Falta'}</strong>
+          </span>` : ''}
+          <span class="footer-stat">
+            Personas necesarias: <strong>${plazas}</strong>
+          </span>
+          <span class="footer-stat">
+            Personas apuntadas: <strong>${ocupadas}</strong>
+          </span>
+        </div>
+      </div>`;
+  }
+
+  // ── Helpers ──────────────────────────────────────────
+  function escHtml(v) {
+    return String(v ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function escAttr(v) {
+    return escHtml(v).replace(/`/g, '&#096;');
+  }
+
+  function formatDate(dateStr) {
+    // dateStr expected as DD/MM/YYYY or YYYY-MM-DD
+    try {
+      let d;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+        const [dd, mm, yyyy] = dateStr.split('/');
+        d = new Date(`${yyyy}-${mm}-${dd}`);
+      } else {
+        d = new Date(dateStr);
+      }
+      return d.toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+    } catch { return dateStr; }
+  }
+</script>
+
+</body>
+</html>
