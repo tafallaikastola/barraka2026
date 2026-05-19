@@ -1308,7 +1308,7 @@
         function isRecommendedShift(shift) {
             const plazas = Number(shift.plazas) || 0;
             const libres = getShiftFreePlaces(shift);
-            return libres > 0 && (needsResponsible(shift) || libres >= 3 || (plazas > 0 && libres / plazas >= .4));
+            return libres > 0 && (needsResponsible(shift) || libres >= 5 || (plazas > 0 && libres / plazas >= .4));
         }
 
         function applyShiftFilter(shifts) {
