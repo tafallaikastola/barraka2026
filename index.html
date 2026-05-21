@@ -782,16 +782,27 @@
                 </div>
             </div>
 			<div class="check-card" id="publicNameBox">
-			    <input id="publicarNombre" type="checkbox" />
-			    <div>
-			        <label for="publicarNombre" id="labelPublicarNombre">
-			            Acepto que mi nombre y apellidos, y los de las personas adicionales que inscriba, se muestren públicamente en la web junto al turno elegido
-			        </label>
-			        <small id="publicarNombreHelp">
-			            Si no marcas esta casilla, las inscripciones aparecerán como ocupado o con un identificador no identificativo.
-			        </small>
-			    </div>
-			</div>
+    <div style="width:100%;">
+        <label id="labelPublicarNombreDecision" style="margin-bottom: 8px;">
+            ¿Cómo quieres aparecer en la lista pública?
+            <span class="required-star">*</span>
+        </label>
+
+        <label style="display:flex; gap:8px; align-items:flex-start; font-weight:700; margin: 8px 0;">
+            <input type="radio" name="publicarNombre" value="si" />
+            <span>
+                Mostrar mi nombre y apellidos
+            </span>
+        </label>
+
+        <label style="display:flex; gap:8px; align-items:flex-start; font-weight:700; margin: 8px 0;">
+            <input type="radio" name="publicarNombre" value="no" />
+            <span>
+                No mostrar el nombre, aparecera como privado.
+            </span>
+        </label>
+		    </div>
+		</div>
 
             <div class="signup-section-title">
                 <h4 id="additionalPeopleTitle">Otras personas que quieres apuntar</h4>
@@ -1509,7 +1520,14 @@
         function getAdditionalPeopleData() {
             return [...document.querySelectorAll("#additionalPeople .additional-person-card")].map(card => {
                 const get = field => card.querySelector(`[data-extra-field="${field}"]`);
-				const publicarNombre = $("publicarNombre") && $("publicarNombre").checked ? "si" : "no";
+				const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
+
+				if (!publicarNombreSelected) {
+				    showToast("Elige si quieres que el nombre se muestre públicamente o como reserva privada.");
+				    return;
+				}
+				
+				const publicarNombre = publicarNombreSelected.value;
                 const full = get("nombre").value.trim();
                 return {
                     nombre: full,
@@ -1750,9 +1768,9 @@
             $("signupShiftId").value = idTurno;
             $("signupGestorId").value = idGestor || "";
             $("responsableTurno").checked = false;
-			if ($("publicarNombre")) {
-    			$("publicarNombre").checked = false;
-			}
+			document.querySelectorAll('input[name="publicarNombre"]').forEach(radio => {
+    			radio.checked = false;
+				});
             updateSignupResponsibleAvailability(shift, !idGestor);
             $("signupShiftText").innerHTML = `
                 <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(shift.dia)}, ${normalizeDateLabel(shift.fecha)}</span></span>
@@ -1771,7 +1789,14 @@
 			async function signup() {
     const btn = $("dlgSignupConfirm");
     const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
-	const publicarNombre = $("publicarNombre") && $("publicarNombre").checked ? "si" : "no";
+	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
+
+if (!publicarNombreSelected) {
+    showToast("Elige si quieres que el nombre se muestre públicamente o como reserva privada.");
+    return;
+}
+
+const publicarNombre = publicarNombreSelected.value;
     const fullName = $("nombre").value.trim();
     const mainPerson = {
         id_turno: $("signupShiftId").value,
