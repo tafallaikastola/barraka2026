@@ -318,7 +318,7 @@
         button.danger { background: var(--danger); box-shadow: 0 8px 18px rgba(220,38,38,.16); }
 
         input:not([type="checkbox"]), select {
-         
+         	width: 100%;
             border: 1.5px solid var(--line);
             border-radius: 12px;
             padding: 12px 13px;
@@ -631,6 +631,7 @@
 }
 
 .privacy-option input {
+	width: 10%;
     margin-top: 3px;
     flex-shrink: 0;
     accent-color: var(--teal);
@@ -640,7 +641,7 @@
     line-height: 1.35;
 }
 
-.privacy-option:has(input:checked) {
+.privacy-option:has(input:radio) {
     border-color: var(--teal);
     background: var(--teal-lt);
     color: var(--teal-dk);
