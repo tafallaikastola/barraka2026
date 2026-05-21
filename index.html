@@ -781,6 +781,17 @@
                     <small id="responsableTurnoHelp"></small>
                 </div>
             </div>
+			<div class="check-card" id="publicNameBox">
+			    <input id="publicarNombre" type="checkbox" />
+			    <div>
+			        <label for="publicarNombre" id="labelPublicarNombre">
+			            Acepto que mi nombre y apellidos, y los de las personas adicionales que inscriba, se muestren públicamente en la web junto al turno elegido
+			        </label>
+			        <small id="publicarNombreHelp">
+			            Si no marcas esta casilla, las inscripciones aparecerán como ocupado o con un identificador no identificativo.
+			        </small>
+			    </div>
+			</div>
 
             <div class="signup-section-title">
                 <h4 id="additionalPeopleTitle">Otras personas que quieres apuntar</h4>
@@ -829,7 +840,8 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby4iAxS1YEWj21ugYHSKzfOOILwSFqTYBo1KOud9WtGQXMzmIjh3dKXGG_t1jdqummk/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkgfXCGB5LzcjuFw1XL_HR6U7fSL-1PvmaZTPLKCR2daDLgnmh6vSFmqdbTXNP7ayl/exec";
+							
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
 
@@ -855,6 +867,8 @@
                 labelGela: "Si tienes hij@s en la ikastola, indica en qué curso. Puedes seleccionar más de una opción",
                 labelResponsableTurno: "Puedo ser responsable del turno",
                 labelChangeResponsableTurno: "Quiero realizar la función de responsable del turno",
+				labelPublicarNombre: "Acepto que mi nombre y apellidos, y los de las personas adicionales que inscriba, se muestren públicamente en la web junto al turno elegido",
+				publicarNombreHelp: "Si no marcas esta casilla, las inscripciones aparecerán como ocupado o con un identificador no identificativo.",
                 additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
                 btnAddAdditionalPerson: "Añadir otra persona",
                 additionalPersonTitle: n => `Persona adicional ${n}`,
@@ -939,6 +953,8 @@
                 labelGela: "Ikastolan seme-alabak badituzu, adierazi zein mailatan. Aukera bat baino gehiago hauta ditzakezu",
                 labelResponsableTurno: "Txandako arduraduna izan naiteke",
                 labelChangeResponsableTurno: "Txandako arduradun lana egin nahi dut",
+				labelPublicarNombre: "Onartzen dut nire izen-abizenak eta nik inskribatutako pertsona gehigarrienak webgunean publikoki agertzea hautatutako txandarekin batera",
+				publicarNombreHelp: "Lauki hau markatzen ez baduzu, izen-emateak okupatuta bezala edo identifikatzailerik gabeko modu batean agertuko dira.",
                 additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
                 btnAddAdditionalPerson: "Beste pertsona bat gehitu",
                 additionalPersonTitle: n => `Pertsona gehigarria ${n}`,
@@ -1031,7 +1047,7 @@
                 "mainTitle", "headerSubtitle", "myShiftsCta", "myPanelTitle", "myPanelSubtitle",
                 "labelMyEmail", "labelmyNombre", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
-                "labelResponsableTurno", "additionalPeopleTitle", "btnAddAdditionalPerson",
+                 "labelResponsableTurno", "publicarNombreHelp", "labelPublicarNombre", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
                 "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
                 "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn"
@@ -1493,12 +1509,14 @@
         function getAdditionalPeopleData() {
             return [...document.querySelectorAll("#additionalPeople .additional-person-card")].map(card => {
                 const get = field => card.querySelector(`[data-extra-field="${field}"]`);
+				const publicarNombre = $("publicarNombre") && $("publicarNombre").checked ? "si" : "no";
                 const full = get("nombre").value.trim();
                 return {
                     nombre: full,
                     dni: normalizeDni(get("dni").value),
                     gela: [...card.querySelectorAll('[data-extra-gela] input:checked')].map(cb => cb.value).join(", "),
                     responsable_turno: "no",
+					publicar_nombre: publicarNombre,
                     _card: card
                 };
             });
@@ -1732,6 +1750,9 @@
             $("signupShiftId").value = idTurno;
             $("signupGestorId").value = idGestor || "";
             $("responsableTurno").checked = false;
+			if ($("publicarNombre")) {
+    			$("publicarNombre").checked = false;
+			}
             updateSignupResponsibleAvailability(shift, !idGestor);
             $("signupShiftText").innerHTML = `
                 <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(shift.dia)}, ${normalizeDateLabel(shift.fecha)}</span></span>
@@ -1750,7 +1771,7 @@
 			async function signup() {
     const btn = $("dlgSignupConfirm");
     const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
-
+	const publicarNombre = $("publicarNombre") && $("publicarNombre").checked ? "si" : "no";
     const fullName = $("nombre").value.trim();
     const mainPerson = {
         id_turno: $("signupShiftId").value,
@@ -1758,7 +1779,8 @@
         email: $("email").value.trim(),
         dni: normalizeDni($("dni").value),
         gela: selectedGela("gela"),
-        responsable_turno: $("responsableTurno") && $("responsableTurno").checked ? "si" : "no"
+        responsable_turno: $("responsableTurno") && $("responsableTurno").checked ? "si" : "no",
+		publicar_nombre: publicarNombre
     };
 
     const extraPeople = getAdditionalPeopleData();
