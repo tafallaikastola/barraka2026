@@ -1268,13 +1268,15 @@
                 if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
 
                 const data = await response.json();
-                if (!data.ok) {
-    const code = data.errorCode || "unknownError";
-    const translated = TEXTS[lang] && TEXTS[lang][code];
 
-    throw new Error(translated || data.error || t("unknownError"));
-}
-                return data;
+				if (!data.ok) {
+				    const code = data.errorCode || "unknownError";
+				    const translated = TEXTS[lang] && TEXTS[lang][code];
+				
+				    throw new Error(translated || data.error || t("unknownError"));
+				}
+				
+				return data;
             } catch (error) {
                 throw new Error(error.message || "No se ha podido conectar con el servidor.");
             }
