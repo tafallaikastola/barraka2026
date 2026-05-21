@@ -598,11 +598,15 @@
         .gela-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
         .gela-options label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: #f8fafc; font-weight: 700; }
 
-        .check-card { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: 14px; background: #f8fafc; padding: 12px 14px; margin-top: 14px; }
+        .check-card { font-size:85%; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: 14px; background: #f8fafc; padding: 12px 14px; margin-top: 14px; }
         .check-card.disabled { opacity: .55; }
         .check-card.hidden { display: none; }
         .check-card label { margin: 0 0 3px; cursor: pointer; }
-        .check-card small { display: block; color: var(--muted); font-weight: 650; line-height: 1.35; }
+		.check-card .labelResponsable { display:contents; margin: 0 0 3px; cursor: pointer; }
+        .check-card small { 
+		--display: block;
+		color: var(--muted); font-weight: 650; line-height: 1.35; }
+
 .privacy-choice {
     display: block;
 }
@@ -618,7 +622,7 @@
 }
 
 .privacy-option {
-    display: flex;
+    display: contents;
     align-items: flex-start;
     gap: 9px;
     margin: 8px 0;
@@ -631,7 +635,7 @@
 }
 
 .privacy-option input {
-	width: 10%;
+	width: auto;
     margin-top: 3px;
     flex-shrink: 0;
     accent-color: var(--teal);
@@ -639,6 +643,7 @@
 
 .privacy-option span {
     line-height: 1.35;
+	padding-right: 30px;
 }
 
 .privacy-option:has(input:radio) {
@@ -819,7 +824,7 @@
             <div class="check-card" id="signupResponsableBox">
                 <input id="responsableTurno" type="checkbox" />
                 <div>
-                    <label for="responsableTurno" id="labelResponsableTurno">Quiero realizar la función de responsable del turno</label>
+                    <label for="responsableTurno" class="labelResponsable" id="labelResponsableTurno">Quiero realizar la función de responsable del turno</label>
                     <small id="responsableTurnoHelp"></small>
                 </div>
             </div>
