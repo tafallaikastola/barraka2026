@@ -986,7 +986,21 @@
                 successTitle: "Te has apuntado correctamente",
                 successAnotherBtn: "Apuntarme a otro turno",
                 successMyShiftsBtn: "Ver mis turnos",
-                successCloseBtn: "Cerrar"
+                successCloseBtn: "Cerrar",
+				shiftNotFound: "No se ha encontrado ese turno.",
+				shiftFull: "Ese turno está completo.",
+				notEnoughPlaces: "No hay plazas suficientes para inscribir a todas las personas.",
+				notResp: "Este turno no tiene plazas de responsable disponibles.",
+				notEnoughResp: "Ya están cubiertas las plazas de responsable de este turno.",
+				duplicateInTurno: "Ya está apuntada una persona con ese DNI o email en el turno.",
+				duplicateInRequest: "Hay DNI repetidos entre las personas que quieres inscribir.",
+				duplicateInSheet: "Una de las personas ya está apuntada a ese turno.",
+				notdata: "Faltan datos obligatorios.",
+				missingMainEmail: "Falta el campo email en la persona principal.",
+				managerNotFound: "No se ha encontrado esa inscripción activa.",
+				noPermission: "No tienes permiso para gestionar esta inscripción.",
+				noChanges: "No hay cambios que guardar.",
+				unknownError: "Se ha producido un error."
             },
             eu: {
                 mainTitle: "Ikastolako barrakako txandak",
@@ -1075,7 +1089,21 @@
                 successTitle: "Ondo eman duzu izena",
                 successAnotherBtn: "Beste txanda batean izena eman",
                 successMyShiftsBtn: "Nire txandak ikusi",
-                successCloseBtn: "Itxi"
+                successCloseBtn: "Itxi",
+				shiftNotFound: "Ez da txanda hori aurkitu.",
+				shiftFull: "Txanda hori beteta dago.",
+				notEnoughPlaces: "Ez dago nahikoa plaza pertsona guztiak inskribatzeko.",
+				notResp: "Txanda honek ez du arduradunentzako plazarik erabilgarri.",
+				notEnoughResp: "Txanda honetako arduradun plazak beteta daude.",
+				duplicateInTurno: "DNI/NAN edo email horrekin pertsona bat dago jada txanda horretan izena emanda.",
+				duplicateInRequest: "Inskribatu nahi dituzun pertsonen artean NAN errepikatuta dago.",
+				duplicateInSheet: "Pertsona horietako bat dago jada txanda horretan izena emanda.",
+				notdata: "Nahitaezko datuak falta dira.",
+				missingMainEmail: "Email eremua falta da pertsona nagusian.",
+				managerNotFound: "Ez da inskripzio aktibo hori aurkitu.",
+				noPermission: "Ez duzu baimenik inskripzio hau kudeatzeko.",
+				noChanges: "Ez dago gordetzeko aldaketarik.",
+				unknownError: "Errore bat gertatu da."
             }
         };
 
@@ -1240,7 +1268,12 @@
                 if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
 
                 const data = await response.json();
-                if (!data.ok) throw new Error(data.error || "Error desconocido");
+                if (!data.ok) {
+    const code = data.errorCode || "unknownError";
+    const translated = TEXTS[lang] && TEXTS[lang][code];
+
+    throw new Error(translated || data.error || t("unknownError"));
+}
                 return data;
             } catch (error) {
                 throw new Error(error.message || "No se ha podido conectar con el servidor.");
