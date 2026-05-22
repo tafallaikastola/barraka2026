@@ -457,11 +457,11 @@
 			font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 			font-size: clamp(1.05rem, 2.4vw, 1.35rem);
 			font-weight: 800;
-			margin-left: 0;
+            margin-left: 0;
 			opacity: .95;
-			text-transform: none;
+            text-transform: none;
 			letter-spacing: -0.02em;
-		}
+        }
         .shifts-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -606,27 +606,6 @@
 		--display: block;
 		color: var(--muted); font-weight: 650; line-height: 1.35; }
 
-
-.saving-message {
-    margin: 16px 0 0;
-    padding: 13px 15px;
-    border-radius: 14px;
-    background: var(--warning-lt);
-    border: 1px solid #f5d083;
-    color: #92400e;
-    font-weight: 750;
-    line-height: 1.4;
-}
-
-.saving-message strong {
-    display: block;
-    margin-bottom: 3px;
-}
-
-.saving-message span {
-    display: block;
-    font-size: .92rem;
-}
 .privacy-choice {
     display: block;
 }
@@ -680,6 +659,27 @@
     font-size: .84rem;
     font-weight: 650;
     line-height: 1.35;
+}
+
+.saving-message {
+    margin: 16px 0 0;
+    padding: 13px 15px;
+    border-radius: 14px;
+    background: var(--warning-lt);
+    border: 1px solid #f5d083;
+    color: #92400e;
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.saving-message strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.saving-message span {
+    display: block;
+    font-size: .92rem;
 }
         .signup-section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
         .signup-section-title h4 { margin: 0; font-size: 1rem; color: var(--teal-dk); }
@@ -894,10 +894,11 @@
                     Política de privacidad
                 </a>.
             </p>
-			<div id="signupSavingMessage" class="saving-message" hidden>
-				<strong id="signupSavingTitle">Guardando inscripción…</strong>
-				<span id="signupSavingText">Espera unos segundos, por favor. No cierres esta ventana.</span>
-			</div>
+
+            <div id="signupSavingMessage" class="saving-message" hidden aria-live="polite">
+                <strong id="signupSavingTitle">Guardando inscripción…</strong>
+                <span id="signupSavingText">Espera unos segundos, por favor. No cierres esta ventana.</span>
+            </div>
 
             <div class="actions">
                 <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
@@ -969,10 +970,7 @@
                 privacyFooterLink: "Política de privacidad",
                 privacyNoticeText: "Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la",
                 privacyNoticeLink: "Política de privacidad",
-                signupSavingTitle: "Guardando inscripción…",
-				signupSavingText: "Espera unos segundos, por favor. No cierres esta ventana.",
-				signupSavingBtn: "Inscribiendo…",
-				additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
+                additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
                 btnAddAdditionalPerson: "Añadir otra persona",
                 additionalPersonTitle: n => `Persona adicional ${n}`,
                 btnRemovePerson: "Quitar",
@@ -987,6 +985,9 @@
                 managedByMeLabel: "Gestionada por ti",
                 dlgSignupCancel: "Cancelar",
                 dlgSignupConfirm: "Apuntarme al turno",
+                signupSavingTitle: "Guardando inscripción…",
+                signupSavingText: "Espera unos segundos, por favor. No cierres esta ventana.",
+                signupSavingBtn: "Inscribiendo…",
                 dlgChangeTitle: "Cambiar turno",
                 labelNewShift: "Nuevo turno",
                 dlgChangeCancel: "Cancelar",
@@ -1080,10 +1081,7 @@
                 privacyFooterLink: "Pribatutasun politika",
                 privacyNoticeText: "Izen-ematea baieztatzean, zure datuak txandak kudeatzeko erabiliko dira. Informazio gehiago kontsulta dezakezu hemen:",
                 privacyNoticeLink: "Pribatutasun politika",
-                signupSavingTitle: "Izen-ematea gordetzen…",
-				signupSavingText: "Itxaron segundo batzuk, mesedez. Ez itxi leiho hau.",
-				signupSavingBtn: "Izena ematen…",
-				additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
+                additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
                 btnAddAdditionalPerson: "Beste pertsona bat gehitu",
                 additionalPersonTitle: n => `Pertsona gehigarria ${n}`,
                 btnRemovePerson: "Kendu",
@@ -1098,6 +1096,9 @@
                 managedByMeLabel: "Zuk kudeatua",
                 dlgSignupCancel: "Utzi",
                 dlgSignupConfirm: "Txandan izena eman",
+                signupSavingTitle: "Izen-ematea gordetzen…",
+                signupSavingText: "Itxaron segundo batzuk, mesedez. Ez itxi leiho hau.",
+                signupSavingBtn: "Izena ematen…",
                 dlgChangeTitle: "Txanda aldatu",
                 labelNewShift: "Txanda berria",
                 dlgChangeCancel: "Utzi",
@@ -1193,7 +1194,7 @@
                 "dlgSignupCancel", "dlgSignupConfirm",
                 "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
                 "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn",
-                "privacyFooterLink", "privacyNoticeText", "privacyNoticeLink","signupSavingTitle","signupSavingText"
+                "privacyFooterLink", "privacyNoticeText", "privacyNoticeLink", "signupSavingTitle", "signupSavingText"
             ];
 
             ids.forEach(id => {
@@ -1903,6 +1904,7 @@
 
             clearInvalidFields(["nombre", "email", "dni"]);
             clearAdditionalPeople();
+            setSignupSaving(false);
 
             const isAddingManagedPerson = Boolean(String(idGestor || "").trim());
             $("signupShiftId").value = idTurno;
@@ -1932,20 +1934,42 @@
             $("signupDialog").showModal();
         }
 
+        function setSignupSaving(isSaving) {
+            const modal = $("signupModal");
+            const message = $("signupSavingMessage");
+            const confirmBtn = $("dlgSignupConfirm");
+
+            if (message) message.hidden = !isSaving;
+
+            if (confirmBtn) {
+                confirmBtn.textContent = isSaving ? t("signupSavingBtn") : t("dlgSignupConfirm");
+            }
+
+            if (!modal) return;
+
+            modal.querySelectorAll("input, select, button").forEach(el => {
+                if (isSaving) {
+                    el.dataset.disabledBeforeSaving = el.disabled ? "1" : "0";
+                    el.disabled = true;
+                } else {
+                    const wasDisabled = el.dataset.disabledBeforeSaving === "1";
+                    el.disabled = wasDisabled;
+                    delete el.dataset.disabledBeforeSaving;
+                }
+            });
+        }
+
 			async function signup() {
     const btn = $("dlgSignupConfirm");
     const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
 	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
 
-	const isAddingManagedPerson = Boolean($("signupGestorId").value.trim());
-if (!validateRequired(isAddingManagedPerson ? ["dni", "nombre"] : ["dni", "nombre", "email"])) return;
-  
 if (!publicarNombreSelected) {
     showToast(t("choosePublicName"));
     return;
 }
 
-	const publicarNombre = publicarNombreSelected.value;
+const publicarNombre = publicarNombreSelected.value;
     const fullName = $("nombre").value.trim();
     const mainPerson = {
         id_turno: $("signupShiftId").value,
@@ -1959,10 +1983,11 @@ if (!publicarNombreSelected) {
 
     const extraPeople = getAdditionalPeopleData();
 
+    const isAddingManagedPerson = Boolean($("signupGestorId").value.trim());
+    if (!validateRequired(isAddingManagedPerson ? ["dni", "nombre"] : ["dni", "nombre", "email"])) return;
     if (!isAddingManagedPerson && !isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
     if (isAddingManagedPerson && state.myIdentity) mainPerson.email = state.myIdentity.email;
     if (!validateAdditionalPeople(extraPeople)) return;
-    
 
     const requestedResponsible = mainPerson.responsable_turno === "si" ? 1 : 0;
     const freeResponsible = getResponsibleFree(shift);
@@ -1971,8 +1996,8 @@ if (!publicarNombreSelected) {
         showToast(t("responsibleLimit", freeResponsible));
         return;
     }
-	setSignupSaving(true);
-    btn.disabled = true;
+
+    setSignupSaving(true);
 
     try {
         const existingGestorId = $("signupGestorId").value.trim();
@@ -2000,7 +2025,7 @@ if (!publicarNombreSelected) {
 
         const total = response.total || (1 + personasAdicionales.length);
 
-       
+        $("signupDialog").close();
 
         state.myIdentity = {
             email: mainPerson.email,
@@ -2015,12 +2040,12 @@ if (!publicarNombreSelected) {
         const myTurnsData = await api("misTurnos", state.myIdentity);
         state.myInscriptions = myTurnsData.inscripciones || [];
         renderMyShifts();
-		$("signupDialog").close();
+
         showSignupSuccess(shift, total);
     } catch (error) {
         showToast(error.message);
     } finally {
-        btn.disabled = false;
+        setSignupSaving(false);
     }
 }
         async function loadMyShifts() {
@@ -2129,37 +2154,6 @@ if (!publicarNombreSelected) {
                 btn.disabled = false;
             }
         }
-		
-		function setSignupSaving(isSaving) {
-    const message = $('signupSavingMessage');
-    const confirmBtn = $('dlgSignupConfirm');
-    const cancelBtn = $('dlgSignupCancel');
-    const closeBtn = document.querySelector('#signupDialog .close-btn');
-    const addPersonBtn = $('btnAddAdditionalPerson');
-    const modal = $('signupModal');
-
-    if (message) message.hidden = !isSaving;
-
-    if (confirmBtn) {
-        confirmBtn.disabled = isSaving;
-        confirmBtn.textContent = isSaving
-            ? t('signupSavingBtn')
-            : t('dlgSignupConfirm');
-    }
-
-    if (cancelBtn) cancelBtn.disabled = isSaving;
-    if (closeBtn) closeBtn.disabled = isSaving;
-    if (addPersonBtn) addPersonBtn.disabled = isSaving;
-
-    if (modal) {
-        modal.querySelectorAll('input, select, button').forEach(el => {
-            if (el.id === 'dlgSignupConfirm') return;
-            if (el.id === 'dlgSignupCancel') return;
-            if (el.classList.contains('close-btn')) return;
-            el.disabled = isSaving;
-        });
-    }
-}
 
         async function deleteInscription(idInscripcion, button) {
             const ok = confirm(t("confirmDelete"));
