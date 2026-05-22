@@ -441,7 +441,7 @@
 
         .day-title h2 {
             margin: 0;
-            font-size: clamp(1.25rem, 3vw, 1.8rem);
+             font-size: clamp(1.35rem, 3.5vw, 2rem);
             line-height: 1.1;
             letter-spacing: -.035em;
             font-weight: 850;
@@ -454,15 +454,14 @@
         }
 
         .date {
-            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: .92rem;
-            font-weight: 500;
-            margin-left: 0;
-            opacity: .86;
-            text-transform: none;
-            letter-spacing: 0;
-        }
-
+			font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+			font-weight: 800;
+			margin-left: 0;
+			opacity: .95;
+			text-transform: none;
+			letter-spacing: -0.02em;
+		}
         .shifts-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -607,6 +606,27 @@
 		--display: block;
 		color: var(--muted); font-weight: 650; line-height: 1.35; }
 
+
+.saving-message {
+    margin: 16px 0 0;
+    padding: 13px 15px;
+    border-radius: 14px;
+    background: var(--warning-lt);
+    border: 1px solid #f5d083;
+    color: #92400e;
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.saving-message strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.saving-message span {
+    display: block;
+    font-size: .92rem;
+}
 .privacy-choice {
     display: block;
 }
@@ -622,7 +642,7 @@
 }
 
 .privacy-option {
-    display: contents;
+    display: flex;
     align-items: flex-start;
     gap: 9px;
     margin: 8px 0;
@@ -632,6 +652,7 @@
     background: white;
     font-weight: 700;
     cursor: pointer;
+    transition: border .18s, background .18s, color .18s;
 }
 
 .privacy-option input {
@@ -643,13 +664,22 @@
 
 .privacy-option span {
     line-height: 1.35;
-	padding-right: 30px;
+	padding-right: 0;
 }
 
-.privacy-option:has(input:radio) {
+.privacy-option:has(input:checked) {
     border-color: var(--teal);
     background: var(--teal-lt);
     color: var(--teal-dk);
+}
+
+.privacy-choice-help {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: .84rem;
+    font-weight: 650;
+    line-height: 1.35;
 }
         .signup-section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
         .signup-section-title h4 { margin: 0; font-size: 1rem; color: var(--teal-dk); }
@@ -691,6 +721,9 @@
             .shift-summary-row { margin-top: 4px; }
             .modal, .modal-inner { padding: 18px; }
             .signup-grid { grid-template-columns: 1fr; }
+			.date {
+    font-size: 1.15rem;
+}
         }
     </style>
 </head>
@@ -730,7 +763,7 @@
         <section class="summary-card" id="summaryCard" aria-live="polite"></section>
         <section class="grid" id="shiftGrid"></section>
 		<section style="text-align:center; margin: 28px 0 0; color: var(--muted); font-size: .92rem;">
-            <a href="politica-privacidad.html" style="color: var(--teal-dk); font-weight: 800; text-decoration: none;">
+            <a href="politica-privacidad.html" id="privacyFooterLink" style="color: var(--teal-dk); font-weight: 800; text-decoration: none;">
                 Política de privacidad
             </a>
         </section>
@@ -836,14 +869,16 @@
         </div>
 
         <label class="privacy-option">
-            <input type="radio" name="publicarNombre" value="si">
-            <span>Mostrar mi nombre y apellidos</span>
+            <input type="radio" name="publicarNombre" value="si" required>
+            <span id="publicarNombreSi">Mostrar mi nombre y apellidos</span>
         </label>
 
         <label class="privacy-option">
-            <input type="radio" name="publicarNombre" value="no">
-            <span>No mostrar el nombre, aparecerá como privado.</span>
+            <input type="radio" name="publicarNombre" value="no" required>
+            <span id="publicarNombreNo">No mostrar mi nombre; apareceré como privado.</span>
         </label>
+
+        <small class="privacy-choice-help" id="publicarNombreHelp">Esta elección se aplicará también a las personas adicionales que inscribas.</small>
     </div>
 </div>
 
@@ -854,12 +889,16 @@
             <div id="additionalPeople"></div>
 
 			<p style="margin: 16px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.45;">
-                Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos.
-                Puedes consultar más información en la
-                <a href="politica-privacidad.html" target="_blank" rel="noopener" style="color: var(--teal-dk); font-weight: 800;">
+                <span id="privacyNoticeText">Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la</span>
+                <a href="politica-privacidad.html" target="_blank" rel="noopener" id="privacyNoticeLink" style="color: var(--teal-dk); font-weight: 800;">
                     Política de privacidad
                 </a>.
             </p>
+			<div id="signupSavingMessage" class="saving-message" hidden>
+				<strong id="signupSavingTitle">Guardando inscripción…</strong>
+				<span id="signupSavingText">Espera unos segundos, por favor. No cierres esta ventana.</span>
+			</div>
+
             <div class="actions">
                 <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
                 <button type="button" id="dlgSignupConfirm" onclick="signup()">Confirmar inscripción</button>
@@ -923,9 +962,17 @@
                 labelChangeResponsableTurno: "Quiero realizar la función de responsable del turno",
 				labelPublicarNombreDecision: "¿Cómo quieres aparecer en la lista pública?",
 				publicarNombreSi: "Mostrar mi nombre y apellidos",
-				publicarNombreNo: "No mostrar el nombre; aparecerá como privado.",
+				publicarNombreNo: "No mostrar mi nombre; apareceré como privado.",
 				publicarNombreHelp: "Esta elección se aplicará también a las personas adicionales que inscribas.",
-                additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
+                choosePublicName: "Elige si quieres mostrar el nombre públicamente o aparecer como privado.",
+                signupAddPersonTitle: "Añadir persona",
+                privacyFooterLink: "Política de privacidad",
+                privacyNoticeText: "Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la",
+                privacyNoticeLink: "Política de privacidad",
+                signupSavingTitle: "Guardando inscripción…",
+				signupSavingText: "Espera unos segundos, por favor. No cierres esta ventana.",
+				signupSavingBtn: "Inscribiendo…",
+				additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
                 btnAddAdditionalPerson: "Añadir otra persona",
                 additionalPersonTitle: n => `Persona adicional ${n}`,
                 btnRemovePerson: "Quitar",
@@ -970,6 +1017,7 @@
                 fillAllFields: "Rellena todos los campos.",
                 invalidEmail: "El email no es válido.",
                 invalidName: "Introduce un nombre válido.",
+                invalidSurname: "Introduce un nombre o apellido válido.",
                 filterTitle: "Filtrar turnos",
                 filterAll: "Todos",
                 filterOpen: "Con huecos",
@@ -992,7 +1040,7 @@
 				notEnoughPlaces: "No hay plazas suficientes para inscribir a todas las personas.",
 				notResp: "Este turno no tiene plazas de responsable disponibles.",
 				notEnoughResp: "Ya están cubiertas las plazas de responsable de este turno.",
-				duplicateInTurno: "Ya está apuntada una persona con ese DNI o email en el turno.",
+				duplicateInTurno: "Ya está apuntada una persona con ese DNI en el turno.",
 				duplicateInRequest: "Hay DNI repetidos entre las personas que quieres inscribir.",
 				duplicateInSheet: "Una de las personas ya está apuntada a ese turno.",
 				notdata: "Faltan datos obligatorios.",
@@ -1025,10 +1073,17 @@
                 labelChangeResponsableTurno: "Txandako arduradun lana egin nahi dut",
 				labelPublicarNombreDecision: "Nola agertu nahi duzu zerrenda publikoan?",
 				publicarNombreSi: "Nire izen-abizenak erakutsi",
-				publicarNombreNo: "Ez erakutsi izena; pribatu gisa agertuko da.",
+				publicarNombreNo: "Ez erakutsi nire izena; pribatu gisa agertuko naiz.",
 				publicarNombreHelp: "Aukera hau inskribatzen dituzun pertsona gehigarriei ere aplikatuko zaie.",
-				publicarNombreHelp: "Lauki hau markatzen ez baduzu, izen-emateak okupatuta bezala edo identifikatzailerik gabeko modu batean agertuko dira.",
-                additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
+                choosePublicName: "Aukeratu izena publikoki erakutsi nahi duzun edo pribatu gisa agertu nahi duzun.",
+                signupAddPersonTitle: "Pertsona gehitu",
+                privacyFooterLink: "Pribatutasun politika",
+                privacyNoticeText: "Izen-ematea baieztatzean, zure datuak txandak kudeatzeko erabiliko dira. Informazio gehiago kontsulta dezakezu hemen:",
+                privacyNoticeLink: "Pribatutasun politika",
+                signupSavingTitle: "Izen-ematea gordetzen…",
+				signupSavingText: "Itxaron segundo batzuk, mesedez. Ez itxi leiho hau.",
+				signupSavingBtn: "Izena ematen…",
+				additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
                 btnAddAdditionalPerson: "Beste pertsona bat gehitu",
                 additionalPersonTitle: n => `Pertsona gehigarria ${n}`,
                 btnRemovePerson: "Kendu",
@@ -1095,7 +1150,7 @@
 				notEnoughPlaces: "Ez dago nahikoa plaza pertsona guztiak inskribatzeko.",
 				notResp: "Txanda honek ez du arduradunentzako plazarik erabilgarri.",
 				notEnoughResp: "Txanda honetako arduradun plazak beteta daude.",
-				duplicateInTurno: "DNI/NAN edo email horrekin pertsona bat dago jada txanda horretan izena emanda.",
+				duplicateInTurno: "DNI/NAN horrekin pertsona bat dago jada txanda horretan izena emanda.",
 				duplicateInRequest: "Inskribatu nahi dituzun pertsonen artean NAN errepikatuta dago.",
 				duplicateInSheet: "Pertsona horietako bat dago jada txanda horretan izena emanda.",
 				notdata: "Nahitaezko datuak falta dira.",
@@ -1134,10 +1189,11 @@
                 "mainTitle", "headerSubtitle", "myShiftsCta", "myPanelTitle", "myPanelSubtitle",
                 "labelMyEmail", "labelmyNombre", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
-                 "labelResponsableTurno", "publicarNombreHelp", "labelPublicarNombre", "additionalPeopleTitle", "btnAddAdditionalPerson",
+                 "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
                 "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
-                "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn"
+                "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn",
+                "privacyFooterLink", "privacyNoticeText", "privacyNoticeLink","signupSavingTitle","signupSavingText"
             ];
 
             ids.forEach(id => {
@@ -1606,7 +1662,7 @@
 				const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
 
 				if (!publicarNombreSelected) {
-				    showToast("Elige si quieres que el nombre se muestre públicamente o como reserva privada.");
+				    showToast(t("choosePublicName"));
 				    return;
 				}
 				
@@ -1848,12 +1904,17 @@
             clearInvalidFields(["nombre", "email", "dni"]);
             clearAdditionalPeople();
 
+            const isAddingManagedPerson = Boolean(String(idGestor || "").trim());
             $("signupShiftId").value = idTurno;
             $("signupGestorId").value = idGestor || "";
             $("responsableTurno").checked = false;
-			document.querySelectorAll('input[name="publicarNombre"]').forEach(radio => {
-    			radio.checked = false;
-				});
+            document.querySelectorAll('input[name="publicarNombre"]').forEach(radio => {
+                radio.checked = false;
+            });
+            const emailFieldWrapper = $("email") ? $("email").closest(".signup-field") : null;
+            if (emailFieldWrapper) emailFieldWrapper.style.display = isAddingManagedPerson ? "none" : "";
+            $("email").value = isAddingManagedPerson && state.myIdentity ? state.myIdentity.email : "";
+            $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
             updateSignupResponsibleAvailability(shift, !idGestor);
             $("signupShiftText").innerHTML = `
                 <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(shift.dia)}, ${normalizeDateLabel(shift.fecha)}</span></span>
@@ -1861,11 +1922,13 @@
                 <span class="shift-summary-row"><span>${t("signupTime")}:</span><span>${escapeHtml(shift.hora_inicio)}–${escapeHtml(shift.hora_fin)}</span></span>
             `;
 
-            ["nombre", "email", "dni"].forEach(id => $(id).value = "");
+            ["nombre", "dni"].forEach(id => $(id).value = "");
+            if (!isAddingManagedPerson) $("email").value = "";
             setLookupHint($("dniLookupHint"), "");
             renderGelaOptions($("gela_group"), "gela");
 
             applyTexts();
+            $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
             $("signupDialog").showModal();
         }
 
@@ -1874,12 +1937,15 @@
     const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
 	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
 
+	const isAddingManagedPerson = Boolean($("signupGestorId").value.trim());
+if (!validateRequired(isAddingManagedPerson ? ["dni", "nombre"] : ["dni", "nombre", "email"])) return;
+  
 if (!publicarNombreSelected) {
-    showToast("Elige si quieres que el nombre se muestre públicamente o como reserva privada.");
+    showToast(t("choosePublicName"));
     return;
 }
 
-const publicarNombre = publicarNombreSelected.value;
+	const publicarNombre = publicarNombreSelected.value;
     const fullName = $("nombre").value.trim();
     const mainPerson = {
         id_turno: $("signupShiftId").value,
@@ -1893,9 +1959,10 @@ const publicarNombre = publicarNombreSelected.value;
 
     const extraPeople = getAdditionalPeopleData();
 
-    if (!validateRequired(["dni", "nombre", "email"])) return;
-    if (!isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
+    if (!isAddingManagedPerson && !isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
+    if (isAddingManagedPerson && state.myIdentity) mainPerson.email = state.myIdentity.email;
     if (!validateAdditionalPeople(extraPeople)) return;
+    
 
     const requestedResponsible = mainPerson.responsable_turno === "si" ? 1 : 0;
     const freeResponsible = getResponsibleFree(shift);
@@ -1904,7 +1971,7 @@ const publicarNombre = publicarNombreSelected.value;
         showToast(t("responsibleLimit", freeResponsible));
         return;
     }
-
+	setSignupSaving(true);
     btn.disabled = true;
 
     try {
@@ -1918,19 +1985,22 @@ const publicarNombre = publicarNombreSelected.value;
                 email: payload.email,
                 dni: payload.dni,
                 gela: payload.gela,
-                responsable_turno: "no"
+                responsable_turno: "no",
+                publicar_nombre: publicarNombre
             };
         });
 
         const response = await api("inscribir", {
             ...mainPerson,
             id_inscripcion_gestor: existingGestorId,
+            gestor_email: state.myIdentity ? state.myIdentity.email : mainPerson.email,
+            gestor_nombre: state.myIdentity ? state.myIdentity.nombreVisible : mainPerson.nombre,
             personas_adicionales: personasAdicionales
         });
 
         const total = response.total || (1 + personasAdicionales.length);
 
-        $("signupDialog").close();
+       
 
         state.myIdentity = {
             email: mainPerson.email,
@@ -1945,7 +2015,7 @@ const publicarNombre = publicarNombreSelected.value;
         const myTurnsData = await api("misTurnos", state.myIdentity);
         state.myInscriptions = myTurnsData.inscripciones || [];
         renderMyShifts();
-
+		$("signupDialog").close();
         showSignupSuccess(shift, total);
     } catch (error) {
         showToast(error.message);
@@ -2015,6 +2085,7 @@ const publicarNombre = publicarNombreSelected.value;
             if (!current) return;
 
             $("changeInscriptionId").value = idInscripcion;
+            $("changeInscriptionId").dataset.dni = current.dni || "";
             $("changeShiftText").textContent = `${t("changePrefix")} ${current.dia}, ${normalizeDateLabel(current.fecha)} · ${current.tipo}`;
 
             const options = state.shifts
@@ -2042,6 +2113,7 @@ const publicarNombre = publicarNombreSelected.value;
                 await api("cambiar", {
                     ...state.myIdentity,
                     id_inscripcion: $("changeInscriptionId").value,
+                    dni: $("changeInscriptionId").dataset.dni || "",
                     nuevo_id_turno: $("newShiftId").value,
                     responsable_turno: $("changeResponsableTurno").checked ? "si" : "no"
                 });
@@ -2057,6 +2129,37 @@ const publicarNombre = publicarNombreSelected.value;
                 btn.disabled = false;
             }
         }
+		
+		function setSignupSaving(isSaving) {
+    const message = $('signupSavingMessage');
+    const confirmBtn = $('dlgSignupConfirm');
+    const cancelBtn = $('dlgSignupCancel');
+    const closeBtn = document.querySelector('#signupDialog .close-btn');
+    const addPersonBtn = $('btnAddAdditionalPerson');
+    const modal = $('signupModal');
+
+    if (message) message.hidden = !isSaving;
+
+    if (confirmBtn) {
+        confirmBtn.disabled = isSaving;
+        confirmBtn.textContent = isSaving
+            ? t('signupSavingBtn')
+            : t('dlgSignupConfirm');
+    }
+
+    if (cancelBtn) cancelBtn.disabled = isSaving;
+    if (closeBtn) closeBtn.disabled = isSaving;
+    if (addPersonBtn) addPersonBtn.disabled = isSaving;
+
+    if (modal) {
+        modal.querySelectorAll('input, select, button').forEach(el => {
+            if (el.id === 'dlgSignupConfirm') return;
+            if (el.id === 'dlgSignupCancel') return;
+            if (el.classList.contains('close-btn')) return;
+            el.disabled = isSaving;
+        });
+    }
+}
 
         async function deleteInscription(idInscripcion, button) {
             const ok = confirm(t("confirmDelete"));
