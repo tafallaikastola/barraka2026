@@ -838,7 +838,7 @@
             <div class="signup-grid">
                 <div class="signup-field">
                     <label for="dni"><span id="labelDni">DNI / NAN</span><span class="required-star">*</span></label>
-                    <input id="dni" required autocomplete="off" inputmode="text" />
+                    <input id="dni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido, por ejemplo 12345678Z o X1234567L" />
                     <div class="person-lookup-hint" id="dniLookupHint"></div>
                 </div>
                 <div class="signup-field">
@@ -934,7 +934,7 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbz1_6ZYAiNJU9ZOgX8RPKsELK9gzRmCN0s63F92B6XXZkmL-Ocai3OfDFZtjhSmL51L/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbz9jroq7blL9XP3Zw4qm2eEz853TLWJvO_ofMMT0hwdIP7zOq-81CTxcBNOBcz74woO/exec";
 							
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
@@ -966,6 +966,8 @@
 				publicarNombreNo: "No mostrar mi nombre; apareceré como privado.",
 				publicarNombreHelp: "Esta elección se aplicará también a las personas adicionales que inscribas.",
                 choosePublicName: "Elige si quieres mostrar el nombre públicamente o aparecer como privado.",
+                invalidDni: "Introduce un DNI/NIE válido (8 números y letra correcta, o NIE con X/Y/Z).",
+                dniAlreadyInShift: "Esta persona ya está apuntada a este turno.",
                 signupAddPersonTitle: "Añadir persona",
                 privacyFooterLink: "Política de privacidad",
                 privacyNoticeText: "Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la",
@@ -1077,6 +1079,8 @@
 				publicarNombreNo: "Ez erakutsi nire izena; pribatu gisa agertuko naiz.",
 				publicarNombreHelp: "Aukera hau inskribatzen dituzun pertsona gehigarriei ere aplikatuko zaie.",
                 choosePublicName: "Aukeratu izena publikoki erakutsi nahi duzun edo pribatu gisa agertu nahi duzun.",
+                invalidDni: "Sartu baliozko NAN/AIZ bat (8 zenbaki eta letra zuzena, edo X/Y/Z duen AIZ).",
+                dniAlreadyInShift: "Pertsona hau dagoeneko txanda honetan izena emanda dago.",
                 signupAddPersonTitle: "Pertsona gehitu",
                 privacyFooterLink: "Pribatutasun politika",
                 privacyNoticeText: "Izen-ematea baieztatzean, zure datuak txandak kudeatzeko erabiliko dira. Informazio gehiago kontsulta dezakezu hemen:",
@@ -1397,7 +1401,48 @@
 
 
         function normalizeDni(value) {
-            return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+            return String(value || "")
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, "")
+                .replace(/[.\-_/]/g, "");
+        }
+
+        function isValidDniNie(value) {
+            const dni = normalizeDni(value);
+            const letters = "TRWAGMYFPDXBNJZSQVHLCKE";
+
+            let numberPart = "";
+            let letter = "";
+
+            if (/^[0-9]{8}[A-Z]$/.test(dni)) {
+                numberPart = dni.slice(0, 8);
+                letter = dni.slice(8);
+            } else if (/^[XYZ][0-9]{7}[A-Z]$/.test(dni)) {
+                const niePrefix = { X: "0", Y: "1", Z: "2" }[dni[0]];
+                numberPart = niePrefix + dni.slice(1, 8);
+                letter = dni.slice(8);
+            } else {
+                return false;
+            }
+
+            return letters[Number(numberPart) % 23] === letter;
+        }
+
+        function validateDniInput(input, hintEl) {
+            if (!input) return true;
+            const normalized = normalizeDni(input.value);
+            input.value = normalized;
+
+            const valid = isValidDniNie(normalized);
+            input.classList.toggle("user-invalid", !valid);
+
+            if (!valid) {
+                setLookupHint(hintEl, t("invalidDni"), "warn");
+                input.dataset.alreadyInShift = "0";
+            }
+
+            return valid;
         }
 
 
@@ -1426,24 +1471,49 @@
             el.classList.toggle("warn", type === "warn");
         }
 
-        async function lookupPersonByDni(dni, { hintEl, onFound } = {}) {
+        async function lookupPersonByDni(dni, { hintEl, onFound, inputEl, idTurno } = {}) {
             const normalized = normalizeDni(dni);
-            if (normalized.length < 5) {
+            if (inputEl) inputEl.value = normalized;
+
+            if (!normalized) {
                 setLookupHint(hintEl, "");
+                if (inputEl) inputEl.dataset.alreadyInShift = "0";
                 return null;
             }
+
+            if (!validateDniInput(inputEl || { value: normalized, classList: { toggle() {} }, dataset: {} }, hintEl)) {
+                return null;
+            }
+
             setLookupHint(hintEl, t("dniLookupSearching"));
             try {
-                const data = await api("buscarPersonaPorDni", { dni: normalized }, "GET");
-                const person = data.persona || data.person || data;
+                const shiftId = idTurno || ($("signupShiftId") ? $("signupShiftId").value : "");
+                const payload = { dni: normalized };
+                if (shiftId) payload.id_turno = shiftId;
+
+                const data = await api("buscarPersonaPorDni", payload, "GET");
+                const alreadyRegistered = Boolean(data.alreadyRegistered || data.ya_apuntada);
+                if (inputEl) inputEl.dataset.alreadyInShift = alreadyRegistered ? "1" : "0";
+
+                const person = data.persona || data.person || null;
                 if (person && (person.nombre || person.email)) {
                     onFound?.(person);
-                    setLookupHint(hintEl, t("dniLookupFound"), "ok");
-                    return person;
                 }
+
+                if (alreadyRegistered) {
+                    setLookupHint(hintEl, t("dniAlreadyInShift"), "warn");
+                    return data;
+                }
+
+                if (person && (person.nombre || person.email)) {
+                    setLookupHint(hintEl, t("dniLookupFound"), "ok");
+                    return data;
+                }
+
                 setLookupHint(hintEl, t("dniLookupNotFound"), "warn");
-                return null;
+                return data;
             } catch (error) {
+                if (inputEl) inputEl.dataset.alreadyInShift = "0";
                 setLookupHint(hintEl, t("dniLookupUnavailable"), "warn");
                 return null;
             }
@@ -1636,7 +1706,7 @@
                 <div class="mini-grid">
                     <div>
                         <label>${escapeHtml(t("labelDni"))}<span class="required-star">*</span></label>
-                        <input data-extra-field="dni" required autocomplete="off" />
+                        <input data-extra-field="dni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido" />
                         <div class="person-lookup-hint" data-extra-hint></div>
                     </div>
                     <div>
@@ -1653,7 +1723,9 @@
             const dniInput = card.querySelector('[data-extra-field="dni"]');
             dniInput.addEventListener("blur", () => lookupPersonByDni(dniInput.value, {
                 hintEl: card.querySelector("[data-extra-hint]"),
-                onFound: person => fillExtraPersonFromLookup(card, person)
+                onFound: person => fillExtraPersonFromLookup(card, person),
+                inputEl: dniInput,
+                idTurno: $("signupShiftId").value
             }));
         }
 
@@ -1693,6 +1765,19 @@
                 if (firstInvalid) {
                     firstInvalid.focus();
                     showToast(t("fillAllFields"));
+                    return false;
+                }
+
+                const dniInput = person._card.querySelector('[data-extra-field="dni"]');
+                const hintEl = person._card.querySelector("[data-extra-hint]");
+                if (!validateDniInput(dniInput, hintEl)) {
+                    dniInput.focus();
+                    showToast(t("invalidDni"));
+                    return false;
+                }
+                if (dniInput.dataset.alreadyInShift === "1") {
+                    dniInput.focus();
+                    showToast(t("dniAlreadyInShift"));
                     return false;
                 }
             }
@@ -1910,6 +1995,8 @@
             $("signupShiftId").value = idTurno;
             $("signupGestorId").value = idGestor || "";
             $("responsableTurno").checked = false;
+            $("dni").dataset.alreadyInShift = "0";
+            setLookupHint($("dniLookupHint"), "");
             document.querySelectorAll('input[name="publicarNombre"]').forEach(radio => {
                 radio.checked = false;
             });
@@ -1985,6 +2072,8 @@ const publicarNombre = publicarNombreSelected.value;
 
     const isAddingManagedPerson = Boolean($("signupGestorId").value.trim());
     if (!validateRequired(isAddingManagedPerson ? ["dni", "nombre"] : ["dni", "nombre", "email"])) return;
+    if (!validateDniInput($("dni"), $("dniLookupHint"))) return showToast(t("invalidDni"));
+    if ($("dni").dataset.alreadyInShift === "1") return showToast(t("dniAlreadyInShift"));
     if (!isAddingManagedPerson && !isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
     if (isAddingManagedPerson && state.myIdentity) mainPerson.email = state.myIdentity.email;
     if (!validateAdditionalPeople(extraPeople)) return;
@@ -2198,7 +2287,9 @@ if (mainDniInput) {
   mainDniInput.addEventListener("blur", () => {
     lookupPersonByDni(mainDniInput.value, {
       hintEl: $("dniLookupHint"),
-      onFound: fillMainPersonFromLookup
+      onFound: fillMainPersonFromLookup,
+      inputEl: mainDniInput,
+      idTurno: $("signupShiftId").value
     });
   });
 
