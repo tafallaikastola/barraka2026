@@ -101,12 +101,25 @@
     .tag.warn { background:var(--warn-lt); color:#92400e; }
     .empty-ok { background:var(--ok-lt); color:var(--ok); border:1px solid #86efac; border-radius:16px; padding:16px; font-weight:850; }
 
-    .tools-row { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 16px; }
+    .tools-row { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 16px; align-items:center; }
+    .admin-search { min-width:min(320px,100%); flex:1; border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:10px 15px; font-weight:750; outline:none; }
+    .admin-search:focus { border-color:var(--teal); box-shadow:0 0 0 4px rgba(0,180,180,.12); }
     .chip, .copy-btn { border:1.5px solid var(--line); background:#fff; color:var(--text); border-radius:999px; padding:9px 13px; font-weight:850; font-size:.86rem; }
     .chip:hover, .copy-btn:hover { border-color:var(--teal); color:var(--teal-dk); }
     .chip.active, .copy-btn.primary { background:var(--teal); border-color:var(--teal); color:#fff; }
     .copy-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
 
+    .course-stats { margin-top:14px; }
+    .course-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px; }
+    .course-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:13px; box-shadow:var(--soft); }
+    .course-name { font-weight:950; color:var(--text); }
+    .course-count { font-size:1.55rem; font-weight:950; color:var(--teal-dk); margin-top:4px; }
+    .course-sub { color:var(--muted); font-size:.78rem; font-weight:700; margin-top:2px; }
+    .need-counter { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:7px 10px; font-size:.78rem; font-weight:950; background:var(--warn-lt); color:#92400e; }
+    .need-counter.danger { background:var(--danger-lt); color:var(--danger); }
+    .need-counter.ok { background:var(--ok-lt); color:var(--ok); }
+    .no-search-results { display:none; background:#fff; border:1px dashed var(--line); border-radius:18px; padding:18px; color:var(--muted); font-weight:800; text-align:center; }
+    .no-search-results.show { display:block; }
     .list-layout { display:grid; grid-template-columns:260px 1fr; gap:14px; align-items:start; }
     .side-nav { position:sticky; top:14px; }
     .day-tabs { display:grid; gap:8px; }
@@ -171,7 +184,7 @@
     <header>
       <div class="header-inner">
         <div class="brand">
-          <div class="brand-icon">🏕️</div>
+          <div class="brand-icon"> </div>
           <h1>Panel de Gestión<small>BARRAKA IKASTOLA · TXANDAK</small></h1>
         </div>
         <div class="header-actions">
@@ -200,6 +213,7 @@
   let activeDayKey = null;
   let filterMode = 'all';
   let currentView = 'summary';
+  let searchName = '';
 
   async function checkPassword() {
     const val = document.getElementById('pwdInput').value;
@@ -323,12 +337,15 @@
           <div class="tools-row">
             <button class="copy-btn primary" onclick="copyCriticalReminder()">Copiar WhatsApp de lo urgente</button>
             <button class="copy-btn" onclick="setView('list')">Ver listado completo</button>
+            <button class="copy-btn" onclick="exportAdminExcel()">Exportar Excel</button>
+            <button class="copy-btn" onclick="exportAdminPdf()">Exportar PDF</button>
           </div>
           <div class="urgent-list">
             ${urgency.length ? urgency.map((item, idx) => renderUrgencyCard(item, idx)).join('') : '<div class="empty-ok">✔ No hay focos urgentes. Los turnos están bien cubiertos.</div>'}
           </div>
         </div>
-      </section>`;
+      </section>
+      ${renderCourseStats(allTurnos)}`;
   }
 
   function renderDayCard(d) {
@@ -378,10 +395,13 @@
   function renderList(days, dayKeys) {
     document.getElementById('listView').innerHTML = `
       <section class="tools-row">
+        <input id="adminNameSearch" class="admin-search" type="search" placeholder="Buscar por nombre o apellido" value="${escAttr(searchName)}" oninput="setNameSearch(this.value)">
         <button class="chip ${filterMode === 'all' ? 'active' : ''}" onclick="setFilter('all')">Todos</button>
         <button class="chip ${filterMode === 'missing' ? 'active' : ''}" onclick="setFilter('missing')">Con huecos</button>
         <button class="chip ${filterMode === 'responsible' ? 'active' : ''}" onclick="setFilter('responsible')">Sin responsable</button>
         <button class="copy-btn primary" onclick="copyActiveDayReminder()">Copiar WhatsApp del día</button>
+        <button class="copy-btn" onclick="exportAdminExcel()">Exportar Excel</button>
+        <button class="copy-btn" onclick="exportAdminPdf()">Exportar PDF</button>
       </section>
       <section class="list-layout">
         <aside class="panel side-nav">
@@ -392,6 +412,7 @@
           </div>
         </aside>
         <div id="daySections">
+          <div id="noSearchResults" class="no-search-results">No hay turnos/personas que coincidan con la búsqueda.</div>
           ${dayKeys.map(k => renderDaySection(k, days[k])).join('')}
         </div>
       </section>`;
@@ -435,15 +456,18 @@
     let num = 0;
     const tableRows = rows.map(row => {
       num++;
-      if (row.type === 'resp') return `<tr class="row-resp"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)} <span class="resp-badge">⭐ Responsable</span></td></tr>`;
+      if (row.type === 'resp') return `<tr class="row-resp"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)} ${formatPersonCourse(row.persona)} <span class="resp-badge">⭐ Responsable</span></td></tr>`;
       if (row.type === 'empty-resp') return `<tr class="row-empty-resp"><td class="num">${num}</td><td class="name">— plaza libre — <span class="missing-badge">⚠ Responsable</span></td></tr>`;
-      if (row.type === 'filled') return `<tr class="row-filled"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)}</td></tr>`;
+      if (row.type === 'filled') return `<tr class="row-filled"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)} ${formatPersonCourse(row.persona)}</td></tr>`;
       return `<tr class="row-empty"><td class="num">${num}</td><td class="name">— libre —</td></tr>`;
     }).join('');
     const respCubierto = plazasResp > 0 && !needsResp;
-    return `<div class="shift-col ${needsResp ? 'need-resp' : ''}" data-needs-people="${needsPeople ? '1':'0'}" data-needs-responsible="${needsResp ? '1':'0'}">
+    const searchable = buildShiftSearchText(t);
+    const counterClass = libres <= 0 ? 'ok' : libres >= 5 ? 'danger' : '';
+    return `<div class="shift-col ${needsResp ? 'need-resp' : ''}" data-needs-people="${needsPeople ? '1':'0'}" data-needs-responsible="${needsResp ? '1':'0'}" data-search="${escAttr(searchable)}">
       <div class="shift-head"><span class="shift-tipo">${escHtml(t.tipo)}</span><span class="shift-hours">${escHtml(t.hora_inicio)} – ${escHtml(t.hora_fin)}</span><span class="status-badge ${statusClass}">${escHtml(statusText)}</span></div>
       <div class="shift-progress"><div class="progress"><span class="${fillClass}" style="width:${pct}%"></span></div><div class="progress-label">${ocupadas} / ${plazas} personas · ${pct}%</div></div>
+      <div class="need-counter ${counterClass}">${libres <= 0 ? '✔ Turno completo' : `👥 Faltan ${libres} persona${libres === 1 ? '' : 's'}`}</div>
       <table class="people-table">${tableRows}</table>
       ${needsPeople ? `<div class="shift-actions"><button class="copy-btn" onclick="copyShiftReminder('${escAttr(t.id_turno)}')">Copiar WhatsApp de este turno</button></div>` : ''}
       <div class="shift-footer">
@@ -452,6 +476,115 @@
         <span>Necesarias: <strong>${plazas}</strong></span><span>Apuntadas: <strong>${ocupadas}</strong></span>
       </div>
     </div>`;
+  }
+
+
+  function setNameSearch(value) {
+    searchName = normalizeSearch(value);
+    applyFilter();
+  }
+
+  function normalizeSearch(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function buildShiftSearchText(t) {
+    const people = (t.inscritos || []).map(p => [p.nombre, p.dni, p.email, getPersonCourse(p)].filter(Boolean).join(' ')).join(' ');
+    return normalizeSearch([t.dia, t.fecha, t.tipo, t.hora_inicio, t.hora_fin, people].filter(Boolean).join(' '));
+  }
+
+  function getPersonCourse(p) {
+    return String(p.gela || p.curso || p.clase || p.maila || '').trim();
+  }
+
+  function formatPersonCourse(p) {
+    const course = getPersonCourse(p);
+    return course ? `<small style="color:var(--muted);font-weight:750;">· ${escHtml(course)}</small>` : '';
+  }
+
+  function getCourseStats(turnos) {
+    const map = new Map();
+    turnos.forEach(t => (t.inscritos || []).forEach(p => {
+      const raw = getPersonCourse(p) || 'Sin curso indicado';
+      raw.split(',').map(x => x.trim()).filter(Boolean).forEach(course => {
+        if (!map.has(course)) map.set(course, { course, people:0, responsible:0, shifts:new Set() });
+        const item = map.get(course);
+        item.people += 1;
+        if (yes(p.responsable_turno)) item.responsible += 1;
+        if (t.id_turno) item.shifts.add(t.id_turno);
+      });
+    }));
+    return [...map.values()].sort((a,b) => b.people - a.people || a.course.localeCompare(b.course));
+  }
+
+  function renderCourseStats(turnos) {
+    const stats = getCourseStats(turnos);
+    if (!stats.length) return '';
+    return `<section class="panel course-stats">
+      <h2>Estadísticas por curso / clase</h2>
+      <p class="panel-help">Resumen de personas apuntadas según el curso indicado en la inscripción.</p>
+      <div class="course-grid">
+        ${stats.map(item => `<div class="course-card">
+          <div class="course-name">${escHtml(item.course)}</div>
+          <div class="course-count">${item.people}</div>
+          <div class="course-sub">${item.shifts.size} turno(s) · ${item.responsible} responsable(s)</div>
+        </div>`).join('')}
+      </div>
+    </section>`;
+  }
+
+  function getExportRows() {
+    const rows = [];
+    allTurnos.forEach(t => {
+      const inscritos = Array.isArray(t.inscritos) ? t.inscritos : [];
+      if (!inscritos.length) {
+        rows.push({
+          fecha:t.fecha, dia:t.dia, tipo:t.tipo, inicio:t.hora_inicio, fin:t.hora_fin,
+          plazas:t.plazas, ocupadas:t.plazas_ocupadas, libres:t.plazas_disponibles,
+          nombre:'', dni:'', email:'', curso:'', responsable:'', observaciones:'Sin personas apuntadas'
+        });
+        return;
+      }
+      inscritos.forEach(p => rows.push({
+        fecha:t.fecha, dia:t.dia, tipo:t.tipo, inicio:t.hora_inicio, fin:t.hora_fin,
+        plazas:t.plazas, ocupadas:t.plazas_ocupadas, libres:t.plazas_disponibles,
+        nombre:p.nombre || '', dni:p.dni || '', email:p.email || '', curso:getPersonCourse(p),
+        responsable:yes(p.responsable_turno) ? 'Sí' : 'No', observaciones:''
+      }));
+    });
+    return rows;
+  }
+
+  function exportAdminExcel() {
+    const headers = ['Fecha','Día','Turno','Inicio','Fin','Plazas','Ocupadas','Libres','Nombre','DNI/NIE','Email','Curso/clase','Responsable','Observaciones'];
+    const rows = getExportRows().map(r => [r.fecha,r.dia,r.tipo,r.inicio,r.fin,r.plazas,r.ocupadas,r.libres,r.nombre,r.dni,r.email,r.curso,r.responsable,r.observaciones]);
+    const csv = [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\n');
+    downloadFile('\ufeff' + csv, `barraka-turnos-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? '').replace(/"/g, '""');
+    return `"${text}"`;
+  }
+
+  function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportAdminPdf() {
+    window.print();
   }
 
   function goToDay(key) {
@@ -476,12 +609,24 @@
   }
 
   function applyFilter() {
-    document.querySelectorAll('.shift-col').forEach(card => {
-      const needsPeople = card.dataset.needsPeople === '1';
-      const needsResp = card.dataset.needsResponsible === '1';
-      const hide = (filterMode === 'missing' && !needsPeople) || (filterMode === 'responsible' && !needsResp);
-      card.classList.toggle('hidden-by-filter', hide);
+    let visibleCount = 0;
+    document.querySelectorAll('.day-section').forEach(section => {
+      let sectionVisible = false;
+      section.querySelectorAll('.shift-col').forEach(card => {
+        const needsPeople = card.dataset.needsPeople === '1';
+        const needsResp = card.dataset.needsResponsible === '1';
+        const matchesText = !searchName || normalizeSearch(card.dataset.search || '').includes(searchName);
+        const hide = !matchesText || (filterMode === 'missing' && !needsPeople) || (filterMode === 'responsible' && !needsResp);
+        card.classList.toggle('hidden-by-filter', hide);
+        if (!hide) {
+          visibleCount += 1;
+          sectionVisible = true;
+        }
+      });
+      section.classList.toggle('visible', searchName ? sectionVisible : section.dataset.key === activeDayKey);
     });
+    const noResults = document.getElementById('noSearchResults');
+    if (noResults) noResults.classList.toggle('show', visibleCount === 0 && (searchName || filterMode !== 'all'));
   }
 
   function getTurnoById(id) { return allTurnos.find(t => String(t.id_turno) === String(id)); }
