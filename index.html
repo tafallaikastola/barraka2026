@@ -523,6 +523,22 @@
         .progress-bar-fill.full { background: var(--danger); }
         .progress-bar-fill.low { background: var(--warning); }
         .progress-label { margin-top: 5px; font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; color: var(--muted); }
+        .missing-counter {
+            margin: 12px 0 2px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1.5px solid var(--line);
+            border-radius: 14px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,.75);
+            font-weight: 850;
+        }
+        .missing-counter strong { color: var(--teal-dk); font-size: 1.15rem; }
+        .missing-counter.full strong { color: var(--ok); }
+        .missing-counter.urgent strong { color: var(--danger); }
+        .missing-counter small { color: var(--muted); font-weight: 700; }
 
         .names-label {
             margin: 14px 0 8px;
@@ -996,6 +1012,8 @@
                 dlgChangeConfirm: "Cambiar",
                 badgeFull: "Cubierto",
                 badgeFew: free => `Faltan ${free}`,
+                missingCounter: (free, total) => free <= 0 ? `Turno completo · ${total}/${total}` : `Faltan ${free} de ${total}`,
+                missingCounterHelp: "personas por cubrir",
                 btnSignup: "Apuntarme",
                 btnFull: "Turno completo",
                 noSignups: "Todavía no hay nadie apuntado.",
@@ -1109,6 +1127,8 @@
                 dlgChangeConfirm: "Aldatu",
                 badgeFull: "Beteta",
                 badgeFew: (free, total) => `${free}/${total} falta`,
+                missingCounter: (free, total) => free <= 0 ? `Txanda beteta · ${total}/${total}` : `${free}/${total} falta`,
+                missingCounterHelp: "betetzeko pertsonak",
                 btnSignup: "Izena eman",
                 btnFull: "Txanda beteta",
                 noSignups: "Oraindik ez dago inor izena emanda.",
@@ -1933,6 +1953,8 @@
                     const plazas = Number(shift.plazas) || 0;
                     const libres = getShiftFreePlaces(shift);
                     const full = libres <= 0;
+                    const pct = plazas > 0 ? Math.round(((plazas - libres) / plazas) * 100) : 0;
+                    const counterClass = full ? 'full' : libres >= 5 || (plazas > 0 && libres / plazas >= .4) ? 'urgent' : '';
                     const recommended = isRecommendedShift(shift);
                     const responsibleNeeded = needsResponsible(shift);
 
@@ -1960,6 +1982,14 @@
                             <span class="badge ${badgeClass}">
                                 ${full ? t("badgeFull") : t("badgeFew", libres, shift.plazas)}
                             </span>
+                        </div>
+                        <div class="shift-progress-wrap" aria-label="Cobertura del turno">
+                            <div class="progress-bar-bg"><div class="progress-bar-fill ${badgeClass}" style="--progress:${pct}%"></div></div>
+                            <div class="progress-label">${plazas - libres} / ${plazas} · ${pct}%</div>
+                        </div>
+                        <div class="missing-counter ${counterClass}">
+                            <span>${full ? '✅' : '👥'} ${t("missingCounter", libres, plazas)}</span>
+                            <small>${full ? t("badgeFull") : t("missingCounterHelp")}</small>
                         </div>
                         ${(recommended || responsibleNeeded) ? `<div class="shift-tags">
                             ${recommended ? `<span class="recommended-tag">★ ${t("recommendedLabel")}</span>` : ""}
