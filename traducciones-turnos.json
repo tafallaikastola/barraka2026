@@ -1,0 +1,54 @@
+{
+  "tipos": {
+    "mañana": {
+      "es": "Mañana",
+      "eu": "Goiza"
+    },
+    "tarde": {
+      "es": "Tarde",
+      "eu": "Arratsaldea"
+    },
+    "montaje": {
+      "es": "Montaje",
+      "eu": "Muntaketa"
+    },
+	"desmontaje": {
+      "es": "Desmontaje",
+      "eu": "Desmuntatze"
+    },
+    "llenado": {
+      "es": "Llenado",
+      "eu": "Betetzea"
+    }
+  },
+  "dias": {
+    "monday": {
+      "es": "Lunes",
+      "eu": "Astelehena"
+    },
+    "tuesday": {
+      "es": "Martes",
+      "eu": "Asteartea"
+    },
+    "wednesday": {
+      "es": "Miércoles",
+      "eu": "Asteazkena"
+    },
+    "thursday": {
+      "es": "Jueves",
+      "eu": "Osteguna"
+    },
+    "friday": {
+      "es": "Viernes",
+      "eu": "Ostirala"
+    },
+    "saturday": {
+      "es": "Sábado",
+      "eu": "Larunbata"
+    },
+    "sunday": {
+      "es": "Domingo",
+      "eu": "Igandea"
+    }
+  }
+}
