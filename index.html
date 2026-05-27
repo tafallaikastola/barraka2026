@@ -1353,13 +1353,7 @@ function getDayLabel(item) {
 }
 
 function getShiftTypeCode(item) {
-    const original = String(item?.tipo || "").trim();
-
-    return (
-        findAliasCode(original, SHIFT_TYPE_ALIASES) ||
-        findAliasCode(item?.id_turno, SHIFT_TYPE_ALIASES) ||
-        dataKey(original)
-    );
+    return dataKey(item?.tipo);
 }
 
 function getShiftTypeLabel(item) {
@@ -1368,7 +1362,7 @@ function getShiftTypeLabel(item) {
 
     if (!code) return original;
 
-    return SHIFT_TRANSLATIONS.tipos?.[code]?.[lang] || original || code;
+    return SHIFT_TRANSLATIONS.tipos?.[code]?.[lang] || original || "";
 }
 
         function setLang(l) {
