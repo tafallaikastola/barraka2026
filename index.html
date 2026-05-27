@@ -1343,12 +1343,13 @@ function getDayCodeFromDate(fecha) {
 }
 
 function getDayLabel(item) {
-    const original = String(item?.dia || "").trim();
-    const code = findAliasCode(original, DAY_ALIASES) || getDayCodeFromDate(item?.fecha);
+    const code = getDayCodeFromDate(item?.fecha);
 
-    if (!code) return original;
+    if (!code) {
+        return String(item?.dia || "").trim();
+    }
 
-    return SHIFT_TRANSLATIONS.dias?.[code]?.[lang] || original || code;
+    return SHIFT_TRANSLATIONS.dias?.[code]?.[lang] || "";
 }
 
 function getShiftTypeCode(item) {
