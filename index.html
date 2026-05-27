@@ -160,6 +160,39 @@
 
         .my-shifts-cta svg { flex-shrink: 0; }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .help-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            border-radius: 999px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 850;
+            text-decoration: none;
+            border: 1.5px solid rgba(255,255,255,.42);
+            background: rgba(255,255,255,.12);
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            transition: background .2s, transform .15s, border-color .2s;
+        }
+
+        .help-link:hover {
+            background: rgba(255,255,255,.26);
+            border-color: rgba(255,255,255,.62);
+            transform: translateY(-1px);
+        }
+
+        .mobile-tools-btn { display: none; }
+
         main {
             width: min(1180px, calc(100% - 40px));
             margin: 22px auto 52px;
@@ -487,7 +520,6 @@
         .shift + .shift { border-left: 1.5px solid var(--teal); }
         .shifts-row .shift { margin-top: 0; height: 100%; }
 
-        .shift-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 
         .shift-name {
             font-weight: 850;
@@ -501,8 +533,34 @@
             color: var(--muted);
             margin-top: 4px;
             font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: .9rem;
+            font-size: 1rem;
         }
+		.shift-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.shift-title-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.shift-title-line .time {
+    margin-top: 0;
+}
+
+.badge {
+    flex-shrink: 0;
+}
+
+.shift-title-line .time {
+    margin-top: 0;
+}
 
         .badge {
             border-radius: 999px;
@@ -713,7 +771,8 @@
 
         @media (max-width: 900px) {
             .header-top { grid-template-columns: 1fr; justify-items: center; }
-            .my-shifts-cta { width: min(100%, 360px); }
+            .header-actions { justify-content: center; width: 100%; }
+            .my-shifts-cta, .help-link { width: min(100%, 360px); }
             .summary-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .shifts-row { grid-template-columns: 1fr; }
             .shift + .shift { border-left: 0; border-top: 1.5px solid var(--teal); }
@@ -724,7 +783,11 @@
             main { width: calc(100% - 24px); margin-top: 16px; }
             .summary-main { grid-template-columns: 1fr 1fr; }
             .topbar { align-items: stretch; }
-            .topbar .status, #reloadBtn { width: 100%; }
+            .topbar .status, #reloadBtn, #mobileToolsBtn { width: 100%; }
+            .mobile-tools-btn { display: inline-flex; justify-content: center; }
+            .filter-panel, .summary-card.show { display: none; }
+            body.mobile-tools-open .filter-panel { display: flex; }
+            body.mobile-tools-open .summary-card.show { display: grid; }
             .filter-panel { align-items: stretch; }
             .filter-title { width: 100%; }
             .filter-chip { flex: 1 1 auto; }
@@ -753,13 +816,16 @@
 
             <h1 id="mainTitle">Turnos barraka ikastola</h1>
 
-            <button class="my-shifts-cta" onclick="scrollToMyShifts()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-                <span id="myShiftsCta">Consultar / cambiar mis turnos</span>
-            </button>
+            <div class="header-actions">
+                <button class="my-shifts-cta" onclick="scrollToMyShifts()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                    <span id="myShiftsCta">Consultar / cambiar mis turnos</span>
+                </button>
+                <a class="help-link" id="helpLink" href="mailto:at2ndesarrollo@gmail.com?subject=Ayuda%20turnos%20barraka">Ayuda / contacto</a>
+            </div>
         </div>
 
         <p class="subtitle" id="headerSubtitle">Consulta los turnos disponibles y apúntate. En cada turno aparecerá el nombre de las personas inscritas.</p>
@@ -768,6 +834,7 @@
     <main>
         <section class="topbar">
             <div class="status" id="status">Cargando turnos...</div>
+            <button class="secondary mobile-tools-btn" id="mobileToolsBtn" type="button" aria-expanded="false">Filtros y resumen</button>
             <button class="secondary" id="reloadBtn">Actualizar</button>
         </section>
 
@@ -961,6 +1028,9 @@
                 headerSubtitle: "Elige un turno y apúntate. Puedes cambiarlo después desde Mis turnos.",
                 myShiftsCta: "Consultar / cambiar mis turnos",
                 reloadBtn: "Actualizar",
+                helpLink: "Ayuda / contacto",
+                mobileToolsBtn: "Filtros y resumen",
+                mobileToolsOpenBtn: "Ocultar filtros y resumen",
                 reloadingBtn: "Actualizando...",
                 statusLoading: "Cargando turnos...",
                 statusLoaded: n => `Actualizado. ${n} turnos cargados.`,
@@ -1021,6 +1091,7 @@
                 summaryTurns: "turnos disponibles",
                 summaryFree: "faltan por cubrir",
                 summaryPeople: "personas apuntadas",
+                summaryDays: "días con turnos",
                 signupDay: "Día",
                 signupShift: "Turno",
                 signupTime: "Hora",
@@ -1044,6 +1115,7 @@
                 filterOpen: "Con huecos",
                 filterMorning: "Mañana",
                 filterAfternoon: "Tarde",
+				filterRefuerzo: "Refuerzo",
                 filterResponsible: "Faltan responsables",
                 filterRecommended: "Más necesarios",
                 recommendedLabel: "Más necesario",
@@ -1076,6 +1148,9 @@
                 headerSubtitle: "Aukeratu txanda bat eta eman izena. Ondoren Nire txandak ataletik aldatu ahal izango duzu.",
                 myShiftsCta: "Nire txandak kontsultatu / aldatu",
                 reloadBtn: "Eguneratu",
+                helpLink: "Laguntza / kontaktua",
+                mobileToolsBtn: "Iragazkiak eta laburpena",
+                mobileToolsOpenBtn: "Iragazkiak eta laburpena ezkutatu",
                 reloadingBtn: "Eguneratzen...",
                 statusLoading: "Txandak kargatzen...",
                 statusLoaded: n => `Eguneratuta. ${n} txanda kargatuta.`,
@@ -1136,6 +1211,7 @@
                 summaryTurns: "txanda erabilgarri",
                 summaryFree: "betetzeko falta direnak",
                 summaryPeople: "izena eman duten pertsonak",
+                summaryDays: "txandak dituzten egunak",
                 signupDay: "Eguna",
                 signupShift: "Txanda",
                 signupTime: "Ordua",
@@ -1158,6 +1234,7 @@
                 filterOpen: "Leku libreak",
                 filterMorning: "Goiza",
                 filterAfternoon: "Arratsaldea",
+				filterRefuerzo: "Errefortzu",
                 filterResponsible: "Arduraduna falta da",
                 filterRecommended: "Premiazkoenak",
                 recommendedLabel: "Premiazkoa",
@@ -1197,6 +1274,102 @@
             return typeof val === "function" ? val(...args) : val;
         }
 
+     
+let SHIFT_TRANSLATIONS = {
+    tipos: {},
+    dias: {}
+};
+
+async function loadShiftTranslations() {
+    try {
+        const response = await fetch("traducciones-turnos.json");
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const external = await response.json();
+
+        SHIFT_TRANSLATIONS = {
+            tipos: external.tipos || {},
+            dias: external.dias || {}
+        };
+    } catch (error) {
+        console.error("No se han podido cargar traducciones-turnos.json.", error);
+        showToast("No se han podido cargar las traducciones de turnos.");
+    }
+}
+
+function dataKey(value) {
+    return normalizeText(value)
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function findAliasCode(value, aliases) {
+    const key = dataKey(value);
+    if (!key) return "";
+
+    const parts = key.split(" ");
+
+    for (const [code, words] of aliases) {
+        if (words.some(word => {
+            const aliasKey = dataKey(word);
+            return parts.includes(aliasKey) || key.includes(aliasKey);
+        })) {
+            return code;
+        }
+    }
+
+    return "";
+}
+
+function getDayCodeFromDate(fecha) {
+    if (!fecha) return "";
+
+    const date = new Date(`${fecha}T12:00:00`);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday"
+    ][date.getDay()];
+}
+
+function getDayLabel(item) {
+    const original = String(item?.dia || "").trim();
+    const code = findAliasCode(original, DAY_ALIASES) || getDayCodeFromDate(item?.fecha);
+
+    if (!code) return original;
+
+    return SHIFT_TRANSLATIONS.dias?.[code]?.[lang] || original || code;
+}
+
+function getShiftTypeCode(item) {
+    const original = String(item?.tipo || "").trim();
+
+    return (
+        findAliasCode(original, SHIFT_TYPE_ALIASES) ||
+        findAliasCode(item?.id_turno, SHIFT_TYPE_ALIASES) ||
+        dataKey(original)
+    );
+}
+
+function getShiftTypeLabel(item) {
+    const original = String(item?.tipo || "").trim();
+    const code = getShiftTypeCode(item);
+
+    if (!code) return original;
+
+    return SHIFT_TRANSLATIONS.tipos?.[code]?.[lang] || original || code;
+}
+
         function setLang(l) {
             lang = l;
             localStorage.setItem("lang", l);
@@ -1211,7 +1384,7 @@
             $("btnEu").classList.toggle("active", lang === "eu");
 
             const ids = [
-                "mainTitle", "headerSubtitle", "myShiftsCta", "myPanelTitle", "myPanelSubtitle",
+                "mainTitle", "headerSubtitle", "myShiftsCta", "helpLink", "mobileToolsBtn", "myPanelTitle", "myPanelSubtitle",
                 "labelMyEmail", "labelmyNombre", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
                  "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
@@ -1227,6 +1400,11 @@
             });
 
             $("reloadBtn").textContent = t("reloadBtn");
+            const mobileToolsBtn = $("mobileToolsBtn");
+            if (mobileToolsBtn) {
+                const open = document.body.classList.contains("mobile-tools-open");
+                mobileToolsBtn.textContent = open ? t("mobileToolsOpenBtn") : t("mobileToolsBtn");
+            }
 
             document.querySelectorAll(".close-btn").forEach(btn => {
                 btn.setAttribute("aria-label", lang === "eu" ? "Itxi" : "Cerrar");
@@ -1563,13 +1741,17 @@
         }
 
         function isMorningShift(shift) {
-            const text = normalizeText(`${shift.tipo || ""} ${shift.hora_inicio || ""}`);
+            const text = normalizeText(`${getShiftTypeLabel(shift)} ${shift.tipo || ""} ${shift.id_turno || ""} ${shift.hora_inicio || ""}`);
             const hour = Number(String(shift.hora_inicio || "").split(":")[0]);
             return text.includes("mañana") || text.includes("goiz") || (!Number.isNaN(hour) && hour < 15);
         }
+		 function isRefuerzoShift(shift) {
+            const text = normalizeText(`${shift.tipo || ""}`);
+            return text.includes("errefortzu") || text.includes("refuerzo");
+        }
 
         function isAfternoonShift(shift) {
-            const text = normalizeText(`${shift.tipo || ""} ${shift.hora_inicio || ""}`);
+            const text = normalizeText(`${getShiftTypeLabel(shift)} ${shift.tipo || ""} ${shift.id_turno || ""} ${shift.hora_inicio || ""}`);
             const hour = Number(String(shift.hora_inicio || "").split(":")[0]);
             return text.includes("tarde") || text.includes("arrats") || (!Number.isNaN(hour) && hour >= 15);
         }
@@ -1585,6 +1767,7 @@
             return shifts.filter(shift => {
                 if (filter === "open") return getShiftFreePlaces(shift) > 0;
                 if (filter === "morning") return isMorningShift(shift);
+				if (filter === "refuerzo") return isRefuerzoShift(shift);
                 if (filter === "afternoon") return isAfternoonShift(shift);
                 if (filter === "responsible") return needsResponsible(shift);
                 if (filter === "recommended") return isRecommendedShift(shift);
@@ -1600,6 +1783,7 @@
                 ["open", "filterOpen"],
                 ["morning", "filterMorning"],
                 ["afternoon", "filterAfternoon"],
+				["refuerzo", "filterRefuerzo"],
                 ["responsible", "filterResponsible"],
                 ["recommended", "filterRecommended"]
             ];
@@ -1641,7 +1825,7 @@
             const dialog = $("successDialog");
             const text = $("successShiftText");
             if (text && shift) {
-                text.textContent = `${shift.dia || ""} · ${normalizeDateLabel(shift.fecha)} · ${shift.tipo || ""} · ${shift.hora_inicio || ""}–${shift.hora_fin || ""}`;
+                text.textContent = `${getDayLabel(shift)} · ${normalizeDateLabel(shift.fecha)} · ${getShiftTypeLabel(shift)} · ${shift.hora_inicio || ""}–${shift.hora_fin || ""}`;
             }
             if (dialog && !dialog.open) dialog.showModal();
         }
@@ -1834,7 +2018,7 @@
                 if (!acc.dias[shift.fecha]) {
                     acc.dias[shift.fecha] = {
                         fecha: shift.fecha,
-                        dia: shift.dia || "",
+                        dia: getDayLabel(shift),
                         turnos: 0,
                         libres: 0,
                         inscritos: 0
@@ -1882,7 +2066,7 @@
                     </div>
                     <div class="summary-item">
                         <span class="summary-value">${dias.length}</span>
-                        <span class="summary-label">${lang === "eu" ? "egun" : "días con turnos"}</span>
+                        <span class="summary-label">${t("summaryDays")}</span>
                     </div>
                 </div>
                 <div class="summary-days">
@@ -1941,7 +2125,7 @@
 
                 card.innerHTML = `
                     <div class="day-title">
-                        <h2>${escapeHtml(shifts[0].dia || "")} <span class="date">${normalizeDateLabel(fecha)}</span></h2>
+                        <h2>${escapeHtml(getDayLabel(shifts[0]))} <span class="date">${normalizeDateLabel(fecha)}</span></h2>
                     </div>
                     <div class="shifts-row"></div>
                 `;
@@ -1975,8 +2159,8 @@
 
                     div.innerHTML = `
                         <div class="shift-head">
-                            <div>
-                                <div class="shift-name">${escapeHtml(shift.tipo)}</div>
+                           <div class="shift-title-line">
+                                <div class="shift-name">${escapeHtml(getShiftTypeLabel(shift))}</div>
                                 <div class="time">${escapeHtml(shift.hora_inicio)}–${escapeHtml(shift.hora_fin)}</div>
                             </div>
                             <span class="badge ${badgeClass}">
@@ -2036,8 +2220,8 @@
             $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
             updateSignupResponsibleAvailability(shift, !idGestor);
             $("signupShiftText").innerHTML = `
-                <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(shift.dia)}, ${normalizeDateLabel(shift.fecha)}</span></span>
-                <span class="shift-summary-row"><span>${t("signupShift")}:</span><span>${escapeHtml(shift.tipo)}</span></span>
+                <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(getDayLabel(shift))}, ${normalizeDateLabel(shift.fecha)}</span></span>
+                <span class="shift-summary-row"><span>${t("signupShift")}:</span><span>${escapeHtml(getShiftTypeLabel(shift))}</span></span>
                 <span class="shift-summary-row"><span>${t("signupTime")}:</span><span>${escapeHtml(shift.hora_inicio)}–${escapeHtml(shift.hora_fin)}</span></span>
             `;
 
@@ -2200,7 +2384,7 @@ const publicarNombre = publicarNombreSelected.value;
             box.innerHTML = state.myInscriptions.map(item => `
                 <div class="my-shift">
                     <div>
-                        <strong>${escapeHtml(item.dia)}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(item.tipo)}</strong><br />
+                        <strong>${escapeHtml(getDayLabel(item))}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(getShiftTypeLabel(item))}</strong><br />
                         <span class="time">${escapeHtml(item.hora_inicio)}–${escapeHtml(item.hora_fin)}</span>
                         ${getMyShiftMeta(item)}
                     </div>
@@ -2230,12 +2414,12 @@ const publicarNombre = publicarNombreSelected.value;
 
             $("changeInscriptionId").value = idInscripcion;
             $("changeInscriptionId").dataset.dni = current.dni || "";
-            $("changeShiftText").textContent = `${t("changePrefix")} ${current.dia}, ${normalizeDateLabel(current.fecha)} · ${current.tipo}`;
+            $("changeShiftText").textContent = `${t("changePrefix")} ${getDayLabel(current)}, ${normalizeDateLabel(current.fecha)} · ${getShiftTypeLabel(current)}`;
 
             const options = state.shifts
                 .filter(s => s.id_turno === current.id_turno || Number((s.inscritos || []).length) < Number(s.plazas))
                 .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora_inicio).localeCompare(String(b.hora_inicio)))
-                .map(s => `<option value="${s.id_turno}" ${s.id_turno === current.id_turno ? "selected" : ""}>${s.dia}, ${normalizeDateLabel(s.fecha)} · ${s.tipo} · ${s.hora_inicio}–${s.hora_fin}</option>`)
+                .map(s => `<option value="${s.id_turno}" ${s.id_turno === current.id_turno ? "selected" : ""}>${getDayLabel(s)}, ${normalizeDateLabel(s.fecha)} · ${getShiftTypeLabel(s)} · ${s.hora_inicio}–${s.hora_fin}</option>`)
                 .join("");
 
             const hasOptions = Boolean(options);
@@ -2309,7 +2493,18 @@ const publicarNombre = publicarNombreSelected.value;
             }
         });
 
+        function toggleMobileTools() {
+            const open = !document.body.classList.contains("mobile-tools-open");
+            document.body.classList.toggle("mobile-tools-open", open);
+            const btn = $("mobileToolsBtn");
+            if (btn) {
+                btn.setAttribute("aria-expanded", open ? "true" : "false");
+                btn.textContent = open ? t("mobileToolsOpenBtn") : t("mobileToolsBtn");
+            }
+        }
+
         $("reloadBtn").addEventListener("click", loadData);
+        $("mobileToolsBtn").addEventListener("click", toggleMobileTools);
 
 const mainDniInput = $("dni");
 
@@ -2332,8 +2527,15 @@ if (mainDniInput) {
       });
     }
   });
-}        applyTexts();
-        loadData();
+}
+
+        async function initApp() {
+            applyTexts();
+            await loadShiftTranslations();
+            await loadData();
+        }
+
+        initApp();
     </script>
 </body>
 </html>
