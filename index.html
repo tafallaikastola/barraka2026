@@ -5,806 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TURNOS BARRAKA IKASTOLA / IKASTOLAKO BARRAKA TXANDAK</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <style>
-        :root {
-            --teal: #00b4b4;
-            --teal-dk: #008a8a;
-            --teal-ink: #005f8a;
-            --teal-lt: #e0f7f7;
-            --bg: #f2f4f6;
-            --card: #ffffff;
-            --text: #111827;
-            --muted: #6b7280;
-            --line: #d1d5db;
-            --empty: #f9fafb;
-            --primary: #00b4b4;
-            --primary-dark: #008a8a;
-            --danger: #dc2626;
-            --danger-lt: #fef2f2;
-            --ok: #15803d;
-            --ok-lt: #dcfce7;
-            --warning: #d97706;
-            --warning-lt: #fef3c7;
-            --radius: 12px;
-            --shadow: 0 18px 44px rgba(17, 24, 39, 0.08);
-            --soft-shadow: 0 8px 22px rgba(17, 24, 39, 0.06);
-        }
-
-        * { box-sizing: border-box; }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(0,180,180,.16), transparent 34rem),
-                linear-gradient(180deg, #f7fbfb 0%, var(--bg) 42%, #eef2f4 100%);
-            color: var(--text);
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background-image: linear-gradient(rgba(255,255,255,.26) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.26) 1px, transparent 1px);
-            background-size: 34px 34px;
-            mask-image: linear-gradient(to bottom, rgba(0,0,0,.32), transparent 48%);
-        }
-
-        header {
-            color: white;
-            padding: 20px 32px 28px;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-ink) 100%);
-            box-shadow: 0 14px 34px rgba(0, 95, 138, .20);
-        }
-
-        header::after {
-            content: "";
-            position: absolute;
-            width: 420px;
-            height: 420px;
-            right: -130px;
-            top: -220px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.13);
-        }
-
-        .header-top {
-            position: relative;
-            z-index: 1;
-            display: grid;
-            grid-template-columns: auto minmax(240px, 1fr) auto;
-            align-items: center;
-            max-width: 1180px;
-            margin: 0 auto 12px;
-            gap: 14px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(1.65rem, 4.5vw, 3rem);
-            font-weight: 800;
-            line-height: .96;
-            letter-spacing: -.055em;
-            text-align: center;
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            position: relative;
-            z-index: 1;
-            margin: 0 auto;
-            max-width: 760px;
-            color: rgba(255,255,255,.86);
-            line-height: 1.55;
-            text-align: center;
-            font-size: 1rem;
-        }
-
-        .lang-toggle {
-            display: flex;
-            background: rgba(255,255,255,.16);
-            border: 1.5px solid rgba(255,255,255,.34);
-            border-radius: 999px;
-            padding: 3px;
-            gap: 2px;
-            flex-shrink: 0;
-            backdrop-filter: blur(10px);
-        }
-
-        .lang-toggle button {
-            background: transparent;
-            color: white;
-            font-weight: 800;
-            font-size: .84rem;
-            padding: 7px 14px;
-            border-radius: 999px;
-            transition: background .2s, color .2s, transform .15s;
-        }
-
-        .lang-toggle button:hover { background: rgba(255,255,255,.18); transform: none; }
-        .lang-toggle button.active { background: white; color: var(--teal-dk); }
-
-        .my-shifts-cta {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 40px;
-            background: rgba(255,255,255,.18);
-            border: 1.5px solid rgba(255,255,255,.42);
-            border-radius: 999px;
-            padding: 8px 18px;
-            font-weight: 800;
-            font-size: .92rem;
-            color: white;
-            cursor: pointer;
-            box-shadow: none;
-            transition: background .2s, transform .15s, border-color .2s;
-            white-space: nowrap;
-            flex-shrink: 0;
-            backdrop-filter: blur(10px);
-        }
-
-        .my-shifts-cta:hover {
-            background: rgba(255,255,255,.30);
-            border-color: rgba(255,255,255,.62);
-            transform: translateY(-1px);
-        }
-
-        .my-shifts-cta svg { flex-shrink: 0; }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .help-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 40px;
-            border-radius: 999px;
-            padding: 8px 16px;
-            color: white;
-            font-weight: 850;
-            text-decoration: none;
-            border: 1.5px solid rgba(255,255,255,.42);
-            background: rgba(255,255,255,.12);
-            backdrop-filter: blur(10px);
-            white-space: nowrap;
-            transition: background .2s, transform .15s, border-color .2s;
-        }
-
-        .help-link:hover {
-            background: rgba(255,255,255,.26);
-            border-color: rgba(255,255,255,.62);
-            transform: translateY(-1px);
-        }
-
-        .mobile-tools-btn { display: none; }
-
-        main {
-            width: min(1180px, calc(100% - 40px));
-            margin: 22px auto 52px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin: 18px 0;
-            flex-wrap: wrap;
-        }
-
-        .status {
-            color: var(--muted);
-            font-size: .92rem;
-            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            padding: 8px 14px;
-            box-shadow: var(--soft-shadow);
-        }
-
-        .filter-panel {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            background: rgba(255,255,255,.92);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--soft-shadow);
-            padding: 12px 14px;
-            margin: 0 0 16px;
-        }
-
-        .filter-title {
-            font-weight: 850;
-            color: var(--teal-dk);
-        }
-
-        .filter-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .filter-chip {
-            background: #f8fafc;
-            color: var(--text);
-            border: 1.5px solid var(--line);
-            box-shadow: none;
-            padding: 8px 12px;
-            font-size: .9rem;
-        }
-
-        .filter-chip:hover,
-        .filter-chip.active {
-            background: var(--teal);
-            color: white;
-            border-color: var(--teal);
-            transform: translateY(-1px);
-        }
-
-        .shift-tags {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin: 10px 0 2px;
-        }
-
-        .recommended-tag,
-        .responsible-needed-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            border-radius: 999px;
-            padding: 5px 9px;
-            font-size: .78rem;
-            font-weight: 850;
-        }
-
-        .recommended-tag {
-            background: var(--warning-lt);
-            color: var(--warning);
-        }
-
-        .responsible-needed-tag {
-            background: var(--danger-lt);
-            color: var(--danger);
-        }
-
-        .person-lookup-hint {
-            min-height: 18px;
-            margin-top: 6px;
-            color: var(--muted);
-            font-size: .84rem;
-            font-weight: 650;
-        }
-
-        .person-lookup-hint.ok { color: var(--ok); }
-        .person-lookup-hint.warn { color: var(--warning); }
-
-        .success-message {
-            text-align: center;
-            padding: 6px 0 2px;
-        }
-
-        .success-icon {
-            width: 54px;
-            height: 54px;
-            display: inline-grid;
-            place-items: center;
-            border-radius: 999px;
-            background: var(--ok-lt);
-            color: var(--ok);
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-
-        .success-shift {
-            background: var(--teal-lt);
-            border: 1px solid #99e7e7;
-            border-radius: 14px;
-            padding: 12px 14px;
-            margin: 12px 0 4px;
-            color: var(--text);
-            font-weight: 750;
-        }
-
-
-        button, input, select { font: inherit; }
-
-        button {
-            border: 0;
-            border-radius: 999px;
-            padding: 10px 18px;
-            background: var(--primary);
-            color: white;
-            cursor: pointer;
-            font-weight: 800;
-            transition: transform .15s ease, background .15s ease, opacity .15s ease, box-shadow .15s ease;
-            box-shadow: 0 8px 18px rgba(0,180,180,.18);
-        }
-
-        button:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(0,180,180,.24); outline-offset: 2px; }
-        button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
-        button.secondary { background: var(--teal-lt); color: var(--teal-dk); box-shadow: none; }
-        button.secondary:hover { background: #c8f1f1; }
-        button.danger { background: var(--danger); box-shadow: 0 8px 18px rgba(220,38,38,.16); }
-
-        input:not([type="checkbox"]), select {
-         	width: 100%;
-            border: 1.5px solid var(--line);
-            border-radius: 12px;
-            padding: 12px 13px;
-            background: white;
-            color: var(--text);
-            transition: border .18s, box-shadow .18s, background .18s;
-        }
-
-        input:not([type="checkbox"]):focus, select:focus {
-            border-color: var(--teal);
-            box-shadow: 0 0 0 4px rgba(0,180,180,.12);
-            outline: none;
-        }
-
-        input:not([type="checkbox"]):required.user-invalid,
-        select:required.user-invalid,
-        textarea:required.user-invalid {
-            background: var(--danger-lt);
-            border-color: var(--danger);
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, .12);
-        }
-
-        input[type="checkbox"] { width: auto; accent-color: var(--teal); }
-        .required-star { color: var(--danger); font-weight: 850; margin-left: 4px; }
-
-        .summary-card {
-            display: none;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            align-items: stretch;
-            background: rgba(255,255,255,.92);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 16px;
-            margin: 0 0 18px;
-        }
-
-        .summary-card.show { display: grid; }
-
-        .summary-main {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(140px, 1fr));
-            gap: 12px;
-        }
-
-        .summary-item {
-            background: linear-gradient(180deg, #fff, #fbfefe);
-            border: 1px solid #e5eeee;
-            border-radius: 16px;
-            padding: 14px 16px;
-            box-shadow: 0 6px 16px rgba(17, 24, 39, .04);
-        }
-
-        .summary-value {
-            display: block;
-            font-size: 1.55rem;
-            font-weight: 850;
-            letter-spacing: -0.04em;
-            color: var(--teal-dk);
-        }
-
-        .summary-label { color: var(--muted); font-size: .9rem; font-weight: 700; }
-
-        .summary-days {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .summary-day {
-            width: 100%;
-            text-align: left;
-            background: var(--empty);
-            border: 1.5px solid var(--line);
-            border-radius: 13px;
-            padding: 11px 13px;
-            font-weight: 750 !important;
-            color: var(--text);
-            cursor: pointer;
-            transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
-            box-shadow: none;
-        }
-
-        .summary-day:hover {
-            background: var(--teal-lt);
-            border-color: var(--teal);
-            color: var(--teal-dk);
-            box-shadow: 0 8px 18px rgba(0,180,180,.12);
-            transform: translateY(-1px);
-        }
-
-        .summary-day span { display: block; color: var(--muted); font-size: .84rem; font-weight: 500; margin-top: 2px; }
-
-        .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-
-        .card {
-            scroll-margin-top: 18px;
-            background: rgba(255,255,255,.94);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            animation: fadeIn .35s ease both;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .day-title {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin: 0;
-            border-bottom: 0;
-            padding: 15px 20px;
-            background: var(--teal);
-            color: white;
-        }
-
-        .day-title h2 {
-            margin: 0;
-             font-size: clamp(1.35rem, 3.5vw, 2rem);
-            line-height: 1.1;
-            letter-spacing: -.035em;
-            font-weight: 850;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 12px;
-            flex-wrap: wrap;
-            text-transform: uppercase;
-        }
-
-        .date {
-			font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-			font-size: clamp(1.05rem, 2.4vw, 1.35rem);
-			font-weight: 800;
-            margin-left: 0;
-			opacity: .95;
-            text-transform: none;
-			letter-spacing: -0.02em;
-        }
-        .shifts-row {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0;
-            align-items: stretch;
-            background: var(--line);
-            border-top: 1.5px solid var(--teal);
-        }
-
-        .shift {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            border: 0;
-            border-left: 0;
-            border-radius: 0;
-            padding: 16px;
-            margin-top: 0;
-            min-height: 210px;
-            background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--shift-color, var(--teal)) 10%, #fff));
-        }
-
-        .shift + .shift { border: 1.5px solid var(--teal); }
-        .shifts-row .shift { margin-top: 0; height: 100%; }
-
-
-        .shift-name {
-            font-weight: 850;
-            font-size: 1.05rem;
-            color: var(--teal-dk);
-            text-transform: uppercase;
-            letter-spacing: .045em;
-        }
-
-        .time {
-            color: var(--muted);
-            margin-top: 4px;
-            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 1rem;
-        }
-		.shift-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: flex-start;
-}
-
-.shift-title-line {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-    min-width: 0;
-}
-
-.shift-title-line .time {
-    margin-top: 0;
-}
-
-.badge {
-    flex-shrink: 0;
-}
-
-.shift-title-line .time {
-    margin-top: 0;
-}
-
-        .badge {
-            border-radius: 999px;
-            padding: 6px 10px;
-            font-weight: 850;
-            font-size: .82rem;
-            background: var(--ok-lt);
-            color: var(--ok);
-            white-space: nowrap;
-        }
-
-        .badge.full { background: var(--danger-lt); color: var(--danger); }
-        .badge.low { background: var(--warning-lt); color: var(--warning); }
-
-        .shift-progress-wrap { margin: 12px 0 2px; }
-        .progress-bar-bg { height: 7px; border-radius: 999px; overflow: hidden; background: #e5e7eb; }
-        .progress-bar-fill { height: 100%; width: var(--progress, 0%); border-radius: 999px; background: var(--teal); transition: width .35s ease; }
-        .progress-bar-fill.full { background: var(--danger); }
-        .progress-bar-fill.low { background: var(--warning); }
-        .progress-label { margin-top: 5px; font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; color: var(--muted); }
-        .missing-counter {
-            margin: 12px 0 2px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            border: 1.5px solid var(--line);
-            border-radius: 14px;
-            padding: 10px 12px;
-            background: rgba(255,255,255,.75);
-            font-weight: 850;
-        }
-        .missing-counter strong { color: var(--teal-dk); font-size: 1.15rem; }
-        .missing-counter.full strong { color: var(--ok); }
-        .missing-counter.urgent strong { color: var(--danger); }
-        .missing-counter small { color: var(--muted); font-weight: 700; }
-
-        .names-label {
-            margin: 14px 0 8px;
-            color: var(--muted);
-            font-size: .8rem;
-            font-weight: 850;
-            text-transform: uppercase;
-            letter-spacing: .055em;
-        }
-
-        .names { margin: 0 0 14px; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
-
-        .names li {
-            background: #f4f7f8;
-            border: 1px solid #e2e8ea;
-            border-radius: 999px;
-            padding: 7px 11px;
-            font-size: .95rem;
-            font-weight: 650;
-        }
-
-        .empty { color: var(--muted); font-style: italic; margin: 14px 0; }
-
-        .shift > button[data-signup] { margin-top: auto; align-self: flex-start; }
-        .shift > button[data-signup]:not(:disabled)::after { content: " →"; }
-        .shift.linked-shift { box-shadow: inset 0 0 0 3px var(--warning), 0 12px 24px rgba(217,119,6,.15); }
-
-        .empty-state { grid-column: 1 / -1; text-align: center; padding: 58px 24px; color: var(--muted); background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-        .empty-state p { margin: 0; font-size: 1.1rem; }
-
-        dialog {
-            border: 0;
-            border-radius: 20px;
-            padding: 0;
-            width: min(1000px, calc(100% - 28px));
-            box-shadow: 0 24px 80px rgba(15, 23, 42, .35);
-        }
-
-        dialog::backdrop { background: rgba(15, 23, 42, .48); backdrop-filter: blur(3px); }
-        .modal, .modal-inner { padding: 24px; background: white; border-radius: 20px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
-        .modal h3, .modal-header h2 { margin: 0; font-size: 1.45rem; letter-spacing: -.03em; color: var(--teal-dk); }
-        .modal p { margin: 0 0 18px; color: var(--muted); }
-        .modal .subtitle, .modal-inner .subtitle { color: var(--muted); text-align: left; }
-
-        .close-btn { background: #f2f4f7; color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: .9rem; font-weight: 800; flex-shrink: 0; box-shadow: none; }
-        .close-btn:hover { background: #e4e7ec; transform: none; }
-
-        .confirm-box { background: var(--teal-lt); border: 1px solid #99e7e7; border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; font-size: .95rem; line-height: 1.45; }
-        .confirm-box strong { display: inline; margin: 0 8px 0 0; color: var(--teal-dk); white-space: nowrap; }
-        .shift-summary { display: inline; }
-        .shift-summary-row { display: inline; margin-right: 14px; white-space: nowrap; }
-        .shift-summary-row span:first-child { color: var(--muted); font-weight: 850; font-size: .88rem; margin-right: 4px; }
-        .shift-summary-row span:last-child { color: var(--text); font-weight: 750; }
-
-        label { display: block; font-weight: 800; margin: 12px 0 6px; }
-
-        .signup-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px 14px;
-            align-items: start;
-        }
-
-        .signup-field label { margin-top: 0; }
-
-        .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 18px; }
-        .my-shift { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; border-top: 1px solid var(--line); padding: 12px 0; }
-        .my-shift-meta { color: var(--muted); font-size: .9rem; font-weight: 650; margin-top: 4px; }
-
-        .gela-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-        .gela-options label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: #f8fafc; font-weight: 700; }
-
-        .check-card { font-size:85%; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: 14px; background: #f8fafc; padding: 12px 14px; margin-top: 14px; }
-        .check-card.disabled { opacity: .55; }
-        .check-card.hidden { display: none; }
-        .check-card label { margin: 0 0 3px; cursor: pointer; }
-		.check-card .labelResponsable { display:contents; margin: 0 0 3px; cursor: pointer; }
-        .check-card small { 
-		--display: block;
-		color: var(--muted); font-weight: 650; line-height: 1.35; }
-
-.privacy-choice {
-    display: block;
-}
-
-.privacy-choice-content {
-    width: 100%;
-}
-
-.privacy-choice-title {
-    font-weight: 850;
-    margin: 0 0 10px;
-    color: var(--text);
-}
-
-.privacy-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    margin: 8px 0;
-    padding: 9px 11px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: white;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border .18s, background .18s, color .18s;
-}
-
-.privacy-option input {
-	width: auto;
-    margin-top: 3px;
-    flex-shrink: 0;
-    accent-color: var(--teal);
-}
-
-.privacy-option span {
-    line-height: 1.35;
-	padding-right: 0;
-}
-
-.privacy-option:has(input:checked) {
-    border-color: var(--teal);
-    background: var(--teal-lt);
-    color: var(--teal-dk);
-}
-
-.privacy-choice-help {
-    display: block;
-    margin-top: 8px;
-    color: var(--muted);
-    font-size: .84rem;
-    font-weight: 650;
-    line-height: 1.35;
-}
-
-.saving-message {
-    margin: 16px 0 0;
-    padding: 13px 15px;
-    border-radius: 14px;
-    background: var(--warning-lt);
-    border: 1px solid #f5d083;
-    color: #92400e;
-    font-weight: 750;
-    line-height: 1.4;
-}
-
-.saving-message strong {
-    display: block;
-    margin-bottom: 3px;
-}
-
-.saving-message span {
-    display: block;
-    font-size: .92rem;
-}
-        .signup-section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
-        .signup-section-title h4 { margin: 0; font-size: 1rem; color: var(--teal-dk); }
-        .additional-person-card { border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-top: 12px; background: #fbfdff; }
-        .additional-person-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 8px; }
-        .additional-person-head strong { color: var(--teal-dk); }
-        .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 12px; }
-
-        #toast { width: min(420px, calc(100% - 32px)); border-radius: 18px; padding: 0; overflow: hidden; }
-        #toast::backdrop { background: rgba(15, 23, 42, .22); }
-        .toast-inner { padding: 18px 20px; background: #ffffff; border-left: 6px solid var(--teal); display: grid; gap: 14px; }
-        #toastmsg { font-weight: 750; line-height: 1.4; color: var(--text); }
-        .toast-actions { display: flex; justify-content: flex-end; }
-        .toast-actions button { padding: 8px 14px; }
-
-        @media (max-width: 900px) {
-            .header-top { grid-template-columns: 1fr; justify-items: center; }
-            .header-actions { justify-content: center; width: 100%; }
-            .my-shifts-cta, .help-link { width: min(100%, 360px); }
-            .summary-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .shifts-row { grid-template-columns: 1fr; }
-            .shift + .shift { border-left: 0; border-top: 1.5px solid var(--teal); }
-        }
-
-        @media (max-width: 640px) {
-            header { padding: 18px 16px 24px; }
-            main { width: calc(100% - 24px); margin-top: 16px; }
-            .summary-main { grid-template-columns: 1fr 1fr; }
-            .topbar { align-items: stretch; }
-            .topbar .status, #reloadBtn, #mobileToolsBtn { width: 100%; }
-            .mobile-tools-btn { display: inline-flex; justify-content: center; }
-            .filter-panel, .summary-card.show { display: none; }
-            body.mobile-tools-open .filter-panel { display: flex; }
-            body.mobile-tools-open .summary-card.show { display: grid; }
-            .filter-panel { align-items: stretch; }
-            .filter-title { width: 100%; }
-            .filter-chip { flex: 1 1 auto; }
-            .shift button { width: 100%; margin-top: 8px; }
-            .shift > button[data-signup] { align-self: stretch; }
-            .my-shift { grid-template-columns: 1fr; }
-            .actions { justify-content: stretch; }
-            .actions button { width: 100%; }
-            .shift-summary, .shift-summary-row { display: block; white-space: normal; }
-            .shift-summary-row { margin-top: 4px; }
-            .modal, .modal-inner { padding: 18px; }
-            .signup-grid { grid-template-columns: 1fr; }
-			.date {
-    font-size: 1.15rem;
-}
-        }
-    </style>
+    <style>:root{--teal:#00b4b4;--teal-dk:#008a8a;--teal-ink:#005f8a;--teal-lt:#e0f7f7;--bg:#f2f4f6;--text:#111827;--muted:#6b7280;--line:#d1d5db;--empty:#f9fafb;--primary:#00b4b4;--primary-dark:#008a8a;--danger:#dc2626;--danger-lt:#fef2f2;--ok:#15803d;--ok-lt:#dcfce7;--warning:#d97706;--warning-lt:#fef3c7;--radius:12px;--shadow:0 18px 44px rgba(17,24,39,0.08);--soft-shadow:0 8px 22px rgba(17,24,39,0.06)}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(0,180,180,.16),transparent 34rem),linear-gradient(180deg,#f7fbfb 0%,var(--bg) 42%,#eef2f4 100%);color:var(--text);-webkit-font-smoothing:antialiased}body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.26) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.26) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.32),transparent 48%)}header{color:white;padding:20px 32px 28px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-ink) 100%);box-shadow:0 14px 34px rgba(0,95,138,.20)}header::after{content:"";position:absolute;width:420px;height:420px;right:-130px;top:-220px;border-radius:999px;background:rgba(255,255,255,.13)}.header-top{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(240px,1fr) auto;align-items:center;max-width:1180px;margin:0 auto 12px;gap:14px}h1{margin:0;font-size:clamp(1.65rem,4.5vw,3rem);font-weight:800;line-height:.96;letter-spacing:-.055em;text-align:center;text-transform:uppercase}.subtitle{position:relative;z-index:1;margin:0 auto;max-width:760px;color:rgba(255,255,255,.86);line-height:1.55;text-align:center;font-size:1rem}.lang-toggle{display:flex;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.34);border-radius:999px;padding:3px;gap:2px;flex-shrink:0;backdrop-filter:blur(10px)}.lang-toggle button{background:transparent;color:white;font-weight:800;font-size:.84rem;padding:7px 14px;border-radius:999px;transition:background .2s,color .2s,transform .15s}.lang-toggle button:hover{background:rgba(255,255,255,.18);transform:none}.lang-toggle button.active{background:white;color:var(--teal-dk)}.my-shifts-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.42);border-radius:999px;padding:8px 18px;font-weight:800;font-size:.92rem;color:white;cursor:pointer;box-shadow:none;transition:background .2s,transform .15s,border-color .2s;white-space:nowrap;flex-shrink:0;backdrop-filter:blur(10px)}.my-shifts-cta:hover{background:rgba(255,255,255,.30);border-color:rgba(255,255,255,.62);transform:translateY(-1px)}.my-shifts-cta svg{flex-shrink:0}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.help-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;border-radius:999px;padding:8px 16px;color:white;font-weight:850;text-decoration:none;border:1.5px solid rgba(255,255,255,.42);background:rgba(255,255,255,.12);backdrop-filter:blur(10px);white-space:nowrap;transition:background .2s,transform .15s,border-color .2s}.help-link:hover{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.62);transform:translateY(-1px)}.mobile-tools-btn{display:none}main{width:min(1180px,calc(100% - 40px));margin:22px auto 52px;position:relative;z-index:1}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:18px 0;flex-wrap:wrap}.status{color:var(--muted);font-size:.92rem;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;background:white;border:1px solid var(--line);border-radius:999px;padding:8px 14px;box-shadow:var(--soft-shadow)}.filter-panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--soft-shadow);padding:12px 14px;margin:0 0 16px}.filter-title{font-weight:850;color:var(--teal-dk)}.filter-chips{display:flex;flex-wrap:wrap;gap:8px}.filter-chip{background:#f8fafc;color:var(--text);border:1.5px solid var(--line);box-shadow:none;padding:8px 12px;font-size:.9rem}.filter-chip:hover,.filter-chip.active{background:var(--teal);color:white;border-color:var(--teal);transform:translateY(-1px)}.shift-tags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}.recommended-tag,.responsible-needed-tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:.78rem;font-weight:850}.recommended-tag{background:var(--warning-lt);color:var(--warning)}.responsible-needed-tag{background:var(--danger-lt);color:var(--danger)}.person-lookup-hint{min-height:18px;margin-top:6px;color:var(--muted);font-size:.84rem;font-weight:650}.person-lookup-hint.ok{color:var(--ok)}.person-lookup-hint.warn{color:var(--warning)}.success-message{text-align:center;padding:6px 0 2px}.success-icon{width:54px;height:54px;display:inline-grid;place-items:center;border-radius:999px;background:var(--ok-lt);color:var(--ok);font-size:1.8rem;margin-bottom:10px}.success-shift{background:var(--teal-lt);border:1px solid #99e7e7;border-radius:14px;padding:12px 14px;margin:12px 0 4px;color:var(--text);font-weight:750}button,input,select{font:inherit}button{border:0;border-radius:999px;padding:10px 18px;background:var(--primary);color:white;cursor:pointer;font-weight:800;transition:transform .15s ease,background .15s ease,opacity .15s ease,box-shadow .15s ease;box-shadow:0 8px 18px rgba(0,180,180,.18)}button:hover{background:var(--primary-dark);transform:translateY(-1px)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(0,180,180,.24);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}button.secondary{background:var(--teal-lt);color:var(--teal-dk);box-shadow:none}button.secondary:hover{background:#c8f1f1}button.danger{background:var(--danger);box-shadow:0 8px 18px rgba(220,38,38,.16)}input:not([type="checkbox"]),select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:white;color:var(--text);transition:border .18s,box-shadow .18s,background .18s}input:not([type="checkbox"]):focus,select:focus{border-color:var(--teal);box-shadow:0 0 0 4px rgba(0,180,180,.12);outline:none}input:not([type="checkbox"]):required.user-invalid,select:required.user-invalid,textarea:required.user-invalid{background:var(--danger-lt);border-color:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.12)}input[type="checkbox"]{width:auto;accent-color:var(--teal)}.required-star{color:var(--danger);font-weight:850;margin-left:4px}.summary-card{display:none;grid-template-columns:1fr;gap:12px;align-items:stretch;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin:0 0 18px}.summary-card.show{display:grid}.summary-main{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:12px}.summary-item{background:linear-gradient(180deg,#fff,#fbfefe);border:1px solid #e5eeee;border-radius:16px;padding:14px 16px;box-shadow:0 6px 16px rgba(17,24,39,.04)}.summary-value{display:block;font-size:1.55rem;font-weight:850;letter-spacing:-0.04em;color:var(--teal-dk)}.summary-label{color:var(--muted);font-size:.9rem;font-weight:700}.summary-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:4px}.summary-day{width:100%;text-align:left;background:var(--empty);border:1.5px solid var(--line);border-radius:13px;padding:11px 13px;font-weight:750!important;color:var(--text);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,background .15s ease,border-color .15s ease;box-shadow:none}.summary-day:hover{background:var(--teal-lt);border-color:var(--teal);color:var(--teal-dk);box-shadow:0 8px 18px rgba(0,180,180,.12);transform:translateY(-1px)}.summary-day span{display:block;color:var(--muted);font-size:.84rem;font-weight:500;margin-top:2px}.grid{display:grid;grid-template-columns:1fr;gap:18px}.card{scroll-margin-top:18px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;animation:fadeIn .35s ease both}@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}.day-title{display:flex;flex-direction:column;gap:4px;margin:0;border-bottom:0;padding:15px 20px;background:var(--teal);color:white}.day-title h2{margin:0;font-size:clamp(1.35rem,3.5vw,2rem);line-height:1.1;letter-spacing:-.035em;font-weight:850;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;text-transform:uppercase}.date{font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(1.05rem,2.4vw,1.35rem);font-weight:800;margin-left:0;opacity:.95;text-transform:none;letter-spacing:-0.02em}.shifts-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;align-items:stretch;background:var(--line);border-top:1.5px solid var(--teal)}.shift{position:relative;display:flex;flex-direction:column;border:0;border-left:0;border-radius:0;padding:16px;margin-top:0;min-height:210px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--shift-color,var(--teal)) 10%,#fff))}.shift+.shift{border:1.5px solid var(--teal)}.shifts-row .shift{margin-top:0;height:100%}.shift-name{font-weight:850;font-size:1.05rem;color:var(--teal-dk);text-transform:uppercase;letter-spacing:.045em}.time{color:var(--muted);margin-top:4px;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1rem}.shift-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.shift-title-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}.shift-title-line .time{margin-top:0}.badge{flex-shrink:0}.badge{border-radius:999px;padding:6px 10px;font-weight:850;font-size:.82rem;background:var(--ok-lt);color:var(--ok);white-space:nowrap}.badge.full{background:var(--danger-lt);color:var(--danger)}.badge.low{background:var(--warning-lt);color:var(--warning)}.shift-progress-wrap{margin:12px 0 2px}.progress-bar-bg{height:7px;border-radius:999px;overflow:hidden;background:#e5e7eb}.progress-bar-fill{height:100%;width:var(--progress,0%);border-radius:999px;background:var(--teal);transition:width .35s ease}.progress-bar-fill.full{background:var(--danger)}.progress-bar-fill.low{background:var(--warning)}.progress-label{margin-top:5px;font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;color:var(--muted)}.missing-counter{margin:12px 0 2px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.75);font-weight:850}.missing-counter strong{color:var(--teal-dk);font-size:1.15rem}.missing-counter.full strong{color:var(--ok)}.missing-counter.urgent strong{color:var(--danger)}.missing-counter small{color:var(--muted);font-weight:700}.names-label{margin:14px 0 8px;color:var(--muted);font-size:.8rem;font-weight:850;text-transform:uppercase;letter-spacing:.055em}.names{margin:0 0 14px;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}.names li{background:#f4f7f8;border:1px solid #e2e8ea;border-radius:999px;padding:7px 11px;font-size:.95rem;font-weight:650}.empty{color:var(--muted);font-style:italic;margin:14px 0}.shift>button[data-signup]{margin-top:auto;align-self:flex-start}.shift>button[data-signup]:not(:disabled)::after{content:" →"}.shift.linked-shift{box-shadow:inset 0 0 0 3px var(--warning),0 12px 24px rgba(217,119,6,.15)}.empty-state{grid-column:1 / -1;text-align:center;padding:58px 24px;color:var(--muted);background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.empty-state .empty-icon{font-size:3rem;margin-bottom:12px}.empty-state p{margin:0;font-size:1.1rem}dialog{border:0;border-radius:20px;padding:0;width:min(1000px,calc(100% - 28px));box-shadow:0 24px 80px rgba(15,23,42,.35)}dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(3px)}.modal,.modal-inner{padding:24px;background:white;border-radius:20px}.modal-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.modal h3,.modal-header h2{margin:0;font-size:1.45rem;letter-spacing:-.03em;color:var(--teal-dk)}.modal p{margin:0 0 18px;color:var(--muted)}.modal .subtitle,.modal-inner .subtitle{color:var(--muted);text-align:left}.close-btn{background:#f2f4f7;color:var(--text);border-radius:999px;padding:7px 12px;font-size:.9rem;font-weight:800;flex-shrink:0;box-shadow:none}.close-btn:hover{background:#e4e7ec;transform:none}.confirm-box{background:var(--teal-lt);border:1px solid #99e7e7;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:.95rem;line-height:1.45}.confirm-box strong{display:inline;margin:0 8px 0 0;color:var(--teal-dk);white-space:nowrap}.shift-summary{display:inline}.shift-summary-row{display:inline;margin-right:14px;white-space:nowrap}.shift-summary-row span:first-child{color:var(--muted);font-weight:850;font-size:.88rem;margin-right:4px}.shift-summary-row span:last-child{color:var(--text);font-weight:750}label{display:block;font-weight:800;margin:12px 0 6px}.signup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;align-items:start}.signup-field label{margin-top:0}.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:18px}.my-shift{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:12px 0}.my-shift-meta{color:var(--muted);font-size:.9rem;font-weight:650;margin-top:4px}.gela-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}.gela-options label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#f8fafc;font-weight:700}.check-card{font-size:85%;display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:14px;background:#f8fafc;padding:12px 14px;margin-top:14px}.check-card.disabled{opacity:.55}.check-card.hidden{display:none}.check-card label{margin:0 0 3px;cursor:pointer}.check-card .labelResponsable{display:contents;margin:0 0 3px;cursor:pointer}.check-card small{--display:block;color:var(--muted);font-weight:650;line-height:1.35}.privacy-choice{display:block}.privacy-choice-content{width:100%}.privacy-choice-title{font-weight:850;margin:0 0 10px;color:var(--text)}.privacy-option{display:flex;align-items:flex-start;gap:9px;margin:8px 0;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:white;font-weight:700;cursor:pointer;transition:border .18s,background .18s,color .18s}.privacy-option input{width:auto;margin-top:3px;flex-shrink:0;accent-color:var(--teal)}.privacy-option span{line-height:1.35;padding-right:0}.privacy-option:has(input:checked){border-color:var(--teal);background:var(--teal-lt);color:var(--teal-dk)}.privacy-choice-help{display:block;margin-top:8px;color:var(--muted);font-size:.84rem;font-weight:650;line-height:1.35}.saving-message{margin:16px 0 0;padding:13px 15px;border-radius:14px;background:var(--warning-lt);border:1px solid #f5d083;color:#92400e;font-weight:750;line-height:1.4}.saving-message strong{display:block;margin-bottom:3px}.saving-message span{display:block;font-size:.92rem}.signup-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}.signup-section-title h4{margin:0;font-size:1rem;color:var(--teal-dk)}.additional-person-card{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;background:#fbfdff}.additional-person-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.additional-person-head strong{color:var(--teal-dk)}.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}#toast{width:min(420px,calc(100% - 32px));border-radius:18px;padding:0;overflow:hidden}#toast::backdrop{background:rgba(15,23,42,.22)}.toast-inner{padding:18px 20px;background:#ffffff;border-left:6px solid var(--teal);display:grid;gap:14px}#toastmsg{font-weight:750;line-height:1.4;color:var(--text)}.toast-actions{display:flex;justify-content:flex-end}.toast-actions button{padding:8px 14px}@media (max-width:900px){.header-top{grid-template-columns:1fr;justify-items:center}.header-actions{justify-content:center;width:100%}.my-shifts-cta,.help-link{width:min(100%,360px)}.summary-main{grid-template-columns:repeat(2,minmax(0,1fr))}.shifts-row{grid-template-columns:1fr}.shift+.shift{border-left:0;border-top:1.5px solid var(--teal)}}@media (max-width:640px){header{padding:18px 16px 24px}main{width:calc(100% - 24px);margin-top:16px}.summary-main{grid-template-columns:1fr 1fr}.topbar{align-items:stretch}.topbar .status,#reloadBtn,#mobileToolsBtn{width:100%}.mobile-tools-btn{display:inline-flex;justify-content:center}.filter-panel,.summary-card.show{display:none}body.mobile-tools-open .filter-panel{display:flex}body.mobile-tools-open .summary-card.show{display:grid}.filter-panel{align-items:stretch}.filter-title{width:100%}.filter-chip{flex:1 1 auto}.shift button{width:100%;margin-top:8px}.shift>button[data-signup]{align-self:stretch}.my-shift{grid-template-columns:1fr}.actions{justify-content:stretch}.actions button{width:100%}.shift-summary,.shift-summary-row{display:block;white-space:normal}.shift-summary-row{margin-top:4px}.modal,.modal-inner{padding:18px}.signup-grid{grid-template-columns:1fr}.date{font-size:1.15rem}}</style>
 </head>
 <body>
     <header>
@@ -813,9 +14,7 @@
                 <button id="btnEs" class="active" onclick="setLang('es')">ES</button>
                 <button id="btnEu" onclick="setLang('eu')">EU</button>
             </div>
-
             <h1 id="mainTitle">Turnos barraka ikastola</h1>
-
             <div class="header-actions">
                 <button class="my-shifts-cta" onclick="scrollToMyShifts()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -827,22 +26,18 @@
                 <a class="help-link" id="helpLink" href="mailto:at2ndesarrollo@gmail.com?subject=Ayuda%20turnos%20barraka">Ayuda / contacto</a>
             </div>
         </div>
-
         <p class="subtitle" id="headerSubtitle">Consulta los turnos disponibles y apúntate. En cada turno aparecerá el nombre de las personas inscritas.</p>
     </header>
-
     <main>
         <section class="topbar">
             <div class="status" id="status">Cargando turnos...</div>
             <button class="secondary mobile-tools-btn" id="mobileToolsBtn" type="button" aria-expanded="false">Filtros y resumen</button>
             <button class="secondary" id="reloadBtn">Actualizar</button>
         </section>
-
         <section class="filter-panel" aria-label="Filtros de turnos">
             <div class="filter-title" id="filterTitle">Filtrar turnos</div>
             <div class="filter-chips" id="filterChips"></div>
         </section>
-
         <section class="summary-card" id="summaryCard" aria-live="polite"></section>
         <section class="grid" id="shiftGrid"></section>
 		<section style="text-align:center; margin: 28px 0 0; color: var(--muted); font-size: .92rem;">
@@ -851,7 +46,6 @@
             </a>
         </section>
     </main>
-
     <dialog id="toast">
         <div class="toast-inner">
             <div id="toastmsg"></div>
@@ -860,9 +54,6 @@
             </div>
         </div>
     </dialog>
-
-
-
     <dialog id="successDialog" aria-labelledby="successTitle">
         <div class="modal">
             <div class="success-message">
@@ -902,22 +93,18 @@
             <div id="myShifts"></div>
         </div>
     </dialog>
-
     <dialog id="signupDialog" aria-labelledby="dlgSignupTitle">
         <div class="modal" id="signupModal">
             <div class="modal-header">
                 <h3 id="dlgSignupTitle">Apuntarme</h3>
                 <button class="close-btn" onclick="$('signupDialog').close()" aria-label="Cerrar">✕</button>
             </div>
-
             <div class="confirm-box" id="signupConfirmBox">
                 <strong id="signupConfirmLabel">Turno seleccionado:</strong>
                 <span id="signupShiftText" class="shift-summary"></span>
             </div>
-
             <input type="hidden" id="signupShiftId" />
             <input type="hidden" id="signupGestorId" />
-
             <div class="signup-grid">
                 <div class="signup-field">
                     <label for="dni"><span id="labelDni">DNI / NAN</span><span class="required-star">*</span></label>
@@ -933,10 +120,8 @@
                     <input id="email" type="email" required autocomplete="email" />
                 </div>
             </div>
-
             <label id="labelGela">Clase</label>
             <div id="gela_group" class="gela-options"></div>
-
             <div class="check-card" id="signupResponsableBox">
                 <input id="responsableTurno" type="checkbox" />
                 <div>
@@ -950,46 +135,38 @@
             ¿Cómo quieres aparecer en la lista pública?
             <span class="required-star">*</span>
         </div>
-
         <label class="privacy-option">
             <input type="radio" name="publicarNombre" value="si" required>
             <span id="publicarNombreSi">Mostrar mi nombre y apellidos</span>
         </label>
-
         <label class="privacy-option">
             <input type="radio" name="publicarNombre" value="no" required>
             <span id="publicarNombreNo">No mostrar mi nombre; apareceré como privado.</span>
         </label>
-
         <small class="privacy-choice-help" id="publicarNombreHelp">Esta elección se aplicará también a las personas adicionales que inscribas.</small>
     </div>
 </div>
-
             <div class="signup-section-title">
                 <h4 id="additionalPeopleTitle">Otras personas que quieres apuntar</h4>
                 <button type="button" class="secondary" id="btnAddAdditionalPerson" onclick="addAdditionalPerson()">Añadir otra persona</button>
             </div>
             <div id="additionalPeople"></div>
-
 			<p style="margin: 16px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.45;">
                 <span id="privacyNoticeText">Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la</span>
                 <a href="politica-privacidad.html" target="_blank" rel="noopener" id="privacyNoticeLink" style="color: var(--teal-dk); font-weight: 800;">
                     Política de privacidad
                 </a>.
             </p>
-
             <div id="signupSavingMessage" class="saving-message" hidden aria-live="polite">
                 <strong id="signupSavingTitle">Guardando inscripción…</strong>
                 <span id="signupSavingText">Espera unos segundos, por favor. No cierres esta ventana.</span>
             </div>
-
             <div class="actions">
                 <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
                 <button type="button" id="dlgSignupConfirm" onclick="signup()">Confirmar inscripción</button>
             </div>
         </div>
     </dialog>
-
     <dialog id="changeDialog" aria-labelledby="dlgChangeTitle">
         <div class="modal" id="changeModal">
             <div class="modal-header">
@@ -1000,7 +177,6 @@
             <input type="hidden" id="changeInscriptionId" />
             <label for="newShiftId"><span id="labelNewShift">Nuevo turno</span><span class="required-star">*</span></label>
             <select id="newShiftId" required></select>
-
             <div class="check-card" id="changeResponsableBox">
                 <input id="changeResponsableTurno" type="checkbox" />
                 <div>
@@ -1008,7 +184,6 @@
                     <small id="changeResponsableTurnoHelp"></small>
                 </div>
             </div>
-
             <div class="actions">
                 <button type="button" class="secondary" id="dlgChangeCancel" onclick="$('changeDialog').close()">Cancelar</button>
                 <button type="button" id="dlgChangeConfirm" onclick="changeInscription()">Cambiar</button>
@@ -1017,320 +192,53 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbz9jroq7blL9XP3Zw4qm2eEz853TLWJvO_ofMMT0hwdIP7zOq-81CTxcBNOBcz74woO/exec";
-							
+        const API_URL = "https://script.google.com/macros/s/AKfycbx6yhwCJd_vffS055cydD-b-4qIKyipYcO-nHwV9MNyU_nNsvmA3pkA5cGyT0C4cRM2/exec";				
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
-
-        const TEXTS = {
-            es: {
-                mainTitle: "Turnos barraka ikastola",
-                headerSubtitle: "Elige un turno y apúntate. Puedes cambiarlo después desde Mis turnos.",
-                myShiftsCta: "Consultar / cambiar mis turnos",
-                reloadBtn: "Actualizar",
-                helpLink: "Ayuda / contacto",
-                mobileToolsBtn: "Filtros y resumen",
-                mobileToolsOpenBtn: "Ocultar filtros y resumen",
-                reloadingBtn: "Actualizando...",
-                statusLoading: "Cargando turnos...",
-                statusLoaded: n => `Actualizado. ${n} turnos cargados.`,
-                myPanelTitle: "Mis turnos",
-                myPanelSubtitle: "Introduce tu email y nombre (o apellido) para ver, cambiar o borrar tus inscripciones.",
-                labelMyEmail: "Email",
-                labelmyNombre: "Nombre o apellido",
-                myFormBtn: "Ver mis turnos",
-                dlgSignupTitle: "Apuntarme",
-                signupConfirmLabel: "Turno seleccionado:",
-                labelEmail: "Email",
-                labelDni: "DNI",
-                labelnombre: "Nombre y apellidos",
-                labelGela: "Si tienes hij@s en la ikastola, indica en qué curso. Puedes seleccionar más de una opción",
-                labelResponsableTurno: "Puedo ser responsable del turno",
-                labelChangeResponsableTurno: "Quiero realizar la función de responsable del turno",
-				labelPublicarNombreDecision: "¿Cómo quieres aparecer en la lista pública?",
-				publicarNombreSi: "Mostrar mi nombre y apellidos",
-				publicarNombreNo: "No mostrar mi nombre; apareceré como privado.",
-				publicarNombreHelp: "Esta elección se aplicará también a las personas adicionales que inscribas.",
-                choosePublicName: "Elige si quieres mostrar el nombre públicamente o aparecer como privado.",
-                invalidDni: "Introduce un DNI/NIE válido (8 números y letra correcta, o NIE con X/Y/Z).",
-                dniAlreadyInShift: "Esta persona ya está apuntada a este turno.",
-                signupAddPersonTitle: "Añadir persona",
-                privacyFooterLink: "Política de privacidad",
-                privacyNoticeText: "Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la",
-                privacyNoticeLink: "Política de privacidad",
-                additionalPeopleTitle: "¿Quieres apuntar a otra persona contigo?",
-                btnAddAdditionalPerson: "Añadir otra persona",
-                additionalPersonTitle: n => `Persona adicional ${n}`,
-                btnRemovePerson: "Quitar",
-                responsableAvailable: n => n === 1 ? "Queda 1 plaza de responsable." : `Quedan ${n} plazas de responsable.`,
-                responsableFull: "No quedan plazas de responsable en este turno.",
-                responsableCurrent: "Esta inscripción ya ocupa una plaza de responsable.",
-                responsibleLimit: n => n === 1 ? "Solo queda 1 plaza de responsable para este turno." : `Solo quedan ${n} plazas de responsable para este turno.`,
-                signupMultipleOk: n => n === 1 ? "Inscripción realizada." : `${n} inscripciones realizadas.`,
-                backendNeedsId: "Para apuntar varias personas, Apps Script debe devolver id_inscripcion en la respuesta del alta principal.",
-                btnAddPerson: "Añadir persona",
-                responsibleLabel: "Responsable del turno",
-                managedByMeLabel: "Gestionada por ti",
-                dlgSignupCancel: "Cancelar",
-                dlgSignupConfirm: "Apuntarme al turno",
-                signupSavingTitle: "Guardando inscripción…",
-                signupSavingText: "Espera unos segundos, por favor. No cierres esta ventana.",
-                signupSavingBtn: "Inscribiendo…",
-                dlgChangeTitle: "Cambiar turno",
-                labelNewShift: "Nuevo turno",
-                dlgChangeCancel: "Cancelar",
-                dlgChangeConfirm: "Cambiar",
-                badgeFull: "Cubierto",
-                badgeFew: free => `Faltan ${free}`,
-                missingCounter: (free, total) => free <= 0 ? `Turno completo · ${total}/${total}` : `Faltan ${free} de ${total}`,
-                missingCounterHelp: "personas por cubrir",
-                btnSignup: "Apuntarme",
-                btnFull: "Turno completo",
-                noSignups: "Todavía no hay nadie apuntado.",
-                namesLabel: "Personas apuntadas",
-                summaryTurns: "turnos disponibles",
-                summaryFree: "faltan por cubrir",
-                summaryPeople: "personas apuntadas",
-                summaryDays: "días con turnos",
-                signupDay: "Día",
-                signupShift: "Turno",
-                signupTime: "Hora",
-                noAvailable: "No hay turnos disponibles",
-                toastSignupOk: "Inscripción realizada.",
-                toastChangeOk: "Turno cambiado.",
-                toastDeleteOk: "Inscripción borrada.",
-                confirmDelete: "¿Seguro que quieres borrar esta inscripción?",
-                btnChange: "Cambiar",
-                btnDelete: "Borrar",
-                noMyShifts: "No hay inscripciones activas para esos datos.",
-                emptyStateTitle: "No hay turnos disponibles",
-                emptyStateText: "Vuelve más tarde o pulsa Actualizar.",
-                changePrefix: "Vas a cambiar:",
-                fillAllFields: "Rellena todos los campos.",
-                invalidEmail: "El email no es válido.",
-                invalidName: "Introduce un nombre válido.",
-                invalidSurname: "Introduce un nombre o apellido válido.",
-                filterTitle: "Filtrar turnos",
-                filterAll: "Todos",
-                filterOpen: "Con huecos",
-                filterMorning: "Mañana",
-                filterAfternoon: "Tarde",
-				filterRefuerzo: "Refuerzo",
-                filterResponsible: "Faltan responsables",
-                filterRecommended: "Más necesarios",
-                recommendedLabel: "Más necesario",
-                responsibleNeededLabel: "Falta responsable",
-                dniLookupSearching: "Buscando datos de otras inscripciones…",
-                dniLookupFound: "Hemos encontrado tus datos. Revísalos antes de apuntarte.",
-                dniLookupNotFound: "No hemos encontrado datos anteriores con este DNI.",
-                dniLookupUnavailable: "Autocompletado no disponible todavía.",
-                successTitle: "Te has apuntado correctamente",
-                successAnotherBtn: "Apuntarme a otro turno",
-                successMyShiftsBtn: "Ver mis turnos",
-                successCloseBtn: "Cerrar",
-				shiftNotFound: "No se ha encontrado ese turno.",
-				shiftFull: "Ese turno está completo.",
-				notEnoughPlaces: "No hay plazas suficientes para inscribir a todas las personas.",
-				notResp: "Este turno no tiene plazas de responsable disponibles.",
-				notEnoughResp: "Ya están cubiertas las plazas de responsable de este turno.",
-				duplicateInTurno: "Ya está apuntada una persona con ese DNI en el turno.",
-				duplicateInRequest: "Hay DNI repetidos entre las personas que quieres inscribir.",
-				duplicateInSheet: "Una de las personas ya está apuntada a ese turno.",
-				notdata: "Faltan datos obligatorios.",
-				missingMainEmail: "Falta el campo email en la persona principal.",
-				managerNotFound: "No se ha encontrado esa inscripción activa.",
-				noPermission: "No tienes permiso para gestionar esta inscripción.",
-				noChanges: "No hay cambios que guardar.",
-				unknownError: "Se ha producido un error."
-            },
-            eu: {
-                mainTitle: "Ikastolako barrakako txandak",
-                headerSubtitle: "Aukeratu txanda bat eta eman izena. Ondoren Nire txandak ataletik aldatu ahal izango duzu.",
-                myShiftsCta: "Nire txandak kontsultatu / aldatu",
-                reloadBtn: "Eguneratu",
-                helpLink: "Laguntza / kontaktua",
-                mobileToolsBtn: "Iragazkiak eta laburpena",
-                mobileToolsOpenBtn: "Iragazkiak eta laburpena ezkutatu",
-                reloadingBtn: "Eguneratzen...",
-                statusLoading: "Txandak kargatzen...",
-                statusLoaded: n => `Eguneratuta. ${n} txanda kargatuta.`,
-                myPanelTitle: "Nire txandak",
-                myPanelSubtitle: "Sartu zure emaila eta izena (edo abizena) zure izen-emateak ikusi, aldatu edo ezabatzeko.",
-                labelMyEmail: "Emaila",
-                labelmyNombre: "Izena edo abizena",
-                myFormBtn: "Nire txandak ikusi",
-                dlgSignupTitle: "Izena eman",
-                signupConfirmLabel: "Hautatutako txanda:",
-                labelEmail: "Emaila",
-                labelDni: "NAN",
-                labelnombre: "Izen-abizenak",
-                labelGela: "Ikastolan seme-alabak badituzu, adierazi zein mailatan. Aukera bat baino gehiago hauta ditzakezu",
-                labelResponsableTurno: "Txandako arduraduna izan naiteke",
-                labelChangeResponsableTurno: "Txandako arduradun lana egin nahi dut",
-				labelPublicarNombreDecision: "Nola agertu nahi duzu zerrenda publikoan?",
-				publicarNombreSi: "Nire izen-abizenak erakutsi",
-				publicarNombreNo: "Ez erakutsi nire izena; pribatu gisa agertuko naiz.",
-				publicarNombreHelp: "Aukera hau inskribatzen dituzun pertsona gehigarriei ere aplikatuko zaie.",
-                choosePublicName: "Aukeratu izena publikoki erakutsi nahi duzun edo pribatu gisa agertu nahi duzun.",
-                invalidDni: "Sartu baliozko NAN/AIZ bat (8 zenbaki eta letra zuzena, edo X/Y/Z duen AIZ).",
-                dniAlreadyInShift: "Pertsona hau dagoeneko txanda honetan izena emanda dago.",
-                signupAddPersonTitle: "Pertsona gehitu",
-                privacyFooterLink: "Pribatutasun politika",
-                privacyNoticeText: "Izen-ematea baieztatzean, zure datuak txandak kudeatzeko erabiliko dira. Informazio gehiago kontsulta dezakezu hemen:",
-                privacyNoticeLink: "Pribatutasun politika",
-                additionalPeopleTitle: "Beste pertsona bat zurekin apuntatu nahi duzu?",
-                btnAddAdditionalPerson: "Beste pertsona bat gehitu",
-                additionalPersonTitle: n => `Pertsona gehigarria ${n}`,
-                btnRemovePerson: "Kendu",
-                responsableAvailable: n => n === 1 ? "Arduradun plaza 1 geratzen da." : `${n} arduradun plaza geratzen dira.`,
-                responsableFull: "Txanda honetan ez dago arduradun plazarik libre.",
-                responsableCurrent: "Izen-emate honek arduradun plaza bat dauka.",
-                responsibleLimit: n => n === 1 ? "Txanda honetarako arduradun plaza 1 bakarrik geratzen da." : `Txanda honetarako ${n} arduradun plaza bakarrik geratzen dira.`,
-                signupMultipleOk: n => n === 1 ? "Izena ematea burutu da." : `${n} izen-emate burutu dira.`,
-                backendNeedsId: "Pertsona bat baino gehiago apuntatzeko, Apps Script-ek alta nagusiaren erantzunean id_inscripcion itzuli behar du.",
-                btnAddPerson: "Pertsona gehitu",
-                responsibleLabel: "Txandako arduraduna",
-                managedByMeLabel: "Zuk kudeatua",
-                dlgSignupCancel: "Utzi",
-                dlgSignupConfirm: "Txandan izena eman",
-                signupSavingTitle: "Izen-ematea gordetzen…",
-                signupSavingText: "Itxaron segundo batzuk, mesedez. Ez itxi leiho hau.",
-                signupSavingBtn: "Izena ematen…",
-                dlgChangeTitle: "Txanda aldatu",
-                labelNewShift: "Txanda berria",
-                dlgChangeCancel: "Utzi",
-                dlgChangeConfirm: "Aldatu",
-                badgeFull: "Beteta",
-                badgeFew: (free, total) => `${free}/${total} falta`,
-                missingCounter: (free, total) => free <= 0 ? `Txanda beteta · ${total}/${total}` : `${free}/${total} falta`,
-                missingCounterHelp: "betetzeko pertsonak",
-                btnSignup: "Izena eman",
-                btnFull: "Txanda beteta",
-                noSignups: "Oraindik ez dago inor izena emanda.",
-                namesLabel: "Izena eman duten pertsonak",
-                summaryTurns: "txanda erabilgarri",
-                summaryFree: "betetzeko falta direnak",
-                summaryPeople: "izena eman duten pertsonak",
-                summaryDays: "txandak dituzten egunak",
-                signupDay: "Eguna",
-                signupShift: "Txanda",
-                signupTime: "Ordua",
-                noAvailable: "Ez dago txanda erabilgarririk",
-                toastSignupOk: "Izena ematea burutu da.",
-                toastChangeOk: "Txanda aldatuta.",
-                toastDeleteOk: "Izena ematea ezabatuta.",
-                confirmDelete: "Ziur zaude izen-emate hau ezabatu nahi duzula?",
-                btnChange: "Aldatu",
-                btnDelete: "Ezabatu",
-                noMyShifts: "Ez dago datu horiekin lotutako izen-emate aktiborik.",
-                emptyStateTitle: "Ez dago txanda erabilgarririk",
-                emptyStateText: "Itzuli geroago edo sakatu Eguneratu.",
-                changePrefix: "Aldatuko duzu:",
-                fillAllFields: "Bete eremu guztiak.",
-                invalidEmail: "Emaila ez da baliozkoa.",
-                invalidSurname: "Sartu baliozko abizena.",
-                filterTitle: "Txandak iragazi",
-                filterAll: "Denak",
-                filterOpen: "Leku libreak",
-                filterMorning: "Goiza",
-                filterAfternoon: "Arratsaldea",
-				filterRefuerzo: "Errefortzu",
-                filterResponsible: "Arduraduna falta da",
-                filterRecommended: "Premiazkoenak",
-                recommendedLabel: "Premiazkoa",
-                responsibleNeededLabel: "Arduraduna falta da",
-                dniLookupSearching: "Beste inskripzio batzuen datuak bilatzen…",
-                dniLookupFound: "Zure datuak aurkitu ditugu. Berrikusi izena eman aurretik.",
-                dniLookupNotFound: "Ez dugu aurkitu aurreko daturik NAN honekin.",
-                dniLookupUnavailable: "Autobetetzea oraindik ez dago erabilgarri.",
-                successTitle: "Ondo eman duzu izena",
-                successAnotherBtn: "Beste txanda batean izena eman",
-                successMyShiftsBtn: "Nire txandak ikusi",
-                successCloseBtn: "Itxi",
-				shiftNotFound: "Ez da txanda hori aurkitu.",
-				shiftFull: "Txanda hori beteta dago.",
-				notEnoughPlaces: "Ez dago nahikoa plaza pertsona guztiak inskribatzeko.",
-				notResp: "Txanda honek ez du arduradunentzako plazarik erabilgarri.",
-				notEnoughResp: "Txanda honetako arduradun plazak beteta daude.",
-				duplicateInTurno: "DNI/NAN horrekin pertsona bat dago jada txanda horretan izena emanda.",
-				duplicateInRequest: "Inskribatu nahi dituzun pertsonen artean NAN errepikatuta dago.",
-				duplicateInSheet: "Pertsona horietako bat dago jada txanda horretan izena emanda.",
-				notdata: "Nahitaezko datuak falta dira.",
-				missingMainEmail: "Email eremua falta da pertsona nagusian.",
-				managerNotFound: "Ez da inskripzio aktibo hori aurkitu.",
-				noPermission: "Ez duzu baimenik inskripzio hau kudeatzeko.",
-				noChanges: "Ez dago gordetzeko aldaketarik.",
-				unknownError: "Errore bat gertatu da."
-            }
-        };
-
+        const TRANSLATIONS_URL = "traducciones-index.json";
+        let TEXTS = { es: {}, eu: {} };
+        let SHIFT_TRANSLATIONS = { tipos: {}, dias: {} };
         let lang = localStorage.getItem("lang") || "es";
         const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {}, activeFilter: "all" };
         let didHandleInitialLink = false;
         const $ = id => document.getElementById(id);
 
+        function interpolate(text, args) {
+            return String(text ?? "").replace(/\{(\d+)\}/g, (_, index) => args[index] ?? "");
+        }
+
         function t(key, ...args) {
-            const val = TEXTS[lang][key];
-            return typeof val === "function" ? val(...args) : val;
+            const dictionary = TEXTS[lang] || TEXTS.es || {};
+            let value = dictionary[key] ?? TEXTS.es?.[key] ?? key;
+
+            if (value && typeof value === "object") {
+                const firstArg = Number(args[0]);
+                if (Object.prototype.hasOwnProperty.call(value, "zero") && firstArg <= 0) value = value.zero;
+                else if (Object.prototype.hasOwnProperty.call(value, "one") && firstArg === 1) value = value.one;
+                else value = value.other ?? value.default ?? "";
+            }
+            return interpolate(value, args);
         }
-
-     
-let SHIFT_TRANSLATIONS = {
-    tipos: {},
-    dias: {}
-};
-
-async function loadShiftTranslations() {
-    try {
-        const response = await fetch("traducciones-turnos.json");
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        async function loadTranslations() {
+            try {
+                const response = await fetch(TRANSLATIONS_URL, { cache: "no-cache" });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                TEXTS = data.ui || { es: {}, eu: {} };
+                SHIFT_TRANSLATIONS = data.turnos || { tipos: data.tipos || {}, dias: data.dias || {} };
+            } catch (error) {
+                console.error("No se han podido cargar las traducciones.", error);
+            }
         }
-
-        const external = await response.json();
-
-        SHIFT_TRANSLATIONS = {
-            tipos: external.tipos || {},
-            dias: external.dias || {}
-        };
-    } catch (error) {
-        console.error("No se han podido cargar traducciones-turnos.json.", error);
-        showToast("No se han podido cargar las traducciones de turnos.");
-    }
-}
-
-function dataKey(value) {
+	function dataKey(value) {
     return normalizeText(value)
         .replace(/[^a-z0-9]+/g, " ")
         .trim();
-}
-
-function findAliasCode(value, aliases) {
-    const key = dataKey(value);
-    if (!key) return "";
-
-    const parts = key.split(" ");
-
-    for (const [code, words] of aliases) {
-        if (words.some(word => {
-            const aliasKey = dataKey(word);
-            return parts.includes(aliasKey) || key.includes(aliasKey);
-        })) {
-            return code;
-        }
-    }
-
-    return "";
-}
-
-function getDayCodeFromDate(fecha) {
+	}
+	function getDayCodeFromDate(fecha) {
     if (!fecha) return "";
-
     const date = new Date(`${fecha}T12:00:00`);
-
     if (Number.isNaN(date.getTime())) return "";
-
     return [
         "sunday",
         "monday",
@@ -1344,11 +252,9 @@ function getDayCodeFromDate(fecha) {
 
 function getDayLabel(item) {
     const code = getDayCodeFromDate(item?.fecha);
-
     if (!code) {
         return String(item?.dia || "").trim();
     }
-
     return SHIFT_TRANSLATIONS.dias?.[code]?.[lang] || "";
 }
 
@@ -1364,7 +270,6 @@ function getShiftTypeLabel(item) {
 
     return SHIFT_TRANSLATIONS.tipos?.[code]?.[lang] || original || "";
 }
-
         function setLang(l) {
             lang = l;
             localStorage.setItem("lang", l);
@@ -1643,19 +548,7 @@ function getShiftTypeLabel(item) {
             return String(person.nombre).trim();
         }
 
-        function setGelaSelectionByValue(name, valuesText) {
-            const selected = String(valuesText || "").split(",").map(v => normalizeText(v)).filter(Boolean);
-            document.querySelectorAll(`input[name="${CSS.escape(name)}"]`).forEach(cb => {
-                cb.checked = selected.includes(normalizeText(cb.value));
-            });
-        }
 
-        function setExtraGelaSelection(card, valuesText) {
-            const selected = String(valuesText || "").split(",").map(v => normalizeText(v)).filter(Boolean);
-            card.querySelectorAll('[data-extra-gela] input').forEach(cb => {
-                cb.checked = selected.includes(normalizeText(cb.value));
-            });
-        }
 
         function setLookupHint(el, message, type = "") {
             if (!el) return;
@@ -1793,12 +686,6 @@ function getShiftTypeLabel(item) {
             });
         }
 
-        function getShiftUrl(shift, openForm = false) {
-            const url = new URL(window.location.href);
-            url.searchParams.set("turno", shift.id_turno);
-            if (openForm) url.searchParams.set("apuntar", "1");
-            return url.toString();
-        }
 
         function handleInitialShiftLink() {
             if (didHandleInitialLink) return;
@@ -1983,9 +870,6 @@ function getShiftTypeLabel(item) {
             return true;
         }
 
-        function countRequestedResponsible(mainPerson, extraPeople) {
-            return isResponsibleValue(mainPerson.responsable_turno) ? 1 : 0;
-        }
 
         function getGestorIdForNewPerson(item) {
             return String(item.id_inscripcion_gestor || item.id_inscripcion || "").trim();
@@ -2525,8 +1409,8 @@ if (mainDniInput) {
 }
 
         async function initApp() {
+            await loadTranslations();
             applyTexts();
-            await loadShiftTranslations();
             await loadData();
         }
 
