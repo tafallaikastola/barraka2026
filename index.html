@@ -84,20 +84,12 @@
                 <h2 id="myPanelTitle">Mis turnos</h2>
                 <button class="close-btn" onclick="$('myShiftsDialog').close()" aria-label="Cerrar">✕</button>
             </div>
-            <p class="subtitle" id="myPanelSubtitle" style="margin:0 0 16px;">Introduce tu email y nombre (o apellido) para ver, cambiar o borrar tus inscripciones.</p>
+            <p class="subtitle" id="myPanelSubtitle" style="margin:0 0 16px;">Introduce tu DNI para ver, cambiar o borrar tus inscripciones.</p>
             <div>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                     <div>
-                        <label for="myEmail"><span id="labelMyEmail">Email</span><span class="required-star">*</span></label>
-                        <input id="myEmail" type="email" required autocomplete="email" />
-                    </div>
-                    <div>
                         <label for="myDni"><span id="labelMyDni">DNI</span><span class="required-star">*</span></label>
                         <input id="myDni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido" />
-                    </div>
-                    <div>
-                        <label for="myNombre"><span id="labelmyNombre">Nombre o apellido</span></label>
-                        <input id="myNombre" autocomplete="family-name" />
                     </div>
                 </div>
                 <div class="actions" style="justify-content:flex-start; margin-top: 14px;">
@@ -222,7 +214,7 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby_nsN3UTkMo1BbzdAXXR7R6nVOW8ItCbbiHmsCqs-2msVDMLBYYky2HhC_HidtELs/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxrGAItHuMYip4AIzNJ1WRj_uAPMTrFkgXL4ny7-SCL3NcyS0hWpBfSODW7wzLHTjec/exec";
 							
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
@@ -329,7 +321,7 @@ function getShiftTypeLabel(item) {
 
             const ids = [
                 "mainTitle", "headerSubtitle", "myShiftsCta", "helpLink", "mobileToolsBtn", "myPanelTitle", "myPanelSubtitle",
-                "labelMyEmail", "labelMyDni", "labelmyNombre", "myFormBtn",
+                "labelMyDni", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
                  "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
@@ -360,12 +352,10 @@ function getShiftTypeLabel(item) {
 
         function scrollToMyShifts({ autoLoad = false } = {}) {
             applyTexts();
-            clearInvalidFields(["myEmail", "myDni", "myNombre"]);
+            clearInvalidFields(["myDni"]);
 
             if (state.myIdentity) {
-                $("myEmail").value = state.myIdentity.email || "";
                 $("myDni").value = state.myIdentity.dni || "";
-                $("myNombre").value = state.myIdentity.nombreVisible || state.myIdentity.nombre || "";
             }
 
             $("myShiftsDialog").showModal();
@@ -375,7 +365,7 @@ function getShiftTypeLabel(item) {
                 return;
             }
 
-            setTimeout(() => $(state.myIdentity ? "myFormBtn" : "myEmail").focus(), 80);
+            setTimeout(() => $(state.myIdentity ? "myFormBtn" : "myDni").focus(), 80);
         }
 
         function showToast(message) {
@@ -1261,9 +1251,7 @@ const publicarNombre = publicarNombreSelected.value;
             nombre: normalizeText(mainPerson.nombre),
             nombreVisible: mainPerson.nombre
         };
-        $("myEmail").value = state.myIdentity.email;
         $("myDni").value = state.myIdentity.dni;
-        $("myNombre").value = state.myIdentity.nombreVisible;
 
         if (response.turnos) {
             state.shifts = response.turnos || [];
@@ -1289,17 +1277,13 @@ const publicarNombre = publicarNombreSelected.value;
 }
         async function loadMyShifts() {
             const btn = $("myFormBtn");
-            const email = $("myEmail").value.trim();
             const dni = normalizeDni($("myDni").value.trim());
-            const nombre = $("myNombre").value.trim();
 
-            if (!validateRequired(["myEmail", "myDni"])) return;
-            if (!isValidEmail(email)) return showToast(t("invalidEmail"));
+            if (!validateRequired(["myDni"])) return;
             if (!validateDniInput($("myDni"))) return showToast(t("invalidDni"));
-            if (nombre && !isValidName(nombre)) return showToast(t("invalidSurname"));
 
             $("myDni").value = dni;
-            state.myIdentity = { email, dni, nombre: normalizeText(nombre), nombreVisible: nombre };
+            state.myIdentity = { dni };
             btn.disabled = true;
 
             try {
