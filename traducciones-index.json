@@ -12,9 +12,9 @@
       "statusLoading": "Cargando turnos...",
       "statusLoaded": "Actualizado. {0} turnos cargados.",
       "myPanelTitle": "Mis turnos",
-      "myPanelSubtitle": "Introduce tu email y nombre (o apellido) para ver, cambiar o borrar tus inscripciones.",
+      "myPanelSubtitle": "Introduce tu email y DNI para ver, cambiar o borrar tus inscripciones. El nombre es opcional.",
       "labelMyEmail": "Email",
-      "labelmyNombre": "Nombre o apellido",
+      "labelmyNombre": "Nombre o apellido (opcional)",
       "myFormBtn": "Ver mis turnos",
       "dlgSignupTitle": "Apuntarme",
       "signupConfirmLabel": "Turno seleccionado:",
@@ -130,7 +130,8 @@
       "managerNotFound": "No se ha encontrado esa inscripción activa.",
       "noPermission": "No tienes permiso para gestionar esta inscripción.",
       "noChanges": "No hay cambios que guardar.",
-      "unknownError": "Se ha producido un error."
+      "unknownError": "Se ha producido un error.",
+      "labelMyDni": "DNI"
     },
     "eu": {
       "mainTitle": "Ikastolako barrakako txandak",
@@ -144,9 +145,9 @@
       "statusLoading": "Txandak kargatzen...",
       "statusLoaded": "Eguneratuta. {0} txanda kargatuta.",
       "myPanelTitle": "Nire txandak",
-      "myPanelSubtitle": "Sartu zure emaila eta izena (edo abizena) zure izen-emateak ikusi, aldatu edo ezabatzeko.",
+      "myPanelSubtitle": "Sartu zure emaila eta NANa zure izen-emateak ikusi, aldatu edo ezabatzeko. Izena aukerakoa da.",
       "labelMyEmail": "Emaila",
-      "labelmyNombre": "Izena edo abizena",
+      "labelmyNombre": "Izena edo abizena (aukerakoa)",
       "myFormBtn": "Nire txandak ikusi",
       "dlgSignupTitle": "Izena eman",
       "signupConfirmLabel": "Hautatutako txanda:",
@@ -262,7 +263,8 @@
       "noPermission": "Ez duzu baimenik inskripzio hau kudeatzeko.",
       "noChanges": "Ez dago gordetzeko aldaketarik.",
       "unknownError": "Errore bat gertatu da.",
-      "invalidName": "Sartu baliozko izena."
+      "invalidName": "Sartu baliozko izena.",
+      "labelMyDni": "NAN"
     }
   },
   "turnos": {
