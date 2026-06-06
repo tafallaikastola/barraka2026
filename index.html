@@ -92,8 +92,12 @@
                         <input id="myEmail" type="email" required autocomplete="email" />
                     </div>
                     <div>
-                        <label for="myNombre"><span id="labelmyNombre">Nombre o apellido</span><span class="required-star">*</span></label>
-                        <input id="myNombre" required autocomplete="family-name" />
+                        <label for="myDni"><span id="labelMyDni">DNI</span><span class="required-star">*</span></label>
+                        <input id="myDni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido" />
+                    </div>
+                    <div>
+                        <label for="myNombre"><span id="labelmyNombre">Nombre o apellido</span></label>
+                        <input id="myNombre" autocomplete="family-name" />
                     </div>
                 </div>
                 <div class="actions" style="justify-content:flex-start; margin-top: 14px;">
@@ -218,7 +222,7 @@
     </dialog>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxTM1xOZU-uQcn1KQv3s9uyLn92Z5JYv6RcT4E1v4zDUzDiC9xgDepZ0QRODkd8aIZE/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby_nsN3UTkMo1BbzdAXXR7R6nVOW8ItCbbiHmsCqs-2msVDMLBYYky2HhC_HidtELs/exec";
 							
         const FECHA_SEPARADORA = "2026-08-14";
         const DEFAULT_SHIFT_COLOR = "#64748b";
@@ -325,7 +329,7 @@ function getShiftTypeLabel(item) {
 
             const ids = [
                 "mainTitle", "headerSubtitle", "myShiftsCta", "helpLink", "mobileToolsBtn", "myPanelTitle", "myPanelSubtitle",
-                "labelMyEmail", "labelmyNombre", "myFormBtn",
+                "labelMyEmail", "labelMyDni", "labelmyNombre", "myFormBtn",
                 "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
                  "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
@@ -356,10 +360,11 @@ function getShiftTypeLabel(item) {
 
         function scrollToMyShifts({ autoLoad = false } = {}) {
             applyTexts();
-            clearInvalidFields(["myEmail", "myNombre"]);
+            clearInvalidFields(["myEmail", "myDni", "myNombre"]);
 
             if (state.myIdentity) {
                 $("myEmail").value = state.myIdentity.email || "";
+                $("myDni").value = state.myIdentity.dni || "";
                 $("myNombre").value = state.myIdentity.nombreVisible || state.myIdentity.nombre || "";
             }
 
@@ -1242,6 +1247,7 @@ const publicarNombre = publicarNombreSelected.value;
             id_inscripcion_gestor: existingGestorId,
             gestor_email: state.myIdentity ? state.myIdentity.email : mainPerson.email,
             gestor_nombre: state.myIdentity ? state.myIdentity.nombreVisible : mainPerson.nombre,
+            gestor_dni: state.myIdentity ? state.myIdentity.dni : mainPerson.dni,
             personas_adicionales: personasAdicionales
         });
 
@@ -1251,16 +1257,27 @@ const publicarNombre = publicarNombreSelected.value;
 
         state.myIdentity = {
             email: mainPerson.email,
+            dni: mainPerson.dni,
             nombre: normalizeText(mainPerson.nombre),
             nombreVisible: mainPerson.nombre
         };
         $("myEmail").value = state.myIdentity.email;
+        $("myDni").value = state.myIdentity.dni;
         $("myNombre").value = state.myIdentity.nombreVisible;
 
-        await loadData();
+        if (response.turnos) {
+            state.shifts = response.turnos || [];
+            state.opciones = response.opciones || state.opciones || {};
+            renderShifts();
+            const statusEl = $("status");
+            statusEl.textContent = t("statusLoaded", state.shifts.length);
+            statusEl.dataset.loaded = "1";
+            statusEl.dataset.count = state.shifts.length;
+        } else {
+            await loadData();
+        }
 
-        const myTurnsData = await api("misTurnos", state.myIdentity);
-        state.myInscriptions = myTurnsData.inscripciones || [];
+        state.myInscriptions = response.inscripciones || [];
         renderMyShifts();
 
         showSignupSuccess(shift, total);
@@ -1273,13 +1290,16 @@ const publicarNombre = publicarNombreSelected.value;
         async function loadMyShifts() {
             const btn = $("myFormBtn");
             const email = $("myEmail").value.trim();
+            const dni = normalizeDni($("myDni").value.trim());
             const nombre = $("myNombre").value.trim();
 
-            if (!validateRequired(["myEmail", "myNombre"])) return;
+            if (!validateRequired(["myEmail", "myDni"])) return;
             if (!isValidEmail(email)) return showToast(t("invalidEmail"));
-            if (!isValidName(nombre)) return showToast(t("invalidSurname"));
+            if (!validateDniInput($("myDni"))) return showToast(t("invalidDni"));
+            if (nombre && !isValidName(nombre)) return showToast(t("invalidSurname"));
 
-            state.myIdentity = { email, nombre: normalizeText(nombre), nombreVisible: nombre };
+            $("myDni").value = dni;
+            state.myIdentity = { email, dni, nombre: normalizeText(nombre), nombreVisible: nombre };
             btn.disabled = true;
 
             try {
@@ -1357,17 +1377,21 @@ const publicarNombre = publicarNombreSelected.value;
 
             btn.disabled = true;
             try {
-                await api("cambiar", {
+                const data = await api("cambiar", {
                     ...state.myIdentity,
                     id_inscripcion: $("changeInscriptionId").value,
-                    dni: $("changeInscriptionId").dataset.dni || "",
                     nuevo_id_turno: $("newShiftId").value,
                     responsable_turno: $("changeResponsableTurno").checked ? "si" : "no"
                 });
                 $("changeDialog").close();
                 showToast(t("toastChangeOk"));
-                await loadData();
-                const data = await api("misTurnos", state.myIdentity);
+                if (data.turnos) {
+                    state.shifts = data.turnos || [];
+                    state.opciones = data.opciones || state.opciones || {};
+                    renderShifts();
+                } else {
+                    await loadData();
+                }
                 state.myInscriptions = data.inscripciones || [];
                 renderMyShifts();
             } catch (error) {
@@ -1383,10 +1407,15 @@ const publicarNombre = publicarNombreSelected.value;
 
             if (button) button.disabled = true;
             try {
-                await api("borrar", { ...state.myIdentity, id_inscripcion: idInscripcion });
+                const data = await api("borrar", { ...state.myIdentity, id_inscripcion: idInscripcion });
                 showToast(t("toastDeleteOk"));
-                await loadData();
-                const data = await api("misTurnos", state.myIdentity);
+                if (data.turnos) {
+                    state.shifts = data.turnos || [];
+                    state.opciones = data.opciones || state.opciones || {};
+                    renderShifts();
+                } else {
+                    await loadData();
+                }
                 state.myInscriptions = data.inscripciones || [];
                 renderMyShifts();
             } catch (error) {
