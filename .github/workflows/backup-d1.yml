@@ -1,0 +1,35 @@
+name: Backup D1 diario
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Exportar D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          mkdir -p backups
+          FECHA=$(date +'%Y-%m-%d')
+          npx wrangler d1 export barraka-db --remote --output=./backups/barraka-db-$FECHA.sql --no-schema
+
+      - name: Guardar backup como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: barraka-db-backup
+          path: backups/*.sql
+          retention-days: 30
