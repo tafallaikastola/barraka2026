@@ -1277,6 +1277,7 @@ function getShiftTypeLabel(item) {
             applyTexts();
             $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
             $("signupDialog").showModal();
+			$("dni")?.focus();
         }
 
         function setSignupSaving(isSaving) {
