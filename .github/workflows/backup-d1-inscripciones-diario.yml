@@ -1,0 +1,35 @@
+name: Backup D1 diario - inscripciones
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup-inscripciones:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Exportar tabla inscripciones
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          mkdir -p backups/diario
+          FECHA=$(date +'%Y-%m-%d')
+          npx wrangler d1 export barraka-db --remote --table=inscripciones --output=./backups/diario/inscripciones-$FECHA.sql
+
+      - name: Guardar backup diario como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inscripciones-diario
+          path: backups/diario/*.sql
+          retention-days: 30
