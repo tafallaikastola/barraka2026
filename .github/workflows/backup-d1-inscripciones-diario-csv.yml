@@ -1,4 +1,4 @@
-name: Backup D1 diario - inscripciones Excel
+name: Backup D1 diario - inscripciones CSV
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  backup-inscripciones-excel:
+  backup-inscripciones-csv:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,26 +18,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: Instalar dependencias
-        run: |
-          npm install better-sqlite3 xlsx
-
-      - name: Exportar tabla inscripciones desde D1
+      - name: Exportar inscripciones a CSV
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           mkdir -p backups/diario
           FECHA=$(date +'%Y-%m-%d')
-          npx wrangler d1 export barraka-db --remote --table=inscripciones --output=./backups/diario/inscripciones-$FECHA.sql
+          npx wrangler d1 execute barraka-db --remote --command="SELECT * FROM inscripciones ORDER BY fecha_creacion DESC;" --json > ./backups/diario/inscripciones-$FECHA.json
+          node scripts/json-d1-to-csv.js ./backups/diario/inscripciones-$FECHA.json ./backups/diario/inscripciones-$FECHA.csv
 
-      - name: Convertir SQL a Excel
-        run: |
-          node scripts/sql-to-xlsx.js
-
-      - name: Guardar Excel como artifact
+      - name: Guardar CSV diario como artifact
         uses: actions/upload-artifact@v4
         with:
-          name: inscripciones-excel-diario
-          path: backups/diario/*.xlsx
+          name: inscripciones-csv-diario
+          path: backups/diario/*.csv
           retention-days: 30
