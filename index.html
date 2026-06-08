@@ -416,6 +416,12 @@ function getShiftTypeLabel(item) {
             setTimeout(() => $(state.myIdentity ? "myFormBtn" : "myDni").focus(), 80);
         }
 
+		function emailQueuedMessage() {
+	    return lang === "eu"
+	        ? "Baieztapen-emaila jasoko duzu minutu gutxi barru."
+	        : "Recibirás un email de confirmación en unos minutos.";
+	}
+		
         function showToast(message) {
             $("toastmsg").textContent = message;
             if (!$("toast").open) $("toast").showModal();
@@ -868,15 +874,21 @@ function getShiftTypeLabel(item) {
             }
         }
 
-        function showSignupSuccess(shift, total) {
-            const dialog = $("successDialog");
-            const text = $("successShiftText");
-            if (text && shift) {
-                text.textContent = `${getDayLabel(shift)} · ${normalizeDateLabel(shift.fecha)} · ${getShiftTypeLabel(shift)} · ${shift.hora_inicio || ""}–${shift.hora_fin || ""}`;
-            }
-            if (dialog && !dialog.open) dialog.showModal();
-        }
-
+       function showSignupSuccess(shift, total, emailQueued = false) {
+	    const dialog = $("successDialog");
+	    const text = $("successShiftText");
+	
+	    if (text && shift) {
+	        const resumen = `${getDayLabel(shift)} · ${normalizeDateLabel(shift.fecha)} · ${getShiftTypeLabel(shift)} · ${shift.hora_inicio || ""}–${shift.hora_fin || ""}`;
+	
+	        text.innerHTML = `
+	            <div>${escapeHtml(resumen)}</div>
+	            ${emailQueued ? `<div style="margin-top:10px; font-weight:700;">${escapeHtml(emailQueuedMessage())}</div>` : ""}
+	        `;
+	    }
+	
+	    if (dialog && !dialog.open) dialog.showModal();
+	}
         function closeSuccessAndChooseAnother() {
             if ($("successDialog").open) $("successDialog").close();
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1401,7 +1413,7 @@ const publicarNombre = publicarNombreSelected.value;
         state.myInscriptions = response.inscripciones || [];
         renderMyShifts();
 
-        showSignupSuccess(shift, total);
+        showSignupSuccess(shift, total, response.emailQueued);
     } catch (error) {
         showToast(error.message);
     } finally {
@@ -1502,7 +1514,11 @@ const publicarNombre = publicarNombreSelected.value;
                     es_responsable: $("changeResponsableTurno").checked ? 1 : 0
                 });
                 $("changeDialog").close();
-                showToast(t("toastChangeOk"));
+                let mensaje = t("toastChangeOk");
+				if (data.emailQueued) {
+				    mensaje += " " + emailQueuedMessage();
+				}
+				showToast(mensaje);
                 if (data.turnos) {
                     state.shifts = data.turnos || [];
                     state.opciones = data.opciones || state.opciones || {};
@@ -1526,7 +1542,11 @@ const publicarNombre = publicarNombreSelected.value;
             if (button) button.disabled = true;
             try {
                 const data = await api("borrar", { ...state.myIdentity, id_inscripcion: idInscripcion });
-                showToast(t("toastDeleteOk"));
+                let mensaje = t("toastDeleteOk");
+				if (data.emailQueued) {
+				    mensaje += " " + emailQueuedMessage();
+				}
+				showToast(mensaje);
                 if (data.turnos) {
                     state.shifts = data.turnos || [];
                     state.opciones = data.opciones || state.opciones || {};
