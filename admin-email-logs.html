@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel de Gestión · Barraka Txandak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+
+  <style>
+    .email-log-panel { margin-top: 18px; }
+    .email-log-tools { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+    .email-log-table-wrap { overflow:auto; border-radius:16px; border:1px solid rgba(15,23,42,.12); background:#fff; }
+    .email-log-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    .email-log-table th, .email-log-table td { padding:10px 12px; border-bottom:1px solid rgba(15,23,42,.08); text-align:left; vertical-align:top; }
+    .email-log-table th { background:rgba(15,23,42,.04); font-weight:800; white-space:nowrap; }
+    .email-status { display:inline-flex; border-radius:999px; padding:3px 9px; font-weight:800; font-size:.78rem; }
+    .email-status.sent { background:#dcfce7; color:#166534; }
+    .email-status.queued { background:#dbeafe; color:#1d4ed8; }
+    .email-status.error { background:#fee2e2; color:#991b1b; }
+    .email-status.skipped { background:#fef3c7; color:#92400e; }
+    .email-error { max-width:420px; white-space:normal; word-break:break-word; color:#991b1b; }
+    .mini-action { margin-left:8px; font-size:.78rem; padding:4px 8px; border-radius:999px; }
+  </style>
+
+</head>
+<body>
+  <div id="loginScreen">
+    <div class="login-box">
+
+      <h1>Panel de Gestión</h1>
+      <p>Vista privada para revisar cobertura, huecos y responsables de los turnos.</p>
+      <input type="password" id="pwdInput" placeholder="••••••••" autocomplete="current-password" />
+      <button onclick="checkPassword()">Entrar</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <div id="app">
+    <header>
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-icon"> </div>
+          <h1>Panel de Gestión<small>BARRAKA IKASTOLA · TXANDAK</small></h1>
+        </div>
+        <div class="header-actions">
+          <span id="lastUpdate"></span>
+          <button class="header-btn" onclick="loadData()">↻ Actualizar</button>
+          <a class="header-btn" href="index.html">← Volver a la web</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="view-tabs" role="tablist" aria-label="Vistas del panel">
+        <button class="view-tab active" id="tabSummary" onclick="setView('summary')">Resumen visual</button>
+        <button class="view-tab" id="tabList" onclick="setView('list')">Listado por turnos</button>
+        <button class="view-tab" id="tabEmails" onclick="setView('emails')">Emails</button>
+      </div>
+      <div id="summaryView"></div>
+      <div id="listView" class="hidden"></div>
+      <div id="emailLogsView" class="hidden"></div>
+    </main>
+  </div>
+
+<script>
+   const API_BASE = "https://barraka-api.mabregoa.workers.dev";
+
+  let sessionPassword = '';
+  let allTurnos = [];
+  let activeDayKey = null;
+  let filterMode = 'all';
+  let currentView = 'summary';
+  let searchName = '';
+  let emailLogs = [];
+
+  async function adminApi(action, payload = {}, method = 'GET') {
+    let url = `${API_BASE.replace(/\/$/, '')}/api/${action}`;
+    const options = { method };
+
+    if (method === 'GET') {
+      const params = new URLSearchParams();
+      Object.entries(payload).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v).trim() !== '') params.set(k, v);
+      });
+      const query = params.toString();
+      if (query) url += `?${query}`;
+    } else {
+      options.headers = { 'Content-Type': 'application/json' };
+      options.body = JSON.stringify(payload);
+    }
+
+    const res = await fetch(url, options);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || data.message || `Error HTTP ${res.status}`);
+    }
+
+    return data;
+  }
+
+
+  async function checkPassword() {
+    const val = document.getElementById('pwdInput').value;
+    if (!val.trim()) return;
+    const btn = document.querySelector('.login-box button');
+    btn.textContent = 'Verificando…';
+    btn.disabled = true;
+    try {
+      const data = await adminApi('getAdminData', { pwd: val }, 'GET');
+      sessionPassword = val;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      render(data.turnos || []);
+      updateTime();
+      loadEmailLogs(false);
+      loadEmailLogs(false);
+    } catch (err) {
+      const errEl = document.getElementById('loginError');
+      errEl.textContent = err.message;
+      document.getElementById('pwdInput').value = '';
+      setTimeout(() => errEl.textContent = '', 3500);
+    } finally {
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+  async function loadData() {
+    showLoading();
+    try {
+      const data = await adminApi('getAdminData', { pwd: sessionPassword }, 'GET');
+      render(data.turnos || []);
+      updateTime();
+    } catch (err) {
+      document.getElementById('summaryView').innerHTML = `<div class="error-box">⚠ Error: ${escHtml(err.message)}</div>`;
+      document.getElementById('listView').innerHTML = '';
+    }
+  }
+
+  function updateTime() {
+    document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
+  }
+
+  function showLoading() {
+    const html = `<div class="loading"><div class="spinner"></div><span>Cargando datos…</span></div>`;
+    document.getElementById('summaryView').innerHTML = html;
+    document.getElementById('listView').innerHTML = '';
+  }
+
+  function setView(view) {
+    currentView = view;
+    document.getElementById('tabSummary').classList.toggle('active', view === 'summary');
+    document.getElementById('tabList').classList.toggle('active', view === 'list');
+    document.getElementById('tabEmails').classList.toggle('active', view === 'emails');
+    document.getElementById('summaryView').classList.toggle('hidden', view !== 'summary');
+    document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+    document.getElementById('emailLogsView').classList.toggle('hidden', view !== 'emails');
+
+    if (view === 'emails') {
+      loadEmailLogs(false);
+    } else {
+      highlightActiveDay();
+    }
+  }
+
+  function render(turnos) {
+    allTurnos = Array.isArray(turnos) ? turnos : [];
+    const days = groupByDay(allTurnos);
+    const dayKeys = Object.keys(days).sort();
+    if (!activeDayKey || !days[activeDayKey]) activeDayKey = dayKeys[0] || null;
+    renderSummary(days, dayKeys);
+    renderList(days, dayKeys);
+    setView(currentView);
+  }
+
+  function groupByDay(turnos) {
+    const days = {};
+    turnos.forEach(t => {
+      const key = String(t.fecha || 'Sin fecha');
+      if (!days[key]) days[key] = { dia: t.dia || key, fecha: key, turnos: [] };
+      days[key].turnos.push(t);
+    });
+    Object.values(days).forEach(day => day.turnos.sort((a,b) => String(a.hora_inicio).localeCompare(String(b.hora_inicio))));
+    return days;
+  }
+
+  function getStats(turnos) {
+    const total = turnos.reduce((s,t) => s + (Number(t.plazas) || 0), 0);
+    const occupied = turnos.reduce((s,t) => s + (Number(t.plazas_ocupadas) || 0), 0);
+    const free = turnos.reduce((s,t) => s + (Number(t.plazas_disponibles) || 0), 0);
+    const respMissing = turnos.filter(needsResponsible).length;
+    const incomplete = turnos.filter(t => (Number(t.plazas_disponibles) || 0) > 0).length;
+    const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    return { total, occupied, free, respMissing, incomplete, pct };
+  }
+
+  function needsResponsible(t) {
+    return (Number(t.plazas_responsable) || 0) > 0 && (Number(t.plazas_responsable_disponibles) || 0) > 0;
+  }
+
+  function renderSummary(days, dayKeys) {
+    const stats = getStats(allTurnos);
+    const urgency = buildUrgency(allTurnos, 10);
+    const dayCards = dayKeys.map(k => ({ key:k, day:days[k], stats:getStats(days[k].turnos) }));
+    document.getElementById('summaryView').innerHTML = `
+      <section class="kpi-grid">
+        <div class="kpi blue"><div class="kpi-label">Personas apuntadas</div><div class="kpi-value">${stats.occupied}/${stats.total}</div><div class="kpi-sub">${stats.pct}% de cobertura total</div></div>
+        <div class="kpi ${stats.free ? 'warn' : 'ok'}"><div class="kpi-label">Plazas libres</div><div class="kpi-value">${stats.free}</div><div class="kpi-sub">en ${stats.incomplete} turnos con huecos</div></div>
+        <div class="kpi ${stats.respMissing ? 'danger' : 'ok'}"><div class="kpi-label">Responsables pendientes</div><div class="kpi-value">${stats.respMissing}</div><div class="kpi-sub">${stats.respMissing ? 'prioridad máxima' : 'todos cubiertos'}</div></div>
+        <div class="kpi"><div class="kpi-label">Días / turnos</div><div class="kpi-value">${dayKeys.length}/${allTurnos.length}</div><div class="kpi-sub">seguimiento general</div></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="panel">
+          <h2>Mapa de cobertura por día</h2>
+          <p class="panel-help">Lectura rápida: porcentaje cubierto, huecos y responsables pendientes. Pulsa un día para revisarlo en el listado.</p>
+          <div class="day-map">
+            ${dayCards.map(d => renderDayCard(d)).join('')}
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Focos de acción</h2>
+          <p class="panel-help">Ordenado por urgencia: primero responsables pendientes, después turnos con menor cobertura y más huecos.</p>
+          <div class="tools-row">
+            <button class="copy-btn primary" onclick="copyCriticalReminder()">Copiar WhatsApp de lo urgente</button>
+            <button class="copy-btn" onclick="setView('list')">Ver listado completo</button>
+            <button class="copy-btn" onclick="exportAdminExcel()">Exportar Excel</button>
+            <button class="copy-btn" onclick="exportAdminPdf()">Exportar PDF</button>
+          </div>
+          <div class="urgent-list">
+            ${urgency.length ? urgency.map((item, idx) => renderUrgencyCard(item, idx)).join('') : '<div class="empty-ok">✔ No hay focos urgentes. Los turnos están bien cubiertos.</div>'}
+          </div>
+        </div>
+      </section>
+      ${renderCourseStats(allTurnos)}`;
+  }
+
+  function renderDayCard(d) {
+    const level = d.stats.pct < 50 || d.stats.respMissing >= 2 ? 'danger' : d.stats.pct < 75 || d.stats.respMissing > 0 ? 'warn' : '';
+    return `<button class="day-card ${d.key === activeDayKey ? 'active' : ''}" onclick="goToDay('${escAttr(d.key)}')">
+      <div class="day-card-head"><span class="day-card-title">${escHtml(d.day.dia)}</span><span class="day-card-date">${formatDate(d.key)}</span></div>
+      <div class="progress"><span class="${level}" style="width:${d.stats.pct}%"></span></div>
+      <div class="day-meta"><span><strong>${d.stats.pct}%</strong> cubierto</span><span>· faltan <strong>${d.stats.free}</strong></span><span>· resp. <strong>${d.stats.respMissing || 'OK'}</strong></span></div>
+    </button>`;
+  }
+
+  function buildUrgency(turnos, max) {
+    return turnos.map(t => {
+      const plazas = Number(t.plazas) || 0;
+      const occupied = Number(t.plazas_ocupadas) || 0;
+      const free = Number(t.plazas_disponibles) || 0;
+      const pct = plazas > 0 ? occupied / plazas : 1;
+      const respMissing = needsResponsible(t);
+      let score = 0;
+      if (respMissing) score += 120;
+      score += Math.round((1 - pct) * 70);
+      score += Math.min(free, 8) * 4;
+      return { t, plazas, occupied, free, pct, respMissing, score };
+    }).filter(x => x.score >= 36)
+      .sort((a,b) => b.score - a.score || String(a.t.fecha).localeCompare(String(b.t.fecha)) || String(a.t.hora_inicio).localeCompare(String(b.t.hora_inicio)))
+      .slice(0, max);
+  }
+
+  function renderUrgencyCard(item, idx) {
+    const t = item.t;
+    const cls = item.respMissing ? 'high' : item.pct < .6 ? 'medium' : '';
+    const pct = Math.round(item.pct * 100);
+    return `<div class="urgent-card ${cls}">
+      <span class="rank">${idx + 1}</span>
+      <div>
+        <div class="urgent-title">${escHtml(t.dia)} · ${escHtml(t.tipo)} ${escHtml(t.hora_inicio)}-${escHtml(t.hora_fin)}</div>
+        <div class="urgent-sub">${formatDate(t.fecha)} · ${item.occupied}/${item.plazas} personas · ${pct}% cubierto</div>
+      </div>
+      <div class="tags">
+        ${item.respMissing ? '<span class="tag danger">falta responsable</span>' : ''}
+        ${item.free ? `<span class="tag warn">faltan ${item.free}</span>` : ''}
+        <button class="copy-btn" onclick="copyShiftReminder('${escAttr(t.id_turno)}')">Copiar</button>
+      </div>
+    </div>`;
+  }
+
+  function renderList(days, dayKeys) {
+    document.getElementById('listView').innerHTML = `
+      <section class="tools-row">
+        <input id="adminNameSearch" class="admin-search" type="search" placeholder="Buscar por nombre o apellido" value="${escAttr(searchName)}" oninput="setNameSearch(this.value)">
+        <button class="chip ${filterMode === 'all' ? 'active' : ''}" onclick="setFilter('all')">Todos</button>
+        <button class="chip ${filterMode === 'missing' ? 'active' : ''}" onclick="setFilter('missing')">Con huecos</button>
+        <button class="chip ${filterMode === 'responsible' ? 'active' : ''}" onclick="setFilter('responsible')">Sin responsable</button>
+        <button class="copy-btn primary" onclick="copyActiveDayReminder()">Copiar WhatsApp del día</button>
+        <button class="copy-btn" onclick="exportAdminExcel()">Exportar Excel</button>
+        <button class="copy-btn" onclick="exportAdminPdf()">Exportar PDF</button>
+      </section>
+      <section class="list-layout">
+        <aside class="panel side-nav">
+          <h2>Días</h2>
+          <p class="panel-help">Selecciona un día para revisar sus turnos y personas apuntadas.</p>
+          <div class="day-tabs">
+            ${dayKeys.map(k => renderDayTab(k, days[k])).join('')}
+          </div>
+        </aside>
+        <div id="daySections">
+          <div id="noSearchResults" class="no-search-results">No hay turnos/personas que coincidan con la búsqueda.</div>
+          ${dayKeys.map(k => renderDaySection(k, days[k])).join('')}
+        </div>
+      </section>`;
+    highlightActiveDay();
+  }
+
+  function renderDayTab(key, day) {
+    const st = getStats(day.turnos);
+    return `<button class="day-tab ${key === activeDayKey ? 'active' : ''}" onclick="goToDay('${escAttr(key)}')">
+      ${escHtml(day.dia)}
+      <small>${formatDate(key)} · faltan ${st.free} · resp. ${st.respMissing || 'OK'}</small>
+    </button>`;
+  }
+
+  function renderDaySection(key, day) {
+    return `<div class="day-section" data-key="${escAttr(key)}">
+      <div class="day-header"><span class="day-title">${escHtml(day.dia)}</span><span class="day-date">${formatDate(key)}</span></div>
+      <div class="shifts-grid">${day.turnos.map(renderShift).join('')}</div>
+    </div>`;
+  }
+
+  function renderShift(t) {
+    const plazas = Number(t.plazas) || 0;
+    const ocupadas = Number(t.plazas_ocupadas) || 0;
+    const libres = Number(t.plazas_disponibles) || 0;
+    const pct = plazas > 0 ? Math.round((ocupadas / plazas) * 100) : 0;
+    const fillClass = pct < 50 ? 'danger' : pct < 75 ? 'warn' : '';
+    const plazasResp = Number(t.plazas_responsable) || 0;
+    const needsPeople = libres > 0;
+    const needsResp = needsResponsible(t);
+    const statusClass = needsResp ? 'danger' : needsPeople ? 'warn' : 'ok';
+    const statusText = needsResp ? 'Falta responsable' : needsPeople ? `Faltan ${libres}` : 'Cubierto';
+    const responsable = (t.inscritos || []).find(i => yes(i.responsable_turno));
+    const resto = (t.inscritos || []).filter(i => !yes(i.responsable_turno));
+    const rows = [];
+    if (plazasResp > 0) rows.push(responsable ? {type:'resp', persona:responsable} : {type:'empty-resp'});
+    resto.forEach(p => rows.push({type:'filled', persona:p}));
+    const slotsRegular = Math.max(plazas - plazasResp, 0);
+    const emptyRegular = Math.max(slotsRegular - resto.length, 0);
+    for (let i=0; i<emptyRegular; i++) rows.push({type:'empty'});
+    let num = 0;
+    const tableRows = rows.map(row => {
+      num++;
+      if (row.type === 'resp') return `<tr class="row-resp"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)} ${formatPersonCourse(row.persona)} <span class="resp-badge">⭐ Responsable</span>${renderResendButton(row.persona)}</td></tr>`;
+      if (row.type === 'empty-resp') return `<tr class="row-empty-resp"><td class="num">${num}</td><td class="name">— plaza libre — <span class="missing-badge">⚠ Responsable</span></td></tr>`;
+      if (row.type === 'filled') return `<tr class="row-filled"><td class="num">${num}</td><td class="name">${escHtml(row.persona.nombre)} ${formatPersonCourse(row.persona)}${renderResendButton(row.persona)}</td></tr>`;
+      return `<tr class="row-empty"><td class="num">${num}</td><td class="name">— libre —</td></tr>`;
+    }).join('');
+    const respCubierto = plazasResp > 0 && !needsResp;
+    const searchable = buildShiftSearchText(t);
+    const counterClass = libres <= 0 ? 'ok' : libres >= 5 ? 'danger' : '';
+    return `<div class="shift-col ${needsResp ? 'need-resp' : ''}" data-needs-people="${needsPeople ? '1':'0'}" data-needs-responsible="${needsResp ? '1':'0'}" data-search="${escAttr(searchable)}">
+      <div class="shift-head"><span class="shift-tipo">${escHtml(t.tipo)}</span><span class="shift-hours">${escHtml(t.hora_inicio)} – ${escHtml(t.hora_fin)}</span><span class="status-badge ${statusClass}">${escHtml(statusText)}</span></div>
+      <div class="shift-progress"><div class="progress"><span class="${fillClass}" style="width:${pct}%"></span></div><div class="progress-label">${ocupadas} / ${plazas} personas · ${pct}%</div></div>
+      <div class="need-counter ${counterClass}">${libres <= 0 ? '✔ Turno completo' : `👥 Faltan ${libres} persona${libres === 1 ? '' : 's'}`}</div>
+      <table class="people-table">${tableRows}</table>
+      ${needsPeople ? `<div class="shift-actions"><button class="copy-btn" onclick="copyShiftReminder('${escAttr(t.id_turno)}')">Copiar WhatsApp de este turno</button></div>` : ''}
+      <div class="shift-footer">
+        <span class="${libres === 0 ? 'ok' : libres <= 3 ? 'warn' : 'danger'}">Libres: <strong>${libres}</strong></span>
+        ${plazasResp > 0 ? `<span class="${respCubierto ? 'ok' : 'danger'}">Responsable: <strong>${respCubierto ? '✔ Cubierto' : '✘ Falta'}</strong></span>` : ''}
+        <span>Necesarias: <strong>${plazas}</strong></span><span>Apuntadas: <strong>${ocupadas}</strong></span>
+      </div>
+    </div>`;
+  }
+
+
+  function setNameSearch(value) {
+    searchName = normalizeSearch(value);
+    applyFilter();
+  }
+
+  function normalizeSearch(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function buildShiftSearchText(t) {
+    const people = (t.inscritos || []).map(p => [p.nombre, p.dni, p.email, getPersonCourse(p)].filter(Boolean).join(' ')).join(' ');
+    return normalizeSearch([t.dia, t.fecha, t.tipo, t.hora_inicio, t.hora_fin, people].filter(Boolean).join(' '));
+  }
+
+  function getPersonCourse(p) {
+    return String(p.gela || p.curso || p.clase || p.maila || '').trim();
+  }
+
+  function formatPersonCourse(p) {
+    const course = getPersonCourse(p);
+    return course ? `<small style="color:var(--muted);font-weight:750;">· ${escHtml(course)}</small>` : '';
+  }
+
+  function getCourseStats(turnos) {
+    const map = new Map();
+    turnos.forEach(t => (t.inscritos || []).forEach(p => {
+      const raw = getPersonCourse(p) || 'Sin curso indicado';
+      raw.split(',').map(x => x.trim()).filter(Boolean).forEach(course => {
+        if (!map.has(course)) map.set(course, { course, people:0, responsible:0, shifts:new Set() });
+        const item = map.get(course);
+        item.people += 1;
+        if (yes(p.responsable_turno)) item.responsible += 1;
+        if (t.id_turno) item.shifts.add(t.id_turno);
+      });
+    }));
+    return [...map.values()].sort((a,b) => b.people - a.people || a.course.localeCompare(b.course));
+  }
+
+  function renderCourseStats(turnos) {
+    const stats = getCourseStats(turnos);
+    if (!stats.length) return '';
+    return `<section class="panel course-stats">
+      <h2>Estadísticas por curso / clase</h2>
+      <p class="panel-help">Resumen de personas apuntadas según el curso indicado en la inscripción.</p>
+      <div class="course-grid">
+        ${stats.map(item => `<div class="course-card">
+          <div class="course-name">${escHtml(item.course)}</div>
+          <div class="course-count">${item.people}</div>
+          <div class="course-sub">${item.shifts.size} turno(s) · ${item.responsible} responsable(s)</div>
+        </div>`).join('')}
+      </div>
+    </section>`;
+  }
+
+
+  function renderResendButton(persona) {
+    const id = String(persona?.id_inscripcion || persona?.id || '').trim();
+    const email = String(persona?.email || '').trim();
+
+    if (!id || !email) return '';
+
+    return `<button type="button" class="copy-btn mini-action" onclick="resendEmail('${escAttr(id)}', this)">Reenviar email</button>`;
+  }
+
+  async function resendEmail(idInscripcion, button) {
+    if (!idInscripcion) return;
+
+    if (!confirm('¿Reenviar el email de confirmación a esta persona?')) {
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.dataset.originalText = button.textContent;
+      button.textContent = 'Enviando…';
+    }
+
+    try {
+      const data = await adminApi('reenviarEmail', {
+        pwd: sessionPassword,
+        id_inscripcion: idInscripcion,
+        tipo: 'inscripcion'
+      }, 'POST');
+
+      alert(data.emailQueued
+        ? 'Email puesto en cola. Revisa la pestaña Emails.'
+        : 'No se ha podido poner el email en cola.'
+      );
+
+      await loadEmailLogs(false);
+    } catch (err) {
+      alert('Error reenviando email: ' + err.message);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = button.dataset.originalText || 'Reenviar email';
+      }
+    }
+  }
+
+  async function loadEmailLogs(showSpinner = true) {
+    const view = document.getElementById('emailLogsView');
+    if (!sessionPassword || !view) return;
+
+    if (showSpinner || !emailLogs.length) {
+      view.innerHTML = `<div class="loading"><div class="spinner"></div><span>Cargando emails…</span></div>`;
+    }
+
+    try {
+      const data = await adminApi('getEmailLogs', {
+        pwd: sessionPassword,
+        limit: 100
+      }, 'GET');
+
+      emailLogs = data.logs || [];
+      renderEmailLogs();
+    } catch (err) {
+      view.innerHTML = `<div class="error-box">⚠ Error cargando emails: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  function renderEmailLogs() {
+    const view = document.getElementById('emailLogsView');
+    if (!view) return;
+
+    view.innerHTML = `
+      <section class="panel email-log-panel">
+        <h2>Últimos emails</h2>
+        <p class="panel-help">Historial de emails de inscripción, cambio y baja. Si alguien dice que no le ha llegado, revisa aquí si aparece como enviado o con error.</p>
+
+        <div class="email-log-tools">
+          <button class="copy-btn primary" onclick="loadEmailLogs(true)">↻ Actualizar emails</button>
+          <button class="copy-btn" onclick="exportEmailLogsCsv()">Exportar CSV emails</button>
+        </div>
+
+        <div class="email-log-table-wrap">
+          <table class="email-log-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Email</th>
+                <th>Nombre</th>
+                <th>Inscripción</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${emailLogs.length ? emailLogs.map(renderEmailLogRow).join('') : `
+                <tr><td colspan="7">No hay logs de email todavía.</td></tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderEmailLogRow(log) {
+    const estado = String(log.estado || '').toLowerCase();
+    return `
+      <tr>
+        <td>${escHtml(formatDateTime(log.fecha_creacion))}</td>
+        <td>${escHtml(log.tipo || '')}</td>
+        <td><span class="email-status ${escAttr(estado)}">${escHtml(log.estado || '')}</span></td>
+        <td>${escHtml(log.email || '')}</td>
+        <td>${escHtml(log.nombre || '')}</td>
+        <td><code>${escHtml(log.id_inscripcion || '')}</code></td>
+        <td class="email-error">${escHtml(shortError(log.error || ''))}</td>
+      </tr>
+    `;
+  }
+
+  function shortError(error) {
+    const text = String(error || '').trim();
+    if (!text) return '';
+    return text.length > 240 ? text.slice(0, 240) + '…' : text;
+  }
+
+  function formatDateTime(value) {
+    if (!value) return '';
+    const raw = String(value);
+    const date = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T') + 'Z');
+
+    if (Number.isNaN(date.getTime())) return raw;
+
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function exportEmailLogsCsv() {
+    const headers = ['Fecha','Tipo','Estado','Email','Nombre','ID inscripción','Error'];
+    const rows = emailLogs.map(log => [
+      log.fecha_creacion || '',
+      log.tipo || '',
+      log.estado || '',
+      log.email || '',
+      log.nombre || '',
+      log.id_inscripcion || '',
+      log.error || ''
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\n');
+    downloadFile('\ufeff' + csv, `barraka-email-logs-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  }
+
+  function getExportRows() {
+    const rows = [];
+    allTurnos.forEach(t => {
+      const inscritos = Array.isArray(t.inscritos) ? t.inscritos : [];
+      if (!inscritos.length) {
+        rows.push({
+          fecha:t.fecha, dia:t.dia, tipo:t.tipo, inicio:t.hora_inicio, fin:t.hora_fin,
+          plazas:t.plazas, ocupadas:t.plazas_ocupadas, libres:t.plazas_disponibles,
+          nombre:'', dni:'', email:'', curso:'', responsable:'', observaciones:'Sin personas apuntadas'
+        });
+        return;
+      }
+      inscritos.forEach(p => rows.push({
+        fecha:t.fecha, dia:t.dia, tipo:t.tipo, inicio:t.hora_inicio, fin:t.hora_fin,
+        plazas:t.plazas, ocupadas:t.plazas_ocupadas, libres:t.plazas_disponibles,
+        nombre:p.nombre || '', dni:p.dni || '', email:p.email || '', curso:getPersonCourse(p),
+        responsable:yes(p.responsable_turno) ? 'Sí' : 'No', observaciones:''
+      }));
+    });
+    return rows;
+  }
+
+  function exportAdminExcel() {
+    const headers = ['Fecha','Día','Turno','Inicio','Fin','Plazas','Ocupadas','Libres','Nombre','DNI/NIE','Email','Curso/clase','Responsable','Observaciones'];
+    const rows = getExportRows().map(r => [r.fecha,r.dia,r.tipo,r.inicio,r.fin,r.plazas,r.ocupadas,r.libres,r.nombre,r.dni,r.email,r.curso,r.responsable,r.observaciones]);
+    const csv = [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\n');
+    downloadFile('\ufeff' + csv, `barraka-turnos-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? '').replace(/"/g, '""');
+    return `"${text}"`;
+  }
+
+  function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportAdminPdf() {
+    window.print();
+  }
+
+  function goToDay(key) {
+    activeDayKey = key;
+    render(allTurnos);
+    setView(currentView === 'summary' ? 'list' : currentView);
+  }
+
+  function highlightActiveDay() {
+    document.querySelectorAll('.day-section').forEach(el => el.classList.toggle('visible', el.dataset.key === activeDayKey));
+    document.querySelectorAll('.day-tab').forEach(btn => btn.classList.toggle('active', btn.textContent.includes(formatDate(activeDayKey))));
+    applyFilter();
+  }
+
+  function setFilter(mode) {
+    filterMode = mode;
+    document.querySelectorAll('.chip').forEach(btn => {
+      const txt = btn.textContent.toLowerCase();
+      btn.classList.toggle('active', (mode === 'all' && txt.includes('todos')) || (mode === 'missing' && txt.includes('huecos')) || (mode === 'responsible' && txt.includes('responsable')));
+    });
+    applyFilter();
+  }
+
+  function applyFilter() {
+    let visibleCount = 0;
+    document.querySelectorAll('.day-section').forEach(section => {
+      let sectionVisible = false;
+      section.querySelectorAll('.shift-col').forEach(card => {
+        const needsPeople = card.dataset.needsPeople === '1';
+        const needsResp = card.dataset.needsResponsible === '1';
+        const matchesText = !searchName || normalizeSearch(card.dataset.search || '').includes(searchName);
+        const hide = !matchesText || (filterMode === 'missing' && !needsPeople) || (filterMode === 'responsible' && !needsResp);
+        card.classList.toggle('hidden-by-filter', hide);
+        if (!hide) {
+          visibleCount += 1;
+          sectionVisible = true;
+        }
+      });
+      section.classList.toggle('visible', searchName ? sectionVisible : section.dataset.key === activeDayKey);
+    });
+    const noResults = document.getElementById('noSearchResults');
+    if (noResults) noResults.classList.toggle('show', visibleCount === 0 && (searchName || filterMode !== 'all'));
+  }
+
+  function getTurnoById(id) { return allTurnos.find(t => String(t.id_turno) === String(id)); }
+
+  function copyActiveDayReminder() {
+    const turnosDia = allTurnos.filter(t => String(t.fecha) === String(activeDayKey) && (Number(t.plazas_disponibles) || 0) > 0);
+    copyText(buildReminderText(turnosDia));
+  }
+
+  function copyCriticalReminder() {
+    const urgent = buildUrgency(allTurnos, 8).map(x => x.t);
+    copyText(buildReminderText(urgent));
+  }
+
+  function copyShiftReminder(idTurno) {
+    const t = getTurnoById(idTurno);
+    copyText(buildReminderText(t ? [t] : []));
+  }
+
+  function getPublicShiftUrl(t) {
+    const url = new URL('index.html', window.location.href);
+    if (t && t.id_turno) url.searchParams.set('turno', t.id_turno);
+    url.searchParams.set('apuntar', '1');
+    return url.toString();
+  }
+
+  function buildReminderText(turnos) {
+    if (!turnos.length) return 'Ahora mismo no hay plazas libres en los turnos seleccionados. Eskerrik asko!';
+    const lines = turnos.map(t => {
+      const libres = Number(t.plazas_disponibles) || 0;
+      const resp = needsResponsible(t) ? ' · falta responsable' : '';
+      return `• ${t.dia} ${formatDate(t.fecha)} · ${t.tipo} ${t.hora_inicio}-${t.hora_fin}: faltan ${libres} persona(s)${resp}\n  Apúntate aquí: ${getPublicShiftUrl(t)}`;
+    });
+    return `Kaixo! Necesitamos ayuda para cubrir turnos de la barraka de la ikastola:\n\n${lines.join('\n\n')}\n\nMila esker!`;
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Texto copiado. Ya puedes pegarlo en WhatsApp, email o el grupo que quieras.');
+    } catch (err) {
+      window.prompt('Copia este texto:', text);
+    }
+  }
+
+  function yes(v) { return ['si','sí','s','true','1','yes'].includes(String(v || '').trim().toLowerCase()); }
+  function escHtml(v) { return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+  function escAttr(v) { return escHtml(v).replace(/`/g,'&#096;'); }
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+      let d;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) { const [dd, mm, yyyy] = dateStr.split('/'); d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`); }
+      else { d = new Date(`${dateStr}T00:00:00`); if (Number.isNaN(d.getTime())) d = new Date(dateStr); }
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+    } catch { return dateStr; }
+  }
+</script>
+</body>
+</html>
