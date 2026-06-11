@@ -61,7 +61,6 @@ export default {
 
       return json({
         ok: false,
-        errorCode: "routeNotFound",
         error: "Ruta no encontrada",
         path: url.pathname,
         method: request.method
@@ -319,7 +318,6 @@ async function getData(env) {
   if (!database) {
     return {
       ok: false,
-      errorCode: "serverError",
       error: "No hay binding D1",
       bindings: Object.keys(env)
     };
@@ -457,11 +455,11 @@ async function buscarPersonaPorDni(env, dni, idTurno) {
 	}
 
 	if (!database) {
-		return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
+		return { ok: false, error: "No hay binding D1" };
 	}
 
 	if (!dniKey) {
-		return { ok: false, errorCode: "notdata", error: "Falta DNI." };
+		return { ok: false, error: "Falta DNI." };
 	}
 
 	const persona = await database.prepare(`
@@ -557,7 +555,7 @@ async function misTurnos(env, body) {
 	}
 
   if (!database) {
-    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
+    return { ok: false, error: "No hay binding D1" };
   }
 
   if (!dniKey) {
@@ -631,7 +629,7 @@ async function inscribir(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
+    return { ok: false, error: "No hay binding D1" };
   }
 
   requireFields(body, ["id_turno", "nombre", "dni"]);
@@ -692,6 +690,15 @@ async function inscribir(env, body, ctx) {
     }
 
     email = normalizarEmail(gestor.email);
+
+    // BUG 1 FIX: verificar que el propio gestor no tenga ya un turno solapado
+    // con el turno que se está intentando inscribir como adicional.
+    await assertNoOverlappingShifts(
+      database,
+      [{ dni: gestor.dni, nombre: gestor.nombre }],
+      turno,
+      gestor.id_inscripcion
+    );
   } else if (!email) {
     throw appError("missingMainEmail", "Falta el campo email en la persona principal.");
   }
@@ -730,8 +737,10 @@ async function inscribir(env, body, ctx) {
 	}
   assertNoDuplicatesInRequest(personas);
 
+  // BUG 5 FIX: usar LIKE con dniKey% en vez de substr frágil,
+  // consistente con assertNotDuplicateD1
   const normalDnis = personas.map(p => dniSinLetra(p.dni));
-  const placeholders = normalDnis.map(() => "?").join(",");
+  const placeholders = normalDnis.map(() => `${dniSqlExpr("dni")} LIKE ?`).join(" OR ");
 
   const existentes = await database.prepare(`
     SELECT
@@ -740,26 +749,8 @@ async function inscribir(env, body, ctx) {
     FROM inscripciones
     WHERE id_turno = ?
       AND estado = 'activa'
-      AND substr(
-        REPLACE(
-          REPLACE(
-            REPLACE(
-              REPLACE(UPPER(dni), '-', ''),
-            ' ', ''),
-          '.', ''),
-        '/',	''),
-        1,
-        length(
-          REPLACE(
-            REPLACE(
-              REPLACE(
-                REPLACE(UPPER(dni), '-', ''),
-              ' ', ''),
-            '.', ''),
-          '/', '')
-        ) - 1
-      ) IN (${placeholders})
-  `).bind(idTurno, ...normalDnis).all();
+      AND (${placeholders})
+  `).bind(idTurno, ...normalDnis.map(d => `${d}%`)).all();
 
   if ((existentes.results || []).length) {
     throw appError("alreadyRegistered", "Alguna de las personas ya está apuntada a este turno.");
@@ -867,19 +858,6 @@ await assertNoOverlappingShifts(database, personas, turno);
   const identity = {
     dni: body.gestor_dni || body.dni
   };
-
-/*
-  return {
-    ok: true,
-    id_inscripcion: rows[0].id,
-    id_inscripcion_gestor: idNuevoGestor,
-    total: rows.length,
-    turnos: (await getData(env)).turnos,
-    opciones: {},
-    inscripciones: (await misTurnos(env, identity)).inscripciones
-  };
-  */
- 
 
 const turnosActualizados = (await getData(env)).turnos;
 const inscripcionesActualizadas = (await misTurnos(env, identity)).inscripciones;
@@ -1042,7 +1020,7 @@ async function cambiar(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
+    return { ok: false, error: "No hay binding D1" };
   }
 
   requireFields(body, ["id_inscripcion"]);
@@ -1090,8 +1068,17 @@ async function cambiar(env, body, ctx) {
     ? yesNo(body.responsable_turno)
     : yesNo(item.responsable_turno);
 
+  // Con consulta por DNI, cambiar turno actúa solo sobre la inscripción seleccionada.
+  // El vínculo id_inscripcion_gestor permite verla/gestionarla, pero ya no arrastra
+  // automáticamente al resto de personas que se añadieron desde esa inscripción.
   if (cambiaTurno) {
-    await assertCapacityD1(database, nuevoIdTurno);
+    await assertShiftCapacityForRows(
+      database,
+      nuevoTurno,
+      [{ id: item.id_inscripcion, es_responsable: isYes(nuevoResp) ? 1 : 0 }],
+      [item.id_inscripcion]
+    );
+
     await assertNotDuplicateD1(database, nuevoIdTurno, item.dni, item.id_inscripcion);
     await assertNoOverlappingShifts(
       database,
@@ -1099,9 +1086,7 @@ async function cambiar(env, body, ctx) {
       nuevoTurno,
       item.id_inscripcion
     );
-  }
-
-  if (isYes(nuevoResp)) {
+  } else if (isYes(nuevoResp)) {
     await assertResponsibleCapacityD1(database, nuevoIdTurno, item.id_inscripcion);
   }
 
@@ -1151,23 +1136,49 @@ async function borrar(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
+    return { ok: false, error: "No hay binding D1" };
   }
 
   const item = await findManagedInscription(env, body);
- const idTurnoBorrado = item.id_turno;
-  await database.prepare(`
-    UPDATE inscripciones
-    SET
-      estado = 'borrada',
-      fecha_baja = CURRENT_TIMESTAMP
-    WHERE id = ?
-      AND estado = 'activa'
-  `).bind(item.id_inscripcion).run();
+  const idTurnoBorrado = item.id_turno;
+  const requestedScope = texto(
+    body.delete_scope ||
+    body.deleteScope ||
+    body.modo_borrado ||
+    body.scope ||
+    "single"
+  ).toLowerCase();
 
-  const turnosActualizados = (await getData(env)).turnos;
-  const opcionesActualizadas = await getOpciones(env);
-  const inscripcionesActualizadas = (await misTurnos(env, body)).inscripciones;
+  const deleteAllManaged = ["managed", "all", "allmanaged", "todas", "todos", "gestionadas"].includes(requestedScope);
+  const deleteOnlyCurrent = ["single", "solo", "only", "onlyme", "solo_mi", "solo_esta", "actual"].includes(requestedScope);
+
+  if (!deleteAllManaged && !deleteOnlyCurrent) {
+    throw appError("invalidDeleteScope", "Modo de borrado no válido.");
+  }
+
+  const managedResult = await database.prepare(`
+    SELECT
+      id,
+      id AS id_inscripcion,
+      id_turno,
+      nombre,
+      es_responsable
+    FROM inscripciones
+    WHERE id_inscripcion_gestor = ?
+     
+  `).bind(item.id_inscripcion).all();
+  const managedPeople = managedResult.results || [];
+
+  const statements = [
+    database.prepare(`
+      UPDATE inscripciones
+      SET
+        estado = 'borrada',
+        fecha_baja = CURRENT_TIMESTAMP
+      WHERE id = ?
+        AND estado = 'activa'
+    `).bind(item.id_inscripcion)
+  ];
 
   const rowEmail = {
     id: item.id_inscripcion,
@@ -1176,21 +1187,68 @@ async function borrar(env, body, ctx) {
     es_responsable: Number(item.es_responsable || 0)
   };
 
+  let rowsEmail = [rowEmail];
+
+  if (deleteAllManaged && managedPeople.length) {
+    statements.push(
+      ...managedPeople.map(person =>
+        database.prepare(`
+          UPDATE inscripciones
+          SET
+            estado = 'borrada',
+            fecha_baja = CURRENT_TIMESTAMP
+          WHERE id = ?
+            AND estado = 'activa'
+        `).bind(person.id_inscripcion)
+      )
+    );
+
+    rowsEmail = [
+      rowEmail,
+      ...managedPeople.map(person => ({
+        id: person.id_inscripcion,
+        id_turno: person.id_turno,
+        nombre: person.nombre,
+        es_responsable: Number(person.es_responsable || 0)
+      }))
+    ];
+  } else if (managedPeople.length) {
+    // Si el gestor se borra solo a sí mismo, sus personas añadidas quedan activas,
+    // pero dejan de depender de una inscripción gestora ya borrada.
+    statements.push(
+      database.prepare(`
+        UPDATE inscripciones
+        SET id_inscripcion_gestor = ''
+        WHERE id_inscripcion_gestor = ?
+          AND estado = 'activa'
+      `).bind(item.id_inscripcion)
+    );
+  }
+
+  await database.batch(statements);
+
+  const turnosActualizados = (await getData(env)).turnos;
+  const opcionesActualizadas = await getOpciones(env);
+  const inscripcionesActualizadas = (await misTurnos(env, body)).inscripciones;
+
   const emailQueued = lanzarEmailEnSegundoPlano(env, ctx, {
     tipo: "baja",
     email: item.email,
     nombre: item.nombre,
-    rows: [rowEmail],
+    rows: rowsEmail,
     turnos: turnosActualizados,
     id_inscripcion: item.id_inscripcion
-  }	);
+  });
 
   return {
     ok: true,
     turnos: turnosActualizados,
     opciones: opcionesActualizadas,
     inscripciones: inscripcionesActualizadas,
-    emailQueued
+    emailQueued,
+    deleted_scope: deleteAllManaged ? "managed" : "single",
+    deleted_total: rowsEmail.length,
+    detached_managed: deleteAllManaged ? 0 : managedPeople.length
   };
 }
 
@@ -1198,7 +1256,12 @@ async function borrar(env, body, ctx) {
 // Cupos y solapamientos
 // ------------------------------------------------------------
 
-async function getShiftOccupancy(database, idTurno) {
+async function getShiftOccupancy(database, idTurno, excludeIds = []) {
+  const ids = excludeIds.filter(Boolean).map(String);
+  const excludeSql = ids.length
+    ? `AND id NOT IN (${ids.map(() => "?").join(",")})`
+    : "";
+
 	const row = await database.prepare(`
     SELECT
       SUM(CASE
@@ -1213,7 +1276,8 @@ async function getShiftOccupancy(database, idTurno) {
       END) AS ocupadas_responsable
     FROM inscripciones
     WHERE id_turno = ?
-  `).bind(idTurno).first();
+      ${excludeSql}
+  `).bind(idTurno, ...ids).first();
 
 	return {
 		ocupadas: Number(row?.ocupadas || 0),
@@ -1231,16 +1295,14 @@ async function assertShiftCapacityForRows(database, turno, rows, excludeIds = []
 	const plazas = Number(turno.plazas || 0);
 	const plazasResponsable = Number(turno.plazas_responsable || 0);
 
-	const occupancy = await getShiftOccupancy(database, idTurno);
-
-	const excludeSet = new Set(excludeIds.filter(Boolean).map(String));
+	// Excluimos de la ocupación actual las inscripciones que se están moviendo
+	// o modificando, y después las volvemos a contar con sus nuevos valores.
+	const occupancy = await getShiftOccupancy(database, idTurno, excludeIds);
 
 	let nuevasPersonas = 0;
 	let nuevosResponsables = 0;
 
 	for (const row of rows) {
-		if (excludeSet.has(String(row.id))) continue;
-
 		nuevasPersonas += 1;
 		if (Number(row.es_responsable || 0) === 1) {
 			nuevosResponsables += 1;
@@ -1395,7 +1457,7 @@ async function assertNoOverlappingShifts(database, personas, turno, excludeInscr
 
   if (!dniKeys.length) return;
 
-  const placeholders = dniKeys.map(() => "?").join(",");
+  const placeholders = dniKeys.map(() => `${dniSqlExpr("i.dni")} LIKE ?`).join(" OR ");
   const excludeSql = excludeInscriptionId ? "AND i.id != ?" : "";
 
   const rows = await database.prepare(`
@@ -1416,16 +1478,12 @@ async function assertNoOverlappingShifts(database, personas, turno, excludeInscr
       AND t.fecha = ?
       AND i.id_turno != ?
       ${excludeSql}
-      AND substr(
-        ${dniSqlExpr("i.dni")},
-        1,
-        length(${dniSqlExpr("i.dni")}) - 1
-      ) IN (${placeholders})
+      AND (${placeholders})
   `).bind(
     fecha,
     idTurno,
     ...(excludeInscriptionId ? [String(excludeInscriptionId)] : []),
-    ...dniKeys
+    ...dniKeys.map(d => `${d}%`)
   ).all();
 
   for (const row of rows.results || []) {
@@ -1453,12 +1511,23 @@ function adminPassword(env) {
 }
 
 function requireAdminPassword(env, pwd) {
-	const expected = adminPassword(env);
-	const received = String(pwd || "");
+  const expected = adminPassword(env);
+  const received = String(pwd || "");
 
-	if (!received || received !== expected) {
-		throw appError("adminUnauthorized", "Contraseña incorrecta.");
-	}
+  const enc = new TextEncoder();
+  const a = enc.encode(received);
+  const b = enc.encode(expected);
+
+  let diff = a.length ^ b.length;
+  const maxLength = Math.max(a.length, b.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  }
+
+  if (diff !== 0) {
+    throw appError("adminUnauthorized", "Contraseña incorrecta.");
+  }
 }
 
 async function getAdminData(env, pwd) {
@@ -1563,7 +1632,6 @@ requireAdminPassword(env, pwd);
   if (!database) {
     return {
       ok: false,
-      errorCode: "serverError",
       error: "No hay binding D1"
     };
   }
@@ -1582,8 +1650,8 @@ requireAdminPassword(env, pwd);
       fecha_creacion
     FROM email_logs
     ORDER BY fecha_creacion DESC
-    LIMIT ${safeLimit}
-  `).all();
+    LIMIT ?
+  `).bind(safeLimit).all();
 
   return {
     ok: true,
@@ -1598,7 +1666,6 @@ async function reenviarEmail(env, body, ctx) {
   if (!database) {
     return {
       ok: false,
-      errorCode: "serverError",
       error: "No hay binding D1"
     };
   }
@@ -1609,7 +1676,6 @@ async function reenviarEmail(env, body, ctx) {
   if (!idInscripcion) {
     return {
       ok: false,
-      errorCode: "missingInscriptionId",
       error: "Falta id_inscripcion."
     };
   }
@@ -1633,7 +1699,6 @@ async function reenviarEmail(env, body, ctx) {
   if (!item) {
     return {
       ok: false,
-      errorCode: "inscriptionNotFound",
       error: "No se ha encontrado la inscripción."
     };
   }
@@ -1641,7 +1706,6 @@ async function reenviarEmail(env, body, ctx) {
   if (!item.email) {
     return {
       ok: false,
-      errorCode: "inscriptionMissingEmail",
       error: "La inscripción no tiene email."
     };
   }
@@ -1665,7 +1729,6 @@ async function reenviarEmail(env, body, ctx) {
   if (!turno) {
     return {
       ok: false,
-      errorCode: "associatedShiftNotFound",
       error: "No se ha encontrado el turno asociado."
     };
   }
