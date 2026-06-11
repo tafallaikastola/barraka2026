@@ -30,61 +30,81 @@ export default {
       }
 
       if (url.pathname === "/api/inscribir" && request.method === "POST") {
-		const body = await request.json();
-			return json(await inscribir(env, body, ctx), 200, request);
-		}
-		if (url.pathname === "/api/cambiar" && request.method === "POST") {
-			const body = await request.json();
-		  return json(await cambiar(env, body, ctx), 200, request);
-		}
+        const body = await request.json();
+        return json(await inscribir(env, body, ctx), 200, request);
+      }
 
-		if (url.pathname === "/api/borrar" && request.method === "POST") {
-		  const body = await request.json();
-		  return json(await borrar(env, body, ctx), 200, request);
-		}
-		
-		if (url.pathname === "/api/getAdminData" && request.method === "GET") {
-		  const pwd = url.searchParams.get("pwd");
-		  return json(await getAdminData(env, pwd), 200, request);
-		}
-		
-		if (url.pathname === "/api/getEmailLogs" && request.method === "GET") {
-		  const pwd = url.searchParams.get("pwd");
-		  const limit = url.searchParams.get("limit") || "100";
-		  return json(await getEmailLogs(env, pwd, limit), 200, request);
-		}
+      if (url.pathname === "/api/cambiar" && request.method === "POST") {
+        const body = await request.json();
+        return json(await cambiar(env, body, ctx), 200, request);
+      }
 
-		if (url.pathname === "/api/reenviarEmail" && request.method === "POST") {
-		  const body = await request.json();
-		  return json(await reenviarEmail(env, body, ctx), 200, request);
-		}
+      if (url.pathname === "/api/borrar" && request.method === "POST") {
+        const body = await request.json();
+        return json(await borrar(env, body, ctx), 200, request);
+      }
+
+      if (url.pathname === "/api/getAdminData" && request.method === "POST") {
+        const body = await request.json();
+        return json(await getAdminData(env, body.pwd), 200, request);
+      }
+
+      if (url.pathname === "/api/getEmailLogs" && request.method === "POST") {
+        const body = await request.json();
+        return json(await getEmailLogs(env, body.pwd, body.limit || "100"), 200, request);
+      }
+
+      if (url.pathname === "/api/reenviarEmail" && request.method === "POST") {
+        const body = await request.json();
+        return json(await reenviarEmail(env, body, ctx), 200, request);
+      }
 
       return json({
         ok: false,
+        errorCode: "routeNotFound",
         error: "Ruta no encontrada",
         path: url.pathname,
         method: request.method
       }, 404, request);
 
     } catch (err) {
+      console.error("Worker error:", err);
+
+      const isAppError = Boolean(err?.errorCode);
+
       return json({
         ok: false,
-        errorCode: err.errorCode || "serverError",
-        error: err.message || String(err),
-        stack: err.stack || ""
-      }, 500, request);
+        errorCode: err?.errorCode || "serverError",
+        error: isAppError ? err.message : "Error interno del servidor"
+      }, isAppError ? 400 : 500, request);
     }
   }
 };
 
+// ------------------------------------------------------------
+// Configuración HTTP / CORS
+// ------------------------------------------------------------
+
+const ALLOWED_ORIGINS = [
+  "https://tafallaikastola.github.io"
+];
+
 function corsHeaders(request) {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Max-Age": "86400",
-    "Vary": "Origin"
-  };
+	const origin = request?.headers?.get("Origin") || "";
+
+	if (!ALLOWED_ORIGINS.includes(origin)) {
+		return {
+			"Vary": "Origin"
+		};
+	}
+
+	return {
+		"Access-Control-Allow-Origin": origin,
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+		"Access-Control-Allow-Headers": "Content-Type",
+		"Access-Control-Max-Age": "86400",
+		"Vary": "Origin"
+	};
 }
 
 function json(data, status = 200, request = null) {
@@ -96,17 +116,30 @@ function json(data, status = 200, request = null) {
     }
   });
 }
-function emptyResponse(status = 204) {
-  return new Response(null, {
-    status,
-    headers: corsHeaders()
-  });
-}
+
+// ------------------------------------------------------------
+// Base de datos
+// ------------------------------------------------------------
 
 function db(env) {
 	return env.barraka_db || env.DB;
 }
 
+// ------------------------------------------------------------
+// Helpers básicos
+// ------------------------------------------------------------
+
+function texto(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizarEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function normalizarNombre(nombre) {
+  return String(nombre || "").trim().toUpperCase();
+}
 
 function normalizarDni(dni) {
 	return String(dni || "")
@@ -117,6 +150,118 @@ function normalizarDni(dni) {
 function dniSinLetra(dni) {
 	return normalizarDni(dni).replace(/[A-Z]$/, "");
 }
+
+function yesNo(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return ["si", "sí", "s", "true", "1", "yes"].includes(v) ? "si" : "no";
+}
+
+function isYes(value) {
+  return yesNo(value) === "si";
+}
+
+function uniqueId() {
+  return crypto.randomUUID();
+}
+
+function appError(errorCode, message) {
+  const err = new Error(message);
+  err.errorCode = errorCode;
+  return err;
+}
+
+// ------------------------------------------------------------
+// Validaciones
+// ------------------------------------------------------------
+
+function isValidEmail(email) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function isValidDniNie(dni) {
+	const value = normalizarDni(dni);
+	const letters = "TRWAGMYFPDXBNJZSQVHLCKE";
+
+	let numberPart = "";
+	let letter = "";
+
+	if (/^[0-9]{8}[A-Z]$/.test(value)) {
+		numberPart = value.slice(0, 8);
+		letter = value.slice(8);
+	} else if (/^[XYZ][0-9]{7}[A-Z]$/.test(value)) {
+		const prefixMap = { X: "0", Y: "1", Z: "2" };
+		numberPart = prefixMap[value[0]] + value.slice(1, 8);
+		letter = value.slice(8);
+	} else {
+		return false;
+	}
+
+	return letters[Number(numberPart) % 23] === letter;
+}
+
+function isValidName(nombre) {
+	const value = String(nombre || "").trim();
+	return value.length >= 2 && /^[a-zA-ZÀ-ÿ\u00f1\u00d1çÇ\s.'-]+$/.test(value);
+}
+
+function requireFields(body, fields) {
+  for (const field of fields) {
+    if (!texto(body?.[field])) {
+      throw appError("missingFields", `Falta el campo ${field}.`);
+    }
+  }
+}
+
+function requirePersonFields(person, index) {
+  if (!texto(person.nombre)) {
+    throw appError("missingPersonName", `Falta el nombre de la persona ${index + 1}.`);
+  }
+
+  if (!texto(person.dni)) {
+    throw appError("missingPersonDni", `Falta el DNI de la persona ${index + 1}.`);
+  }
+}
+
+function validatePersonData(person, index = 0) {
+	const label = index === 0 ? "principal" : `adicional ${index}`;
+
+	if (!isValidName(person.nombre)) {
+		throw appError("invalidName", `El nombre de la persona ${label} no es válido.`);
+	}
+
+	if (!isValidDniNie(person.dni)) {
+		throw appError("invalidDni", `El DNI/NIE de la persona ${label} no es válido.`);
+	}
+}
+
+function assertNoDuplicatesInRequest(personas) {
+  const seen = new Set();
+
+  for (const person of personas) {
+    const key = dniSinLetra(person.dni);
+
+    if (!key) {
+      throw appError("invalidDni", "Hay un DNI no válido.");
+    }
+
+    if (seen.has(key)) {
+      throw appError("duplicateInRequest", "Hay personas repetidas en la solicitud.");
+    }
+
+    seen.add(key);
+  }
+}
+
+function identityMatchesByDni(row, body) {
+  const a = dniSinLetra(row?.dni);
+  const b = dniSinLetra(body?.dni);
+
+  return Boolean(a && b && a === b);
+}
+
+// ------------------------------------------------------------
+// Fechas, SQL y conversión para cliente
+// ------------------------------------------------------------
 
 function fechaParaCliente(value) {
 	if (value === null || value === undefined) return "";
@@ -138,78 +283,17 @@ function fechaParaCliente(value) {
 
 	return raw;
 }
-function texto(value) {
-  return String(value ?? "").trim();
-}
 
-function normalizarEmail(email) {
-  return String(email || "").trim().toLowerCase();
-}
-
-function normalizarNombre(nombre) {
-  return String(nombre || "").trim().toUpperCase();
-}
-
-function yesNo(value) {
-  const v = String(value || "").trim().toLowerCase();
-  return ["si", "sí", "s", "true", "1", "yes"].includes(v) ? "si" : "no";
-}
-
-function isYes(value) {
-  return yesNo(value) === "si";
-}
-
-function appError(errorCode, message) {
-  const err = new Error(message);
-  err.errorCode = errorCode;
-  return err;
-}
-
-function requireFields(body, fields) {
-  for (const field of fields) {
-    if (!texto(body?.[field])) {
-      throw appError("missingFields", `Falta el campo ${field}.`);
-    }
-  }
-}
-
-function requirePersonFields(person, index) {
-  if (!texto(person.nombre)) {
-    throw appError("missingPersonName", `Falta el nombre de la persona ${index + 1}.`);
-  }
-
-  if (!texto(person.dni)) {
-    throw appError("missingPersonDni", `Falta el DNI de la persona ${index + 1}.`);
-  }
-}
-
-function uniqueId() {
-  return crypto.randomUUID();
-}
-
-function identityMatchesByDni(row, body) {
-  const a = dniSinLetra(row?.dni);
-  const b = dniSinLetra(body?.dni);
-
-  return Boolean(a && b && a === b);
-}
-
-function assertNoDuplicatesInRequest(personas) {
-  const seen = new Set();
-
-  for (const person of personas) {
-    const key = dniSinLetra(person.dni);
-
-    if (!key) {
-      throw appError("invalidDni", "Hay un DNI no válido.");
-    }
-
-    if (seen.has(key)) {
-      throw appError("duplicateInRequest", "Hay personas repetidas en la solicitud.");
-    }
-
-    seen.add(key);
-  }
+function dniSqlExpr(columnName = "dni") {
+  return `
+    REPLACE(
+      REPLACE(
+        REPLACE(
+          REPLACE(UPPER(${columnName}), '-', ''),
+        ' ', ''),
+      '.', ''),
+    '/', '')
+  `;
 }
 
 function turnoParaCliente(row) {
@@ -225,12 +309,17 @@ function turnoParaCliente(row) {
   };
 }
 
+// ------------------------------------------------------------
+// Datos públicos
+// ------------------------------------------------------------
+
 async function getData(env) {
   const database = db(env);
 
   if (!database) {
     return {
       ok: false,
+      errorCode: "serverError",
       error: "No hay binding D1",
       bindings: Object.keys(env)
     };
@@ -323,16 +412,56 @@ async function getData(env) {
     opciones: await getOpciones(env)
   };
 }
+
+async function getOpciones(env) {
+  const database = db(env);
+
+  if (!database) {
+    return {};
+  }
+
+  const result = await database.prepare(`
+    SELECT clave, valor
+    FROM opciones
+    WHERE clave IS NOT NULL
+      AND valor IS NOT NULL
+      AND TRIM(clave) != ''
+      AND TRIM(valor) != ''
+    ORDER BY clave, valor
+  `).all();
+
+  const opciones = {};
+
+  for (const row of result.results || []) {
+    const clave = String(row.clave || "").trim();
+    const valor = String(row.valor || "").trim();
+
+    if (!clave || !valor) continue;
+
+    if (!opciones[clave]) {
+      opciones[clave] = [];
+    }
+
+    opciones[clave].push(valor);
+  }
+
+  return opciones;
+}
+
 async function buscarPersonaPorDni(env, dni, idTurno) {
 	const database = db(env);
 	const dniKey = dniSinLetra(dni);
 
+	if (!isValidDniNie(dni)) {
+		throw appError("invalidDni", "DNI/NIE no válido.");
+	}
+
 	if (!database) {
-		return { ok: false, error: "No hay binding D1" };
+		return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
 	}
 
 	if (!dniKey) {
-		return { ok: false, error: "Falta DNI." };
+		return { ok: false, errorCode: "notdata", error: "Falta DNI." };
 	}
 
 	const persona = await database.prepare(`
@@ -423,8 +552,12 @@ async function misTurnos(env, body) {
   const database = db(env);
   const dniKey = dniSinLetra(body?.dni);
 
+	if (!isValidDniNie(body?.dni)) {
+		throw appError("invalidDni", "DNI/NIE no válido.");
+	}
+
   if (!database) {
-    return { ok: false, error: "No hay binding D1" };
+    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
   }
 
   if (!dniKey) {
@@ -489,11 +622,16 @@ async function misTurnos(env, body) {
     inscripciones
   };
 }
+
+// ------------------------------------------------------------
+// Inscripción
+// ------------------------------------------------------------
+
 async function inscribir(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, error: "No hay binding D1" };
+    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
   }
 
   requireFields(body, ["id_turno", "nombre", "dni"]);
@@ -558,6 +696,7 @@ async function inscribir(env, body, ctx) {
     throw appError("missingMainEmail", "Falta el campo email en la persona principal.");
   }
 
+
   const adicionales = Array.isArray(body.personas_adicionales)
     ? body.personas_adicionales
     : [];
@@ -581,7 +720,14 @@ async function inscribir(env, body, ctx) {
     }))
   ];
 
-  personas.forEach((p, i) => requirePersonFields(p, i));
+	personas.forEach((p, i) => {
+		requirePersonFields(p, i);
+		validatePersonData(p, i);
+	});
+
+	if (!idGestorExistente && !isValidEmail(email)) {
+		throw appError("invalidEmail", "El email no es válido.");
+	}
   assertNoDuplicatesInRequest(personas);
 
   const normalDnis = personas.map(p => dniSinLetra(p.dni));
@@ -601,7 +747,7 @@ async function inscribir(env, body, ctx) {
               REPLACE(UPPER(dni), '-', ''),
             ' ', ''),
           '.', ''),
-        '/', ''),
+        '/',	''),
         1,
         length(
           REPLACE(
@@ -619,44 +765,21 @@ async function inscribir(env, body, ctx) {
     throw appError("alreadyRegistered", "Alguna de las personas ya está apuntada a este turno.");
   }
 
-  const ocupacion = await database.prepare(`
-    SELECT
-      SUM(CASE
-        WHEN estado = 'activa' THEN 1
-        ELSE 0
-      END) AS ocupadas,
+await assertNoOverlappingShifts(database, personas, turno);
 
-      SUM(CASE
-        WHEN estado = 'activa'
-         AND COALESCE(es_responsable, 0) = 1 THEN 1
-        ELSE 0
-      END) AS ocupadas_responsable
-    FROM inscripciones
-    WHERE id_turno = ?
-  `).bind(idTurno).first();
+	const responsablesSolicitados = personas.filter(p => isYes(p.responsable_turno)).length;
 
-  const ocupadas = Number(ocupacion?.ocupadas || 0);
-  const ocupadasResponsable = Number(ocupacion?.ocupadas_responsable || 0);
-
-  const plazas = Number(turno.plazas || 0);
-  const plazasResponsable = Number(turno.plazas_responsable || 0);
-
-  if (ocupadas + personas.length > plazas) {
-    throw appError("noCapacity", "No quedan plazas suficientes en este turno.");
-  }
-
-  const responsablesSolicitados = personas.filter(p => isYes(p.responsable_turno)).length;
-
-  if (responsablesSolicitados > 0 && ocupadasResponsable + responsablesSolicitados > plazasResponsable) {
-    throw appError("noResponsibleCapacity", "No quedan plazas de responsable en este turno.");
-  }
+	if (responsablesSolicitados > 0 && Number(turno.plazas_responsable || 0) <= 0) {
+		throw appError("noResponsibleCapacity", "Este turno no admite responsable.");
+	}
+	
 
   const idNuevoGestor = idGestorExistente || uniqueId();
 
   const rows = personas.map((p, index) => {
-    const idInscripcion = idGestorExistente || index > 0
-      ? uniqueId()
-      : idNuevoGestor;
+	  const idInscripcion = (idGestorExistente || index > 0)
+		  ? uniqueId()
+		  : idNuevoGestor;
 
     return {
       id: idInscripcion,
@@ -673,9 +796,12 @@ async function inscribir(env, body, ctx) {
       estado: "activa"
     };
   });
+	await assertShiftCapacityForRows(database, turno, rows);
+	const statements = [];
 
   for (const row of rows) {
-    await database.prepare(`
+	  statements.push(
+		  database.prepare(`
       INSERT INTO personas (
         dni,
         nombre,
@@ -700,9 +826,10 @@ async function inscribir(env, body, ctx) {
       row.dni,
       row.nombre,
       row.email
-    ).run();
+    ));
 
-    await database.prepare(`
+	  statements.push(
+		  database.prepare(`
       INSERT INTO inscripciones (
         id,
         id_inscripcion_gestor,
@@ -718,17 +845,24 @@ async function inscribir(env, body, ctx) {
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'activa')
     `).bind(
-      row.id,
-      row.id_inscripcion_gestor,
-      row.id_turno,
-      row.nombre,
-      row.email,
-      row.dni,
-      row.gela,
-      row.es_responsable,
-      row.publicar_nombre
-    ).run();
+			  row.id,
+		row.id_inscripcion_gestor || "",
+		row.id_turno,
+		row.nombre,
+		row.email || "",
+		row.dni,
+		row.gela || "",
+		Number(row.es_responsable || 0),
+		row.publicar_nombre || "no"
+		  ));
   }
+	await database.batch(statements);
+
+	await assertShiftNotOverCapacityAfterInsert(
+		database,
+		turno,
+		rows.map(r => r.id)
+	);
 
   const identity = {
     dni: body.gestor_dni || body.dni
@@ -773,40 +907,10 @@ return {
   emailQueued
 };
 }
-async function getOpciones(env) {
-  const database = db(env);
 
-  if (!database) {
-    return {};
-  }
-
-  const result = await database.prepare(`
-    SELECT clave, valor
-    FROM opciones
-    WHERE clave IS NOT NULL
-      AND valor IS NOT NULL
-      AND TRIM(clave) != ''
-      AND TRIM(valor) != ''
-    ORDER BY clave, valor
-  `).all();
-
-  const opciones = {};
-
-  for (const row of result.results || []) {
-    const clave = String(row.clave || "").trim();
-    const valor = String(row.valor || "").trim();
-
-    if (!clave || !valor) continue;
-
-    if (!opciones[clave]) {
-      opciones[clave] = [];
-    }
-
-    opciones[clave].push(valor);
-  }
-
-  return opciones;
-}
+// ------------------------------------------------------------
+// Cambio y baja
+// ------------------------------------------------------------
 
 async function findManagedInscription(env, body) {
   const database = db(env);
@@ -824,6 +928,9 @@ async function findManagedInscription(env, body) {
   const idInscripcion = texto(body.id_inscripcion);
   const dniGestion = dniSinLetra(body.dni);
 
+	if (!isValidDniNie(body.dni)) {
+		throw appError("invalidDni", "DNI/NIE no válido.");
+	}
   const item = await database.prepare(`
     SELECT
       id,
@@ -908,73 +1015,12 @@ async function findTurnoD1(database, idTurno) {
 
   return turno;
 }
-async function countInTurnoD1(database, idTurno) {
-  const row = await database.prepare(`
-    SELECT COUNT(*) AS total
-    FROM inscripciones
-    WHERE id_turno = ?
-      AND estado = 'activa'
-  `).bind(idTurno).first();
-
-  return Number(row?.total || 0);
-}
-
-async function countResponsablesInTurnoD1(database, idTurno, exceptInscriptionId = "") {
-  const row = await database.prepare(`
-    SELECT COUNT(*) AS total
-    FROM inscripciones
-    WHERE id_turno = ?
-      AND estado = 'activa'
-      AND COALESCE(es_responsable, 0) = 1
-      AND id != ?
-  `).bind(idTurno, exceptInscriptionId || "").first();
-
-  return Number(row?.total || 0);
-}
-
-async function assertResponsibleCapacityD1(database, idTurno, exceptInscriptionId = "") {
-  const turno = await findTurnoD1(database, idTurno);
-  const plazasResponsable = Number(turno.plazas_responsable || 0);
-
-  if (plazasResponsable <= 0) {
-    throw appError("notResp", "Este turno no tiene plazas de responsable disponibles.");
-  }
-
-  const responsablesActuales = await countResponsablesInTurnoD1(
-    database,
-    idTurno,
-    exceptInscriptionId || ""
-  );
-
-  if (responsablesActuales >= plazasResponsable) {
-    throw appError("notEnoughResp", "Ya están cubiertas las plazas de responsable de este turno.");
-  }
-}
-
-async function assertCapacityD1(database, idTurno) {
-  const turno = await findTurnoD1(database, idTurno);
-  const ocupadas = await countInTurnoD1(database, idTurno);
-
-  if (ocupadas >= Number(turno.plazas || 0)) {
-    throw appError("shiftFull", "Ese turno está completo.");
-  }
-}
-
-function dniSqlExpr(columnName = "dni") {
-  return `
-    REPLACE(
-      REPLACE(
-        REPLACE(
-          REPLACE(UPPER(${columnName}), '-', ''),
-        ' ', ''),
-      '.', ''),
-    '/', '')
-  `;
-}
 
 async function assertNotDuplicateD1(database, idTurno, dni, exceptInscriptionId = "") {
   const dniKey = dniSinLetra(dni);
-
+	if (!isValidDniNie(dni)) {
+		throw appError("invalidDni", "DNI/NIE no válido.");
+	}
   if (!dniKey) return;
 
   const duplicate = await database.prepare(`
@@ -996,18 +1042,42 @@ async function cambiar(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, error: "No hay binding D1" };
+    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
   }
 
   requireFields(body, ["id_inscripcion"]);
 
   const item = await findManagedInscription(env, body);
-
   const nuevoIdTurno = texto(
     body.id_turno_nuevo ||
     body.nuevo_id_turno ||
     item.id_turno
   );
+
+  if (!nuevoIdTurno) {
+    throw appError("missingNewShift", "Falta el turno nuevo.");
+  }
+
+  const nuevoTurno = await database.prepare(`
+    SELECT
+      id,
+      id AS id_turno,
+      fecha,
+      tipo,
+      hora_inicio,
+      hora_fin,
+      plazas,
+      plazas_responsable,
+      activo
+    FROM turnos
+    WHERE id = ?
+      AND activo = 1
+    LIMIT 1
+  `).bind(nuevoIdTurno).first();
+
+  if (!nuevoTurno) {
+    throw appError("shiftNotFound", "No se ha encontrado el turno o no está activo.");
+  }
 
   const cambiaTurno = item.id_turno !== nuevoIdTurno;
   const cambiaResp = Object.prototype.hasOwnProperty.call(body, "responsable_turno");
@@ -1023,6 +1093,12 @@ async function cambiar(env, body, ctx) {
   if (cambiaTurno) {
     await assertCapacityD1(database, nuevoIdTurno);
     await assertNotDuplicateD1(database, nuevoIdTurno, item.dni, item.id_inscripcion);
+    await assertNoOverlappingShifts(
+      database,
+      [{ dni: item.dni, nombre: item.nombre }],
+      nuevoTurno,
+      item.id_inscripcion
+    );
   }
 
   if (isYes(nuevoResp)) {
@@ -1071,12 +1147,11 @@ async function cambiar(env, body, ctx) {
   };
 }
 
-
 async function borrar(env, body, ctx) {
   const database = db(env);
 
   if (!database) {
-    return { ok: false, error: "No hay binding D1" };
+    return { ok: false, errorCode: "serverError", error: "No hay binding D1" };
   }
 
   const item = await findManagedInscription(env, body);
@@ -1119,19 +1194,275 @@ async function borrar(env, body, ctx) {
   };
 }
 
+// ------------------------------------------------------------
+// Cupos y solapamientos
+// ------------------------------------------------------------
 
+async function getShiftOccupancy(database, idTurno) {
+	const row = await database.prepare(`
+    SELECT
+      SUM(CASE
+        WHEN estado = 'activa' THEN 1
+        ELSE 0
+      END) AS ocupadas,
+
+      SUM(CASE
+        WHEN estado = 'activa'
+         AND COALESCE(es_responsable, 0) = 1 THEN 1
+        ELSE 0
+      END) AS ocupadas_responsable
+    FROM inscripciones
+    WHERE id_turno = ?
+  `).bind(idTurno).first();
+
+	return {
+		ocupadas: Number(row?.ocupadas || 0),
+		ocupadasResponsable: Number(row?.ocupadas_responsable || 0)
+	};
+}
+
+async function assertShiftCapacityForRows(database, turno, rows, excludeIds = []) {
+	const idTurno = texto(turno?.id_turno || turno?.id);
+
+	if (!idTurno) {
+		throw appError("invalidShift", "Turno no válido para comprobar cupo.");
+	}
+
+	const plazas = Number(turno.plazas || 0);
+	const plazasResponsable = Number(turno.plazas_responsable || 0);
+
+	const occupancy = await getShiftOccupancy(database, idTurno);
+
+	const excludeSet = new Set(excludeIds.filter(Boolean).map(String));
+
+	let nuevasPersonas = 0;
+	let nuevosResponsables = 0;
+
+	for (const row of rows) {
+		if (excludeSet.has(String(row.id))) continue;
+
+		nuevasPersonas += 1;
+		if (Number(row.es_responsable || 0) === 1) {
+			nuevosResponsables += 1;
+		}
+	}
+
+	if (occupancy.ocupadas + nuevasPersonas > plazas) {
+		throw appError("noCapacity", "No quedan plazas suficientes en este turno.");
+	}
+
+	if (occupancy.ocupadasResponsable + nuevosResponsables > plazasResponsable) {
+		throw appError("noResponsibleCapacity", "No quedan plazas de responsable en este turno.");
+	}
+}
+
+async function assertShiftNotOverCapacityAfterInsert(database, turno, insertedIds = []) {
+	const idTurno = texto(turno?.id_turno || turno?.id);
+
+	if (!idTurno) {
+		throw appError("invalidShift", "Turno no válido para comprobar cupo.");
+	}
+
+	const plazas = Number(turno.plazas || 0);
+	const plazasResponsable = Number(turno.plazas_responsable || 0);
+
+	const occupancy = await getShiftOccupancy(database, idTurno);
+
+	const overCapacity = occupancy.ocupadas > plazas;
+	const overResponsibleCapacity = occupancy.ocupadasResponsable > plazasResponsable;
+
+	if (!overCapacity && !overResponsibleCapacity) {
+		return;
+	}
+
+	// Revertimos solo las filas creadas en esta petición.
+	if (insertedIds.length) {
+		const placeholders = insertedIds.map(() => "?").join(",");
+
+		await database.prepare(`
+      UPDATE inscripciones
+      SET estado = 'anulada'
+      WHERE id IN (${placeholders})
+    `).bind(...insertedIds).run();
+	}
+
+	if (overResponsibleCapacity) {
+		throw appError("noResponsibleCapacity", "No quedan plazas de responsable en este turno.");
+	}
+
+	throw appError("noCapacity", "No quedan plazas suficientes en este turno.");
+}
+
+async function countInTurnoD1(database, idTurno) {
+  const row = await database.prepare(`
+    SELECT COUNT(*) AS total
+    FROM inscripciones
+    WHERE id_turno = ?
+      AND estado = 'activa'
+  `).bind(idTurno).first();
+
+  return Number(row?.total || 0);
+}
+
+async function countResponsablesInTurnoD1(database, idTurno, exceptInscriptionId = "") {
+  const row = await database.prepare(`
+    SELECT COUNT(*) AS total
+    FROM inscripciones
+    WHERE id_turno = ?
+      AND estado = 'activa'
+      AND COALESCE(es_responsable, 0) = 1
+      AND id != ?
+  `).bind(idTurno, exceptInscriptionId || "").first();
+
+  return Number(row?.total || 0);
+}
+
+async function assertCapacityD1(database, idTurno) {
+  const turno = await findTurnoD1(database, idTurno);
+  const ocupadas = await countInTurnoD1(database, idTurno);
+
+  if (ocupadas >= Number(turno.plazas || 0)) {
+    throw appError("shiftFull", "Ese turno está completo.");
+  }
+}
+
+async function assertResponsibleCapacityD1(database, idTurno, exceptInscriptionId = "") {
+  const turno = await findTurnoD1(database, idTurno);
+  const plazasResponsable = Number(turno.plazas_responsable || 0);
+
+  if (plazasResponsable <= 0) {
+    throw appError("notResp", "Este turno no tiene plazas de responsable disponibles.");
+  }
+
+  const responsablesActuales = await countResponsablesInTurnoD1(
+    database,
+    idTurno,
+    exceptInscriptionId || ""
+  );
+
+  if (responsablesActuales >= plazasResponsable) {
+    throw appError("notEnoughResp", "Ya están cubiertas las plazas de responsable de este turno.");
+  }
+}
+
+function timeToMinutes(value) {
+	const raw = String(value || "").trim();
+
+	const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+	if (!match) return null;
+
+	const hours = Number(match[1]);
+	const minutes = Number(match[2]);
+
+	if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+
+	return hours * 60 + minutes;
+}
+
+function shiftsOverlap(aStart, aEnd, bStart, bEnd) {
+	let a1 = timeToMinutes(aStart);
+	let a2 = timeToMinutes(aEnd);
+	let b1 = timeToMinutes(bStart);
+	let b2 = timeToMinutes(bEnd);
+
+	if (a1 === null || a2 === null || b1 === null || b2 === null) {
+		return false;
+	}
+
+	// Turnos que cruzan medianoche, ej. 17:30-01:30
+	if (a2 <= a1) a2 += 24 * 60;
+	if (b2 <= b1) b2 += 24 * 60;
+
+	return a1 < b2 && b1 < a2;
+}
+
+async function assertNoOverlappingShifts(database, personas, turno, excludeInscriptionId = "") {
+  const idTurno = texto(turno?.id_turno || turno?.id);
+  const fecha = fechaParaCliente(turno?.fecha);
+  const horaInicio = texto(turno?.hora_inicio);
+  const horaFin = texto(turno?.hora_fin);
+
+  if (!idTurno || !fecha || !horaInicio || !horaFin) {
+    throw appError(
+      "invalidShiftForOverlap",
+      "No se puede comprobar solapamiento porque faltan datos del turno."
+    );
+  }
+
+  const dniKeys = personas
+    .map(p => dniSinLetra(p.dni))
+    .filter(Boolean);
+
+  if (!dniKeys.length) return;
+
+  const placeholders = dniKeys.map(() => "?").join(",");
+  const excludeSql = excludeInscriptionId ? "AND i.id != ?" : "";
+
+  const rows = await database.prepare(`
+    SELECT
+      i.id,
+      i.dni,
+      i.nombre,
+      t.id AS id_turno,
+      t.fecha,
+      t.tipo,
+      t.hora_inicio,
+      t.hora_fin
+    FROM inscripciones i
+    JOIN turnos t
+      ON t.id = i.id_turno
+    WHERE i.estado = 'activa'
+      AND t.activo = 1
+      AND t.fecha = ?
+      AND i.id_turno != ?
+      ${excludeSql}
+      AND substr(
+        ${dniSqlExpr("i.dni")},
+        1,
+        length(${dniSqlExpr("i.dni")}) - 1
+      ) IN (${placeholders})
+  `).bind(
+    fecha,
+    idTurno,
+    ...(excludeInscriptionId ? [String(excludeInscriptionId)] : []),
+    ...dniKeys
+  ).all();
+
+  for (const row of rows.results || []) {
+    if (shiftsOverlap(horaInicio, horaFin, row.hora_inicio, row.hora_fin)) {
+      throw appError(
+        "overlappingShift",
+        `La persona ${row.nombre || ""} ya está apuntada a otro turno que se solapa: ${row.tipo} ${row.hora_inicio}-${row.hora_fin}.`
+      );
+    }
+  }
+}
+
+// ------------------------------------------------------------
+// Administración
+// ------------------------------------------------------------
 
 function adminPassword(env) {
-  return env.ADMIN_PASSWORD || "barraka2026";
+	const pwd = String(env.ADMIN_PASSWORD || "").trim();
+
+	if (!pwd) {
+		throw appError("adminPasswordNotConfigured", "ADMIN_PASSWORD no está configurada.");
+	}
+
+	return pwd;
+}
+
+function requireAdminPassword(env, pwd) {
+	const expected = adminPassword(env);
+	const received = String(pwd || "");
+
+	if (!received || received !== expected) {
+		throw appError("adminUnauthorized", "Contraseña incorrecta.");
+	}
 }
 
 async function getAdminData(env, pwd) {
-  if (String(pwd || "") !== adminPassword(env)) {
-    return {
-      ok: false,
-      error: "Contraseña incorrecta."
-    };
-  }
+  requireAdminPassword(env, pwd);
 
   return {
     ok: true,
@@ -1224,311 +1555,15 @@ async function getAdminTurnos(env) {
   });
 }
 
-async function enviarEmailConfirmacion(env, { email, nombre, rows, turnos }) {
-  if (!email) {
-    return { sent: false, reason: "missing_email" };
-  }
-
-  if (!env.RESEND_API_KEY) {
-    return { sent: false, reason: "missing_resend_api_key" };
-  }
-
-  const from = env.MAIL_FROM || "Barraka Ikastola <onboarding@resend.dev>";
-  const replyTo = env.MAIL_REPLY_TO || "mabregoa@gmail.com";
-
-  const lineasHtml = rows.map(row => {
-    const turno = turnos.find(t => String(t.id_turno || t.id) === String(row.id_turno));
-
-    const fecha = turno?.fecha || "";
-    const tipo = turno?.tipo || "";
-    const inicio = turno?.hora_inicio || "";
-    const fin = turno?.hora_fin || "";
-    const responsable = Number(row.es_responsable || 0) === 1 ? " · Responsable" : "";
-
-    return `
-      <li>
-        <strong>${escapeHtmlEmail(row.nombre)}</strong><br>
-        ${escapeHtmlEmail(fecha)} · ${escapeHtmlEmail(tipo)} · ${escapeHtmlEmail(inicio)}-${escapeHtmlEmail(fin)}${responsable}
-      </li>
-    `;
-  }).join("");
-
-  const lineasTexto = rows.map(row => {
-    const turno = turnos.find(t => String(t.id_turno || t.id) === String(row.id_turno));
-
-    const fecha = turno?.fecha || "";
-    const tipo = turno?.tipo || "";
-    const inicio = turno?.hora_inicio || "";
-    const fin = turno?.hora_fin || "";
-    const responsable = Number(row.es_responsable || 0) === 1 ? " · Responsable" : "";
-
-    return `- ${row.nombre}: ${fecha} · ${tipo} · ${inicio}-${fin}${responsable}`;
-  }).join("\n");
-
-  const subject = "Confirmación inscripción turnos barraka";
-
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;">
-      <h2>Inscripción confirmada</h2>
-
-      <p>Kaixo ${escapeHtmlEmail(nombre || "")},</p>
-
-      <p>Tu inscripción para los turnos de la barraka se ha registrado correctamente.</p>
-
-      <h3>Turnos inscritos</h3>
-      <ul>
-        ${lineasHtml}
-      </ul>
-
-      <p>Puedes consultar, cambiar o borrar tus turnos desde la web usando tu DNI.</p>
-
-      <p>
-        Eskerrik asko!<br>
-        Tafalla Ikastola
-      </p>
-    </div>
-  `;
-
-  const text = `
-Kaixo ${nombre || ""},
-
-Tu inscripción para los turnos de la barraka se ha registrado correctamente.
-
-Turnos inscritos:
-${lineasTexto}
-
-Puedes consultar, cambiar o borrar tus turnos desde la web usando tu DNI.
-
-Eskerrik asko!
-Tafalla Ikastola
-`.trim();
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from,
-      to: [email],
-      reply_to: replyTo,
-      subject,
-      html,
-      text
-    })
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    return {
-      sent: false,
-      status: response.status,
-      error: data
-    };
-  }
-
-  return {
-    sent: true,
-    id: data.id
-  };
-}
-
-function escapeHtmlEmail(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-async function enviarEmailConfirmacionGmail(env, {  tipo = "inscripcion", email, nombre, rows, turnos }) {
-  if (!email) {
-    return {
-      sent: false,
-      reason: 'missing_email'
-    };
-  }
-
-  if (!env.MAIL_SCRIPT_URL) {
-    return {
-      sent: false,
-      reason: 'missing_mail_script_url'
-    };
-  }
-
-  if (!env.MAIL_SCRIPT_SECRET) {
-    return {
-      sent: false,
-      reason: 'missing_mail_script_secret'
-    };
-  }
-
-  const turnosEmail = rows.map(row => {
-    const turno = turnos.find(t =>
-      String(t.id_turno || t.id) === String(row.id_turno)
-    );
-
-    return {
-      nombre: row.nombre,
-      fecha: turno?.fecha || '',
-      tipo: turno?.tipo || '',
-      hora_inicio: turno?.hora_inicio || '',
-      hora_fin: turno?.hora_fin || '',
-      responsable: Number(row.es_responsable || 0) === 1
-    };
-  });
-
-  const response = await fetch(env.MAIL_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify({
-      secret: env.MAIL_SCRIPT_SECRET,
-      to: email,
-	  tipo: tipo,
-      nombre,
-      turnos: turnosEmail
-    })
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok || !data.ok) {
-    return {
-      sent: false,
-      status: response.status,
-      error: data
-    };
-  }
-
-  return {
-    sent: true,
-    result: data
-  };
-}
-async function logEmail(env, {
-  tipo,
-  email,
-  nombre = "",
-  id_inscripcion = "",
-  estado,
-  error = ""
-}) {
-  const database = db(env);
-  if (!database) return;
-
-  try {
-    await database.prepare(`
-      INSERT INTO email_logs (
-        id,
-        tipo,
-        email,
-        nombre,
-        id_inscripcion,
-        estado,
-        error,
-        fecha_creacion
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `).bind(
-      crypto.randomUUID(),
-      String(tipo || ""),
-      String(email || ""),
-      String(nombre || ""),
-      String(id_inscripcion || ""),
-      String(estado || ""),
-      String(error || "")
-    ).run();
-  } catch (err) {
-    console.error("Error guardando email_logs:", err);
-  }
-}
-
-function lanzarEmailEnSegundoPlano(env, ctx, {
-  tipo,
-  email,
-  nombre,
-  rows,
-  turnos,
-  id_inscripcion = ""
-}) {
-  if (!email) {
-    if (ctx && typeof ctx.waitUntil === "function") {
-      ctx.waitUntil(logEmail(env, {
-        tipo,
-        email,
-        nombre,
-        id_inscripcion,
-        estado: "skipped",
-        error: "missing_email"
-      }));
-    }
-
-    return false;
-  }
-
-  if (!ctx || typeof ctx.waitUntil !== "function") {
-    return false;
-  }
-
-  ctx.waitUntil((async () => {
-    await logEmail(env, {
-      tipo,
-      email,
-      nombre,
-      id_inscripcion,
-      estado: "queued"
-    });
-
-    try {
-      const result = await enviarEmailConfirmacionGmail(env, {
-        tipo,
-        email,
-        nombre,
-        rows,
-        turnos
-      });
-
-      await logEmail(env, {
-        tipo,
-        email,
-        nombre,
-        id_inscripcion,
-        estado: result?.sent ? "sent" : "error",
-        error: result?.sent ? "" : JSON.stringify(result || {})
-      });
-
-    } catch (err) {
-      await logEmail(env, {
-        tipo,
-        email,
-        nombre,
-        id_inscripcion,
-        estado: "error",
-        error: err.message || String(err)
-      });
-    }
-  })());
-
-  return true;
-}
-
 async function getEmailLogs(env, pwd, limit = 100) {
-  if (String(pwd || "") !== adminPassword(env)) {
-    return {
-      ok: false,
-      error: "Contraseña incorrecta."
-    };
-  }
+requireAdminPassword(env, pwd);
+
 
   const database = db(env);
   if (!database) {
     return {
       ok: false,
+      errorCode: "serverError",
       error: "No hay binding D1"
     };
   }
@@ -1555,18 +1590,15 @@ async function getEmailLogs(env, pwd, limit = 100) {
     logs: result.results || []
   };
 }
+
 async function reenviarEmail(env, body, ctx) {
-  if (String(body?.pwd || "") !== adminPassword(env)) {
-    return {
-      ok: false,
-      error: "Contraseña incorrecta."
-    };
-  }
+  requireAdminPassword(env, body?.pwd);
 
   const database = db(env);
   if (!database) {
     return {
       ok: false,
+      errorCode: "serverError",
       error: "No hay binding D1"
     };
   }
@@ -1577,6 +1609,7 @@ async function reenviarEmail(env, body, ctx) {
   if (!idInscripcion) {
     return {
       ok: false,
+      errorCode: "missingInscriptionId",
       error: "Falta id_inscripcion."
     };
   }
@@ -1600,6 +1633,7 @@ async function reenviarEmail(env, body, ctx) {
   if (!item) {
     return {
       ok: false,
+      errorCode: "inscriptionNotFound",
       error: "No se ha encontrado la inscripción."
     };
   }
@@ -1607,6 +1641,7 @@ async function reenviarEmail(env, body, ctx) {
   if (!item.email) {
     return {
       ok: false,
+      errorCode: "inscriptionMissingEmail",
       error: "La inscripción no tiene email."
     };
   }
@@ -1630,6 +1665,7 @@ async function reenviarEmail(env, body, ctx) {
   if (!turno) {
     return {
       ok: false,
+      errorCode: "associatedShiftNotFound",
       error: "No se ha encontrado el turno asociado."
     };
   }
@@ -1654,4 +1690,197 @@ async function reenviarEmail(env, body, ctx) {
     ok: true,
     emailQueued
   };
+}
+
+// ------------------------------------------------------------
+// Email
+// ------------------------------------------------------------
+
+function escapeHtmlEmail(value) {
+	return String(value ?? "")
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#039;");
+}
+
+async function enviarEmailConfirmacionGmail(env, {
+	tipo = "inscripcion",
+	email,
+	nombre,
+	rows,
+	turnos
+}) {
+	if (!email) {
+		return {
+			sent: false,
+			reason: "missing_email"
+		};
+	}
+
+	if (!env.MAIL_SCRIPT_URL) {
+		return {
+			sent: false,
+			reason: "missing_mail_script_url"
+		};
+	}
+
+	if (!env.MAIL_SCRIPT_SECRET) {
+		return {
+			sent: false,
+			reason: "missing_mail_script_secret"
+		};
+	}
+
+	const turnosEmail = rows.map(row => {
+		const turno = turnos.find(t =>
+			String(t.id_turno || t.id) === String(row.id_turno)
+		);
+
+		return {
+			nombre: row.nombre,
+			fecha: turno?.fecha || "",
+			tipo: turno?.tipo || "",
+			hora_inicio: turno?.hora_inicio || "",
+			hora_fin: turno?.hora_fin || "",
+			responsable: Number(row.es_responsable || 0) === 1
+		};
+	});
+
+	const response = await fetch(env.MAIL_SCRIPT_URL, {
+		method: "POST",
+		headers: {
+			"Content-Type": "text/plain;charset=utf-8"
+		},
+		body: JSON.stringify({
+			secret: env.MAIL_SCRIPT_SECRET,
+			to: email,
+			tipo,
+			nombre,
+			turnos: turnosEmail
+		})
+	});
+
+	const data = await response.json().catch(() => ({}));
+
+	if (!response.ok || !data.ok) {
+		return {
+			sent: false,
+			status: response.status,
+			error: data
+		};
+	}
+
+	return {
+		sent: true,
+		result: data
+	};
+}
+
+async function logEmail(env, {
+	tipo,
+	email,
+	nombre = "",
+	id_inscripcion = "",
+	estado,
+	error = ""
+}) {
+	const database = db(env);
+	if (!database) return;
+
+	try {
+		await database.prepare(`
+      INSERT INTO email_logs (
+        id,
+        tipo,
+        email,
+        nombre,
+        id_inscripcion,
+        estado,
+        error,
+        fecha_creacion
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `).bind(
+			crypto.randomUUID(),
+			String(tipo || ""),
+			String(email || ""),
+			String(nombre || ""),
+			String(id_inscripcion || ""),
+			String(estado || ""),
+			String(error || "")
+		).run();
+	} catch (err) {
+		console.error("Error guardando email_logs:", err);
+	}
+}
+
+function lanzarEmailEnSegundoPlano(env, ctx, {
+	tipo,
+	email,
+	nombre,
+	rows,
+	turnos,
+	id_inscripcion = ""
+}) {
+	if (!email) {
+		if (ctx && typeof ctx.waitUntil === "function") {
+			ctx.waitUntil(logEmail(env, {
+				tipo,
+				email,
+				nombre,
+				id_inscripcion,
+				estado: "skipped",
+				error: "missing_email"
+			}));
+		}
+
+		return false;
+	}
+
+	if (!ctx || typeof ctx.waitUntil !== "function") {
+		return false;
+	}
+
+	ctx.waitUntil((async () => {
+		await logEmail(env, {
+			tipo,
+			email,
+			nombre,
+			id_inscripcion,
+			estado: "queued"
+		});
+
+		try {
+			const result = await enviarEmailConfirmacionGmail(env, {
+				tipo,
+				email,
+				nombre,
+				rows,
+				turnos
+			});
+
+			await logEmail(env, {
+				tipo,
+				email,
+				nombre,
+				id_inscripcion,
+				estado: result?.sent ? "sent" : "error",
+				error: result?.sent ? "" : JSON.stringify(result || {})
+			});
+
+		} catch (err) {
+			await logEmail(env, {
+				tipo,
+				email,
+				nombre,
+				id_inscripcion,
+				estado: "error",
+				error: err.message || String(err)
+			});
+		}
+	})());
+
+	return true;
 }
