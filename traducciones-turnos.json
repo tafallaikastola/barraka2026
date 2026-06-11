@@ -12,13 +12,17 @@
       "es": "Montaje",
       "eu": "Muntaketa"
     },
-	"desmontaje": {
+    "desmontaje": {
       "es": "Desmontaje",
       "eu": "Desmuntatze"
     },
     "llenado": {
       "es": "Llenado",
       "eu": "Betetzea"
+    },
+    "refuerzo": {
+      "es": "Refuerzo",
+      "eu": "Errefortzua"
     }
   },
   "dias": {

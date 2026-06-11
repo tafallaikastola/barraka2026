@@ -131,7 +131,51 @@
       "noPermission": "No tienes permiso para gestionar esta inscripción.",
       "noChanges": "No hay cambios que guardar.",
       "unknownError": "Se ha producido un error.",
-      "labelMyDni": "DNI"
+      "labelMyDni": "DNI",
+      "pageTitle": "Turnos Barraka Ikastola",
+      "toastAccept": "Aceptar",
+      "closeDialogAria": "Cerrar",
+      "filterPanelAria": "Filtros de turnos",
+      "inputDniTitle": "Introduce un DNI/NIE válido",
+      "inputDniExampleTitle": "Introduce un DNI/NIE válido, por ejemplo 12345678Z o X1234567L",
+      "emailQueuedMessage": "Recibirás un email de confirmación en unos minutos.",
+      "configMissing": "Falta configurar la URL de Cloudflare Worker en index.html.",
+      "networkError": "No se ha podido conectar con el servidor.",
+      "summaryDayFull": "Todo cubierto",
+      "summaryDayMissing": "Faltan {0} personas",
+      "shiftCoverageLabel": "Cobertura del turno",
+      "alreadyRegistered": "Alguna de las personas ya está apuntada a este turno.",
+      "noCapacity": "No quedan plazas suficientes en este turno.",
+      "noResponsibleCapacity": "No quedan plazas de responsable en este turno.",
+      "missingFields": "Faltan datos obligatorios.",
+      "missingPersonName": "Falta el nombre de una de las personas.",
+      "missingPersonDni": "Falta el DNI de una de las personas.",
+      "missingNewShift": "Falta seleccionar el nuevo turno.",
+      "invalidShift": "El turno no es válido.",
+      "invalidShiftForOverlap": "No se puede comprobar si hay solapamientos porque faltan datos del turno.",
+      "overlappingShift": "Esta persona ya está apuntada a otro turno que se solapa en horario.",
+      "adminUnauthorized": "Contraseña incorrecta.",
+      "adminPasswordNotConfigured": "La contraseña de administración no está configurada.",
+      "routeNotFound": "Ruta de API no encontrada.",
+      "serverError": "Error interno del servidor. Inténtalo de nuevo más tarde.",
+      "httpError": "Error de servidor HTTP {0}.",
+      "missingInscriptionId": "Falta el identificador de la inscripción.",
+      "inscriptionNotFound": "No se ha encontrado la inscripción.",
+      "inscriptionMissingEmail": "La inscripción no tiene email.",
+      "associatedShiftNotFound": "No se ha encontrado el turno asociado.",
+      "deleteScopeTitle": "Esta inscripción tiene personas añadidas",
+      "deleteScopeText": {
+        "one": "Con esta inscripción añadiste 1 persona. ¿Quieres borrarte solo a ti o borrar también a esa persona?",
+        "other": "Con esta inscripción añadiste {0} personas. ¿Quieres borrarte solo a ti o borrar también a esas personas?"
+      },
+      "deleteScopeTextWithName": {
+        "one": "La inscripción de {0} tiene 1 persona añadida. ¿Quieres borrar solo esta inscripción o borrar también a esa persona?",
+        "other": "La inscripción de {0} tiene {1} personas añadidas. ¿Quieres borrar solo esta inscripción o borrar también a esas personas?"
+      },
+      "deleteOnlyMeBtn": "Borrarme solo a mí",
+      "deleteAllManagedBtn": "Borrar también a las personas añadidas",
+      "deleteCancelBtn": "Cancelar",
+      "invalidDeleteScope": "Elige si quieres borrar solo esta inscripción o también las personas añadidas."
     },
     "eu": {
       "mainTitle": "Ikastolako barrakako txandak",
@@ -264,7 +308,51 @@
       "noChanges": "Ez dago gordetzeko aldaketarik.",
       "unknownError": "Errore bat gertatu da.",
       "invalidName": "Sartu baliozko izena.",
-      "labelMyDni": "NAN"
+      "labelMyDni": "NAN",
+      "pageTitle": "Ikastolako Barraka Txandak",
+      "toastAccept": "Onartu",
+      "closeDialogAria": "Itxi",
+      "filterPanelAria": "Txanden iragazkiak",
+      "inputDniTitle": "Sartu baliozko NAN/AIZ bat",
+      "inputDniExampleTitle": "Sartu baliozko NAN/AIZ bat, adibidez 12345678Z edo X1234567L",
+      "emailQueuedMessage": "Baieztapen-emaila jasoko duzu minutu gutxi barru.",
+      "configMissing": "Cloudflare Worker-en URLa index.html fitxategian konfiguratzea falta da.",
+      "networkError": "Ezin izan da zerbitzariarekin konektatu.",
+      "summaryDayFull": "Dena beteta",
+      "summaryDayMissing": "{0} pertsona falta dira",
+      "shiftCoverageLabel": "Txandaren estaldura",
+      "alreadyRegistered": "Pertsonetako bat dagoeneko txanda honetan izena emanda dago.",
+      "noCapacity": "Ez dago nahikoa plaza libre txanda honetan.",
+      "noResponsibleCapacity": "Ez dago arduradun-plaza librerik txanda honetan.",
+      "missingFields": "Nahitaezko datuak falta dira.",
+      "missingPersonName": "Pertsona baten izena falta da.",
+      "missingPersonDni": "Pertsona baten NANa falta da.",
+      "missingNewShift": "Txanda berria hautatzea falta da.",
+      "invalidShift": "Txanda ez da baliozkoa.",
+      "invalidShiftForOverlap": "Ezin da ordutegi-gainjartzerik dagoen egiaztatu, txandako datuak falta direlako.",
+      "overlappingShift": "Pertsona honek ordutegian gainjartzen den beste txanda batean izena emanda dauka.",
+      "adminUnauthorized": "Pasahitza ez da zuzena.",
+      "adminPasswordNotConfigured": "Administrazio-pasahitza ez dago konfiguratuta.",
+      "routeNotFound": "API bidea ez da aurkitu.",
+      "serverError": "Zerbitzariaren barne-errorea. Saiatu berriro geroago.",
+      "httpError": "Zerbitzariaren HTTP {0} errorea.",
+      "missingInscriptionId": "Izen-ematearen identifikatzailea falta da.",
+      "inscriptionNotFound": "Ez da izen-ematea aurkitu.",
+      "inscriptionMissingEmail": "Izen-emateak ez du emailik.",
+      "associatedShiftNotFound": "Ez da lotutako txanda aurkitu.",
+      "deleteScopeTitle": "Izen-emate honek pertsona gehituak ditu",
+      "deleteScopeText": {
+        "one": "Izen-emate honekin pertsona 1 gehitu zenuen. Zeure burua bakarrik ezabatu nahi duzu, edo pertsona hori ere ezabatu?",
+        "other": "Izen-emate honekin {0} pertsona gehitu zenituen. Zeure burua bakarrik ezabatu nahi duzu, edo pertsona horiek ere ezabatu?"
+      },
+      "deleteScopeTextWithName": {
+        "one": "{0}(r)en izen-emateak pertsona 1 gehituta dauka. Izen-emate hau bakarrik ezabatu nahi duzu, edo pertsona hori ere ezabatu?",
+        "other": "{0}(r)en izen-emateak {1} pertsona gehituta dauzka. Izen-emate hau bakarrik ezabatu nahi duzu, edo pertsona horiek ere ezabatu?"
+      },
+      "deleteOnlyMeBtn": "Ni bakarrik ezabatu",
+      "deleteAllManagedBtn": "Gehitutako pertsonak ere ezabatu",
+      "deleteCancelBtn": "Utzi",
+      "invalidDeleteScope": "Aukeratu izen-emate hau bakarrik ezabatu nahi duzun edo gehitutako pertsonak ere bai."
     }
   },
   "turnos": {
@@ -288,6 +376,10 @@
       "llenado": {
         "es": "Llenado",
         "eu": "Betetzea"
+      },
+      "refuerzo": {
+        "es": "Refuerzo",
+        "eu": "Errefortzua"
       }
     },
     "dias": {

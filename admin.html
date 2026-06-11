@@ -110,7 +110,7 @@
     btn.textContent = 'Verificando…';
     btn.disabled = true;
     try {
-      const data = await adminApi('getAdminData', { pwd: val }, 'GET');
+      const data = await adminApi('getAdminData', { pwd: val }, 'POST');
       sessionPassword = val;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
@@ -134,7 +134,7 @@
   async function loadData() {
     showLoading();
     try {
-      const data = await adminApi('getAdminData', { pwd: sessionPassword }, 'GET');
+      const data = await adminApi('getAdminData', { pwd: sessionPassword }, 'POST');
       render(data.turnos || []);
       updateTime();
     } catch (err) {
@@ -488,7 +488,7 @@
       const data = await adminApi('getEmailLogs', {
         pwd: sessionPassword,
         limit: 100
-      }, 'GET');
+      }, 'POST');
 
       emailLogs = data.logs || [];
       renderEmailLogs();

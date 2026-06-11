@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Política de privacidad | Turnos Barraka Ikastola</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Política de privacidad | Turnos Barraka Ikastola</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Roboto+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
         :root {
             --teal: #00b4b4;
             --teal-dk: #008a8a;
@@ -764,58 +764,57 @@
             .info-table div:last-child { border-bottom: 0; }
         }
 
+    
+        [data-lang-block][hidden] { display: none !important; }
+        .privacy-card ul { margin-top: 8px; }
+        .privacy-card li { margin: 6px 0; line-height: 1.55; }
+        .placeholder { font-weight: 800; color: var(--teal-dk); }
     </style>
 </head>
 <body>
     <header>
         <div class="header-top">
             <div class="lang-toggle" aria-label="Idioma">
-                <button id="btnEs" class="active" type="button" onclick="setLang('es')">ES</button>
-                <button id="btnEu" type="button" onclick="setLang('eu')">EU</button>
+                <button id="btnEs" class="active" onclick="setLang('es')" type="button">ES</button>
+                <button id="btnEu" onclick="setLang('eu')" type="button">EU</button>
             </div>
-
             <h1 id="mainTitle">Política de privacidad</h1>
-
-            <a class="my-shifts-cta" href="index.html" id="backLink">
-                <span>← Volver a los turnos</span>
-            </a>
+            <a class="my-shifts-cta" href="index.html" id="backLink"><span>← Volver a los turnos</span></a>
         </div>
-
         <p class="subtitle" id="headerSubtitle">Información sobre el tratamiento de datos personales en la reserva de turnos.</p>
     </header>
 
     <main>
-        <section class="privacy-actions" aria-label="Accesos rápidos">
-            <a class="my-shifts-cta" href="#info-basica" id="quickBasic">Información básica</a>
-            <a class="my-shifts-cta" href="#politica-completa" id="quickFull">Política completa</a>
+        <section class="privacy-actions" id="quickLinks" aria-label="Accesos rápidos">
+            <a class="my-shifts-cta" href="#info-basica-es" id="quickBasic">Información básica</a>
+            <a class="my-shifts-cta" href="#politica-completa-es" id="quickFull">Política completa</a>
         </section>
 
-        <div class="privacy-layout">
-            <section class="privacy-card" id="info-basica">
-                <h2 id="basicTitle">Información básica sobre protección de datos</h2>
+        <div class="privacy-layout" data-lang-block="es">
+            <section class="privacy-card" id="info-basica-es">
+                <h2>Información básica sobre protección de datos</h2>
                 <div class="info-table">
-                    <div id="rowResponsibleLabel">Responsable</div>
+                    <div>Responsable</div>
                     <div><span class="placeholder">Ikastola Garcés de los Fayos</span> · <span class="placeholder">ikastola@tafallaikastola.org</span></div>
-                    <div id="rowPurposeLabel">Finalidad</div>
-                    <div id="rowPurposeText">Gestionar la reserva de turnos, mostrar qué turnos están libres u ocupados y, solo si lo autorizas expresamente, mostrar tu nombre y apellidos junto al turno elegido.</div>
-                    <div id="rowLegalLabel">Legitimación</div>
-                    <div id="rowLegalText">La gestión del turno se basa en la solicitud realizada por la persona interesada. La publicación pública del nombre y apellidos se basa en el consentimiento expreso.</div>
-                    <div id="rowRightsLabel">Derechos</div>
-                    <div id="rowRightsText">Puedes solicitar el acceso, rectificación, supresión, oposición, limitación del tratamiento, portabilidad cuando proceda y retirada del consentimiento escribiendo a <span class="placeholder">ikastola@tafallaikastola.org</span>.</div>
+                    <div>Finalidad</div>
+                    <div>Gestionar la reserva de turnos, mostrar qué turnos están libres u ocupados y, solo si lo autorizas expresamente, mostrar tu nombre y apellidos junto al turno elegido.</div>
+                    <div>Legitimación</div>
+                    <div>La gestión del turno se basa en la solicitud realizada por la persona interesada. La publicación pública del nombre y apellidos se basa en el consentimiento expreso.</div>
+                    <div>Derechos</div>
+                    <div>Puedes solicitar el acceso, rectificación, supresión, oposición, limitación del tratamiento, portabilidad cuando proceda y retirada del consentimiento escribiendo a <span class="placeholder">ikastola@tafallaikastola.org</span>.</div>
                 </div>
-                <p class="privacy-note" id="basicNote">Si no autorizas la publicación de tu nombre, tu turno aparecerá como “ocupado” o con un identificador no identificativo.</p>
+                <p class="privacy-note">Si no autorizas la publicación de tu nombre, tu turno aparecerá como “ocupado” o con un identificador no identificativo.</p>
             </section>
 
-          
-            <section class="privacy-card" id="politica-completa">
-                <h2 id="fullTitle">Política de privacidad</h2>
+            <section class="privacy-card" id="politica-completa-es">
+                <h2>Política de privacidad</h2>
 
-                <h3 id="section1Title">1. Responsable del tratamiento</h3>
-                <p id="section1Text">El responsable del tratamiento de los datos personales recogidos en esta web es <span class="placeholder">Ikastola Garcés de los Fayos</span>, con domicilio en <span class="placeholder">Calle La Plana s/n</span> y correo electrónico de contacto <span class="placeholder">ikastola@tafallaikastola.org</span>.</p>
+                <h3>1. Responsable del tratamiento</h3>
+                <p>El responsable del tratamiento de los datos personales recogidos en esta web es <span class="placeholder">Ikastola Garcés de los Fayos</span>, con domicilio en <span class="placeholder">Calle La Plana s/n</span> y correo electrónico de contacto <span class="placeholder">ikastola@tafallaikastola.org</span>.</p>
 
-                <h3 id="section2Title">2. Datos personales tratados</h3>
-                <p id="section2Intro">A través del formulario de reserva de turnos podremos tratar los siguientes datos:</p>
-                <ul id="section2List">
+                <h3>2. Datos personales tratados</h3>
+                <p>A través del formulario de reserva de turnos podremos tratar los siguientes datos:</p>
+                <ul>
                     <li>Nombre y apellidos.</li>
                     <li>DNI/NAN, si se solicita para identificar la inscripción.</li>
                     <li>Correo electrónico.</li>
@@ -825,9 +824,9 @@
                     <li>Información técnica necesaria para acreditar la solicitud o el consentimiento, como fecha, hora y, en su caso, dirección IP.</li>
                 </ul>
 
-                <h3 id="section3Title">3. Finalidades del tratamiento</h3>
-                <p id="section3Intro">Los datos personales se tratarán para las siguientes finalidades:</p>
-                <ul id="section3List">
+                <h3>3. Finalidades del tratamiento</h3>
+                <p>Los datos personales se tratarán para las siguientes finalidades:</p>
+                <ul>
                     <li>Gestionar la reserva de turnos solicitada por la persona interesada.</li>
                     <li>Mostrar en la web qué turnos están libres u ocupados.</li>
                     <li>Contactar con la persona inscrita si fuera necesario para gestionar, modificar o cancelar el turno.</li>
@@ -835,26 +834,26 @@
                     <li>Atender solicitudes de ejercicio de derechos en materia de protección de datos.</li>
                 </ul>
 
-                <h3 id="section4Title">4. Base jurídica del tratamiento</h3>
-                <p id="section4Text1">La base jurídica para gestionar la reserva del turno es la solicitud realizada por la persona interesada.</p>
-                <p id="section4Text2">La publicación del nombre y apellidos en la lista pública de turnos solo se realizará cuando la persona haya prestado su consentimiento expreso mediante la marcación de la casilla correspondiente.</p>
-                <p id="section4Text3">La persona podrá retirar su consentimiento en cualquier momento escribiendo a <span class="placeholder">ikastola@tafallaikastola.org</span>, sin que ello afecte a la licitud del tratamiento realizado con anterioridad.</p>
+                <h3>4. Base jurídica del tratamiento</h3>
+                <p>La base jurídica para gestionar la reserva del turno es la solicitud realizada por la persona interesada.</p>
+                <p>La publicación del nombre y apellidos en la lista pública de turnos solo se realizará cuando la persona haya prestado su consentimiento expreso mediante la marcación de la casilla correspondiente.</p>
+                <p>La persona podrá retirar su consentimiento en cualquier momento escribiendo a <span class="placeholder">ikastola@tafallaikastola.org</span>, sin que ello afecte a la licitud del tratamiento realizado con anterioridad.</p>
 
-                <h3 id="section5Title">5. Publicación de datos en la web</h3>
-                <p id="section5Text1">La web mostrará los turnos disponibles y ocupados. Por defecto, los turnos ocupados aparecerán como “ocupado” o mediante un identificador no identificativo.</p>
-                <p id="section5Text2">El nombre y apellidos de la persona inscrita solo se mostrarán públicamente si esta lo autoriza expresamente marcando la casilla habilitada para ello en el formulario de reserva.</p>
-                <p id="section5Text3">La persona que haya autorizado la publicación podrá solicitar en cualquier momento que su nombre deje de mostrarse públicamente.</p>
+                <h3>5. Publicación de datos en la web</h3>
+                <p>La web mostrará los turnos disponibles y ocupados. Por defecto, los turnos ocupados aparecerán como “ocupado” o mediante un identificador no identificativo.</p>
+                <p>El nombre y apellidos de la persona inscrita solo se mostrarán públicamente si esta lo autoriza expresamente marcando la casilla habilitada para ello en el formulario de reserva.</p>
+                <p>La persona que haya autorizado la publicación podrá solicitar en cualquier momento que su nombre deje de mostrarse públicamente.</p>
 
-                <h3 id="section6Title">6. Conservación de los datos</h3>
-                <p id="section6Text">Los datos se conservarán durante el tiempo necesario para gestionar los turnos y atender posibles incidencias relacionadas con la reserva. Una vez finalizado el turno o el periodo de organización correspondiente, los datos serán suprimidos o anonimizados, salvo que exista una obligación legal de conservarlos durante más tiempo.</p>
+                <h3>6. Conservación de los datos</h3>
+                <p>Los datos se conservarán durante el tiempo necesario para gestionar los turnos y atender posibles incidencias relacionadas con la reserva. Una vez finalizado el turno o el periodo de organización correspondiente, los datos serán suprimidos o anonimizados, salvo que exista una obligación legal de conservarlos durante más tiempo.</p>
 
-                <h3 id="section7Title">7. Destinatarios de los datos</h3>
-                <p id="section7Text1">No se cederán datos personales a terceros, salvo obligación legal o cuando sea necesario para la prestación técnica del servicio, por ejemplo, proveedores de alojamiento web, mantenimiento informático o servicios tecnológicos.</p>
-                <p id="section7Text2">En caso de utilizar proveedores externos, estos tratarán los datos siguiendo las instrucciones del responsable y con las garantías exigidas por la normativa de protección de datos.</p>
+                <h3>7. Destinatarios de los datos</h3>
+                <p>No se cederán datos personales a terceros, salvo obligación legal o cuando sea necesario para la prestación técnica del servicio, por ejemplo, proveedores de alojamiento web, mantenimiento informático o servicios tecnológicos.</p>
+                <p>En caso de utilizar proveedores externos, estos tratarán los datos siguiendo las instrucciones del responsable y con las garantías exigidas por la normativa de protección de datos.</p>
 
-                <h3 id="section8Title">8. Derechos de las personas interesadas</h3>
-                <p id="section8Intro">Las personas interesadas pueden ejercer los siguientes derechos:</p>
-                <ul id="section8List">
+                <h3>8. Derechos de las personas interesadas</h3>
+                <p>Las personas interesadas pueden ejercer los siguientes derechos:</p>
+                <ul>
                     <li>Acceso a sus datos personales.</li>
                     <li>Rectificación de datos inexactos.</li>
                     <li>Supresión de sus datos.</li>
@@ -863,10 +862,89 @@
                     <li>Portabilidad, cuando proceda.</li>
                     <li>Retirada del consentimiento prestado para la publicación del nombre y apellidos.</li>
                 </ul>
-                <p id="section8Text">Para ejercer estos derechos, puede enviarse una solicitud a <span class="placeholder">ikastola@tafallaikastola.org</span>, indicando el derecho que se desea ejercer. También se puede presentar una reclamación ante la Agencia Española de Protección de Datos si la persona considera que el tratamiento de sus datos no se ajusta a la normativa aplicable.</p>
+                <p>Para ejercer estos derechos, puede enviarse una solicitud a <span class="placeholder">ikastola@tafallaikastola.org</span>, indicando el derecho que se desea ejercer. También se puede presentar una reclamación ante la Agencia Española de Protección de Datos si la persona considera que el tratamiento de sus datos no se ajusta a la normativa aplicable.</p>
 
-                <h3 id="section9Title">9. Seguridad</h3>
-                <p id="section9Text">El responsable aplicará medidas técnicas y organizativas adecuadas para proteger los datos personales frente al acceso no autorizado, pérdida, alteración o divulgación indebida.</p>
+                <h3>9. Seguridad</h3>
+                <p>El responsable aplicará medidas técnicas y organizativas adecuadas para proteger los datos personales frente al acceso no autorizado, pérdida, alteración o divulgación indebida.</p>
+            </section>
+        </div>
+
+        <div class="privacy-layout" data-lang-block="eu" hidden>
+            <section class="privacy-card" id="info-basica-eu">
+                <h2>Datuen babesari buruzko oinarrizko informazioa</h2>
+                <div class="info-table">
+                    <div>Arduraduna</div>
+                    <div><span class="placeholder">Ikastola Garcés de los Fayos</span> · <span class="placeholder">ikastola@tafallaikastola.org</span></div>
+                    <div>Helburua</div>
+                    <div>Txanden erreserba kudeatzea, zein txanda dauden libre edo beteta erakustea eta, berariaz baimentzen baduzu bakarrik, zure izen-abizenak hautatutako txandarekin batera erakustea.</div>
+                    <div>Legitimazioa</div>
+                    <div>Txanda kudeatzeko oinarria interesdunak egindako eskaera da. Izen-abizenak publikoki argitaratzeko oinarria berariazko baimena da.</div>
+                    <div>Eskubideak</div>
+                    <div>Datuetara sartzeko, zuzentzeko, ezabatzeko, tratamenduaren aurka egiteko, tratamendua mugatzeko, hala badagokio datuen eramangarritasunerako eta baimena kentzeko eskubideak erabil ditzakezu <span class="placeholder">ikastola@tafallaikastola.org</span> helbidera idatzita.</div>
+                </div>
+                <p class="privacy-note">Zure izena argitaratzea baimentzen ez baduzu, zure txanda “beteta” bezala edo identifikatzen ez duen kode batekin agertuko da.</p>
+            </section>
+
+            <section class="privacy-card" id="politica-completa-eu">
+                <h2>Pribatutasun politika</h2>
+
+                <h3>1. Tratamenduaren arduraduna</h3>
+                <p>Webgune honetan jasotako datu pertsonalen tratamenduaren arduraduna <span class="placeholder">Ikastola Garcés de los Fayos</span> da; helbidea: <span class="placeholder">Calle La Plana s/n</span>; harremanetarako posta elektronikoa: <span class="placeholder">ikastola@tafallaikastola.org</span>.</p>
+
+                <h3>2. Tratatutako datu pertsonalak</h3>
+                <p>Txandak erreserbatzeko formularioaren bidez honako datu hauek tratatu ahal izango ditugu:</p>
+                <ul>
+                    <li>Izen-abizenak.</li>
+                    <li>NAN/AIZ, izen-ematea identifikatzeko eskatzen bada.</li>
+                    <li>Posta elektronikoa.</li>
+                    <li>Adierazitako gela edo ikasturtea, hala badagokio.</li>
+                    <li>Hautatutako txanda eta, hala badagokio, txandako arduradun izaera.</li>
+                    <li>Erreserbaren eguna eta ordua.</li>
+                    <li>Eskaera edo baimena egiaztatzeko beharrezkoa den informazio teknikoa, hala nola data, ordua eta, hala badagokio, IP helbidea.</li>
+                </ul>
+
+                <h3>3. Tratamenduaren helburuak</h3>
+                <p>Datu pertsonalak honako helburu hauetarako tratatuko dira:</p>
+                <ul>
+                    <li>Interesdunak eskatutako txanden erreserba kudeatzeko.</li>
+                    <li>Webgunean zein txanda dauden libre edo beteta erakusteko.</li>
+                    <li>Izena eman duen pertsonarekin harremanetan jartzeko, txanda kudeatu, aldatu edo bertan behera utzi behar bada.</li>
+                    <li>Berariazko baimena dagoenean, pertsonaren izen-abizenak hautatutako txandarekin batera publikoki erakusteko.</li>
+                    <li>Datuen babesaren arloko eskubideak erabiltzeko eskaerei erantzuteko.</li>
+                </ul>
+
+                <h3>4. Tratamenduaren oinarri juridikoa</h3>
+                <p>Txandaren erreserba kudeatzeko oinarri juridikoa interesdunak egindako eskaera da.</p>
+                <p>Txanden zerrenda publikoan izen-abizenak argitaratzea soilik egingo da pertsonak dagokion laukia markatuta berariazko baimena eman badu.</p>
+                <p>Pertsonak edozein unetan kendu ahal izango du baimena <span class="placeholder">ikastola@tafallaikastola.org</span> helbidera idatzita, eta horrek ez dio eragingo aurretik egindako tratamenduaren zilegitasunari.</p>
+
+                <h3>5. Datuak webgunean argitaratzea</h3>
+                <p>Webguneak txanda libre eta beteta daudenak erakutsiko ditu. Lehenespenez, betetako txandak “beteta” bezala edo identifikatzen ez duen kode baten bidez agertuko dira.</p>
+                <p>Izena eman duen pertsonaren izen-abizenak soilik erakutsiko dira publikoki pertsona horrek erreserba-formularioan horretarako gaitutako laukia markatuta berariaz baimentzen badu.</p>
+                <p>Argitalpena baimendu duen pertsonak edozein unetan eskatu ahal izango du bere izena publikoki erakusteari uzteko.</p>
+
+                <h3>6. Datuen kontserbazioa</h3>
+                <p>Datuak txandak kudeatzeko eta erreserbarekin lotutako gorabeherak artatzeko behar den denboran gordeko dira. Txanda edo dagokion antolaketa-aldia amaitutakoan, datuak ezabatu edo anonimizatu egingo dira, salbu eta lege-betebeharren batek denbora gehiagoz gordetzera behartzen badu.</p>
+
+                <h3>7. Datuen hartzaileak</h3>
+                <p>Ez zaizkie datu pertsonalak hirugarrenei lagako, lege-betebeharra dagoenean edo zerbitzuaren prestazio teknikorako beharrezkoa denean izan ezik; adibidez, web ostatatze, mantentze informatiko edo zerbitzu teknologikoetako hornitzaileei.</p>
+                <p>Kanpoko hornitzaileak erabiltzen badira, hornitzaile horiek arduradunaren jarraibideen arabera eta datuen babesari buruzko araudiak eskatzen dituen bermeekin tratatuko dituzte datuak.</p>
+
+                <h3>8. Interesdunen eskubideak</h3>
+                <p>Interesdunek honako eskubide hauek erabil ditzakete:</p>
+                <ul>
+                    <li>Beren datu pertsonaletara sartzeko eskubidea.</li>
+                    <li>Datu okerrak zuzentzeko eskubidea.</li>
+                    <li>Datuak ezabatzeko eskubidea.</li>
+                    <li>Tratamenduaren aurka egiteko eskubidea.</li>
+                    <li>Tratamendua mugatzeko eskubidea.</li>
+                    <li>Datuen eramangarritasunerako eskubidea, hala badagokio.</li>
+                    <li>Izen-abizenak argitaratzeko emandako baimena kentzeko eskubidea.</li>
+                </ul>
+                <p>Eskubide horiek erabiltzeko, eskaera bat bidal daiteke <span class="placeholder">ikastola@tafallaikastola.org</span> helbidera, erabili nahi den eskubidea adierazita. Halaber, erreklamazioa aurkez daiteke Datuak Babesteko Espainiako Agentziaren aurrean, pertsonak uste badu bere datuen tratamendua ez datorrela bat aplikatu beharreko araudiarekin.</p>
+
+                <h3>9. Segurtasuna</h3>
+                <p>Arduradunak neurri tekniko eta antolakuntzako egokiak aplikatuko ditu datu pertsonalak baimenik gabeko sarbide, galera, aldaketa edo bidegabeko zabalkundetik babesteko.</p>
             </section>
         </div>
     </main>
@@ -878,47 +956,23 @@
     <script>
         const TEXTS = {
             es: {
+                title: "Política de privacidad | Turnos Barraka Ikastola",
                 mainTitle: "Política de privacidad",
                 headerSubtitle: "Información sobre el tratamiento de datos personales en la reserva de turnos.",
                 backLink: "← Volver a los turnos",
                 quickBasic: "Información básica",
                 quickFull: "Política completa",
-                quickCheckbox: "Texto del consentimiento",
-                basicTitle: "Información básica sobre protección de datos",
-                rowResponsibleLabel: "Responsable",
-                rowPurposeLabel: "Finalidad",
-                rowPurposeText: "Gestionar la reserva de turnos, mostrar qué turnos están libres u ocupados y, solo si lo autorizas expresamente, mostrar tu nombre y apellidos junto al turno elegido.",
-                rowLegalLabel: "Legitimación",
-                rowLegalText: "La gestión del turno se basa en la solicitud realizada por la persona interesada. La publicación pública del nombre y apellidos se basa en el consentimiento expreso.",
-                rowRightsLabel: "Derechos",
-                rowRightsText: "Puedes solicitar el acceso, rectificación, supresión, oposición, limitación del tratamiento, portabilidad cuando proceda y retirada del consentimiento escribiendo a ikastola@tafallaikastola.org.",
-                basicNote: "Si no autorizas la publicación de tu nombre, tu turno aparecerá como “ocupado” o con un identificador no identificativo.",
-                checkboxTitle: "Texto recomendado para el formulario",
-                checkboxIntro: "Puedes colocar este texto junto al formulario de inscripción, antes del botón de confirmar:",
-                checkboxText: "☐ Acepto que mi nombre y apellidos se muestren públicamente en la web junto al turno elegido.<br><br>Puedes reservar turno aunque no marques esta casilla. En ese caso, tu turno aparecerá como “ocupado” o con un identificador no identificativo.",
-                fullTitle: "Política de privacidad",
+                quickLinksAria: "Accesos rápidos",
                 footerBack: "Volver a la página de turnos"
             },
             eu: {
+                title: "Pribatutasun politika | Ikastolako barrakako txandak",
                 mainTitle: "Pribatutasun politika",
                 headerSubtitle: "Txanden erreserban datu pertsonalak nola tratatzen diren azaltzen duen informazioa.",
                 backLink: "← Txandetara itzuli",
                 quickBasic: "Oinarrizko informazioa",
                 quickFull: "Politika osoa",
-                quickCheckbox: "Baimenaren testua",
-                basicTitle: "Datuen babesari buruzko oinarrizko informazioa",
-                rowResponsibleLabel: "Arduraduna",
-                rowPurposeLabel: "Helburua",
-                rowPurposeText: "Txanden erreserba kudeatzea, zein txanda dauden libre edo beteta erakustea eta, berariaz baimentzen baduzu bakarrik, zure izen-abizenak hautatutako txandarekin batera erakustea.",
-                rowLegalLabel: "Legitimazioa",
-                rowLegalText: "Txanda kudeatzeko oinarria interesdunak egindako eskaera da. Izen-abizenak publikoki argitaratzeko oinarria berariazko baimena da.",
-                rowRightsLabel: "Eskubideak",
-                rowRightsText: "Datuetara sartzeko, zuzentzeko, ezabatzeko, aurka egiteko, tratamendua mugatzeko, hala badagokio eramangarritasunerako eta baimena kentzeko eskubideak erabil ditzakezu ikastola@tafallaikastola.org helbidera idatzita.",
-                basicNote: "Zure izena argitaratzea baimentzen ez baduzu, zure txanda “beteta” bezala edo identifikatzen ez duen kode batekin agertuko da.",
-                checkboxTitle: "Formularioan jartzeko gomendatutako testua",
-                checkboxIntro: "Testu hau izena emateko formularioaren ondoan jar dezakezu, baieztatzeko botoiaren aurretik:",
-                checkboxText: "☐ Onartzen dut nire izen-abizenak webgunean publikoki erakustea hautatutako txandarekin batera.<br><br>Laukia markatu gabe ere txanda erreserbatu dezakezu. Kasu horretan, zure txanda “beteta” bezala edo identifikatzen ez duen kode batekin agertuko da.",
-                fullTitle: "Pribatutasun politika",
+                quickLinksAria: "Sarbide azkarrak",
                 footerBack: "Txanden orrira itzuli"
             }
         };
@@ -927,7 +981,7 @@
         const $ = id => document.getElementById(id);
 
         function setLang(nextLang) {
-            lang = nextLang;
+            lang = nextLang === "eu" ? "eu" : "es";
             localStorage.setItem("lang", lang);
             applyTexts();
         }
@@ -939,18 +993,28 @@
                 el.querySelector("span").textContent = value;
                 return;
             }
-            if (id === "checkboxText") {
-                el.innerHTML = value;
-                return;
-            }
             el.textContent = value;
         }
 
         function applyTexts() {
+            const texts = TEXTS[lang] || TEXTS.es;
             document.documentElement.lang = lang;
+            document.title = texts.title;
             $("btnEs").classList.toggle("active", lang === "es");
             $("btnEu").classList.toggle("active", lang === "eu");
-            Object.entries(TEXTS[lang]).forEach(([id, value]) => setText(id, value));
+
+            ["mainTitle", "headerSubtitle", "backLink", "quickBasic", "quickFull", "footerBack"].forEach(id => {
+                setText(id, texts[id]);
+            });
+
+            const quickLinks = $("quickLinks");
+            if (quickLinks) quickLinks.setAttribute("aria-label", texts.quickLinksAria);
+            $("quickBasic").setAttribute("href", `#info-basica-${lang}`);
+            $("quickFull").setAttribute("href", `#politica-completa-${lang}`);
+
+            document.querySelectorAll("[data-lang-block]").forEach(block => {
+                block.hidden = block.dataset.langBlock !== lang;
+            });
         }
 
         applyTexts();

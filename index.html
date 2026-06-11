@@ -59,7 +59,7 @@
         <div class="toast-inner">
             <div id="toastmsg"></div>
             <div class="toast-actions">
-                <button type="button" class="secondary" onclick="$('toast').close()">Aceptar</button>
+                <button type="button" class="secondary" id="toastAccept" onclick="$('toast').close()">Aceptar</button>
             </div>
         </div>
     </dialog>
@@ -97,6 +97,21 @@
                 </div>
             </div>
             <div id="myShifts"></div>
+        </div>
+    </dialog>
+
+    <dialog id="deleteScopeDialog" aria-labelledby="deleteScopeTitle">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="deleteScopeTitle">Borrar inscripción</h3>
+                <button class="close-btn" id="deleteScopeCloseBtn" type="button" aria-label="Cerrar">✕</button>
+            </div>
+            <p id="deleteScopeText"></p>
+            <div class="actions" style="justify-content:flex-start;">
+                <button type="button" class="secondary" id="deleteOnlyMeBtn">Borrarme solo a mí</button>
+                <button type="button" class="danger" id="deleteAllManagedBtn">Borrar también a las personas añadidas</button>
+                <button type="button" class="secondary" id="deleteCancelBtn">Cancelar</button>
+            </div>
         </div>
     </dialog>
 
@@ -374,7 +389,8 @@ function getShiftTypeLabel(item) {
                  "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
                 "dlgSignupCancel", "dlgSignupConfirm",
                 "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
-                "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn",
+                "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn", "toastAccept",
+                "deleteScopeTitle", "deleteOnlyMeBtn", "deleteAllManagedBtn", "deleteCancelBtn",
                 "privacyFooterLink", "privacyNoticeText", "privacyNoticeLink", "signupSavingTitle", "signupSavingText"
             ];
 
@@ -382,6 +398,17 @@ function getShiftTypeLabel(item) {
                 const el = $(id);
                 if (el) el.textContent = t(id);
             });
+
+            document.title = t("pageTitle");
+
+            const filterPanel = document.querySelector(".filter-panel");
+            if (filterPanel) filterPanel.setAttribute("aria-label", t("filterPanelAria"));
+
+            const myDniInput = $("myDni");
+            if (myDniInput) myDniInput.setAttribute("title", t("inputDniTitle"));
+
+            const signupDniInput = $("dni");
+            if (signupDniInput) signupDniInput.setAttribute("title", t("inputDniExampleTitle"));
 
             $("reloadBtn").textContent = t("reloadBtn");
             const mobileToolsBtn = $("mobileToolsBtn");
@@ -391,7 +418,7 @@ function getShiftTypeLabel(item) {
             }
 
             document.querySelectorAll(".close-btn").forEach(btn => {
-                btn.setAttribute("aria-label", lang === "eu" ? "Itxi" : "Cerrar");
+                btn.setAttribute("aria-label", t("closeDialogAria"));
             });
 
             const s = $("status");
@@ -417,9 +444,7 @@ function getShiftTypeLabel(item) {
         }
 
 		function emailQueuedMessage() {
-	    return lang === "eu"
-	        ? "Baieztapen-emaila jasoko duzu minutu gutxi barru."
-	        : "Recibirás un email de confirmación en unos minutos.";
+	    return t("emailQueuedMessage");
 	}
 		
         function showToast(message) {
@@ -556,9 +581,32 @@ function getShiftTypeLabel(item) {
             return data;
         }
 
+        function hasTranslation(key) {
+            const dictionary = TEXTS[lang] || TEXTS.es || {};
+            return Boolean(key && Object.prototype.hasOwnProperty.call(dictionary, key));
+        }
+
+        function apiErrorMessage(data, status) {
+            const code = data?.errorCode || (status === 404 ? "routeNotFound" : "unknownError");
+
+            if (hasTranslation(code)) {
+                return t(code);
+            }
+
+            if (data?.error) {
+                return String(data.error);
+            }
+
+            if (status) {
+                return t("httpError", status);
+            }
+
+            return t("unknownError");
+        }
+
 		async function api(action, payload = {}, method = "POST") {
             if (!API_BASE || API_BASE.includes("PON_AQUI")) {
-                throw new Error("Falta configurar la URL de Cloudflare Worker en index.html.");
+                throw new Error(t("configMissing"));
             }
 
             try {
@@ -581,21 +629,22 @@ function getShiftTypeLabel(item) {
                 }
 
                 const response = await fetch(url, options);
-                if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
+                let data = {};
 
-                const data = normalizeApiResponse(await response.json());
+                try {
+                    data = normalizeApiResponse(await response.json());
+                } catch (parseError) {
+                    data = {};
+                }
 
-				if (!data.ok) {
-				    const code = data.errorCode || "unknownError";
-				    const translated = TEXTS[lang] && TEXTS[lang][code];
-				
-				    throw new Error(translated || data.error || t("unknownError"));
+				if (!response.ok || !data.ok) {
+				    throw new Error(apiErrorMessage(data, response.status));
 				}
 				
 				return data;
             } catch (error) {
                 console.error("Error en API", { action, payload, method, error });
-                throw new Error(error.message || "No se ha podido conectar con el servidor.");
+                throw new Error(error.message || t("networkError"));
             }
         }	
 
@@ -1131,8 +1180,8 @@ function getShiftTypeLabel(item) {
                             ${normalizeDateLabel(day.fecha)} <br> ${escapeHtml(day.dia)}
                             <span>
                                 ${day.libres <= 0
-                                    ? (lang === "eu" ? "Dena beteta" : "Todo cubierto")
-                                    : (lang === "eu" ? `${day.libres} pertsona falta dira` : `Faltan ${day.libres} personas`)}
+                                    ? t("summaryDayFull")
+                                    : t("summaryDayMissing", day.libres)}
                             </span>
                         </button>
                     `).join("")}
@@ -1223,7 +1272,7 @@ function getShiftTypeLabel(item) {
                                 ${full ? t("badgeFull") : t("badgeFew", libres, shift.plazas)}
                             </span>
                         </div>
-                        <div class="shift-progress-wrap" aria-label="Cobertura del turno">
+                        <div class="shift-progress-wrap" aria-label="${t("shiftCoverageLabel")}">
                             <div class="progress-bar-bg"><div class="progress-bar-fill ${badgeClass}" style="--progress:${pct}%"></div></div>
                             <div class="progress-label">${plazas - libres} / ${plazas} · ${pct}%</div>
                         </div>
@@ -1535,18 +1584,89 @@ const publicarNombre = publicarNombreSelected.value;
             }
         }
 
+        function getManagedChildrenFor(idInscripcion) {
+            return state.myInscriptions.filter(item =>
+                String(item.id_inscripcion_gestor || "") === String(idInscripcion || "") &&
+                String(item.id_inscripcion || "") !== String(idInscripcion || "")
+            );
+        }
+
+        function chooseDeleteScope(current, managedChildren) {
+            return new Promise(resolve => {
+                const dialog = $("deleteScopeDialog");
+
+                if (!dialog) {
+                    resolve(confirm(t("confirmDelete")) ? "single" : "");
+                    return;
+                }
+
+                const closeWith = value => {
+                    onlyBtn.removeEventListener("click", onOnly);
+                    allBtn.removeEventListener("click", onAll);
+                    cancelBtn.removeEventListener("click", onCancelClick);
+                    closeBtn.removeEventListener("click", onCancelClick);
+                    dialog.removeEventListener("cancel", onCancelEvent);
+                    if (dialog.open) dialog.close();
+                    resolve(value);
+                };
+
+                const onlyBtn = $("deleteOnlyMeBtn");
+                const allBtn = $("deleteAllManagedBtn");
+                const cancelBtn = $("deleteCancelBtn");
+                const closeBtn = $("deleteScopeCloseBtn");
+                const text = $("deleteScopeText");
+                const personName = current?.nombre ? String(current.nombre).trim() : "";
+
+                if (text) {
+                    text.textContent = personName
+                        ? t("deleteScopeTextWithName", personName, managedChildren.length)
+                        : t("deleteScopeText", managedChildren.length);
+                }
+
+                const onOnly = () => closeWith("single");
+                const onAll = () => closeWith("managed");
+                const onCancelClick = () => closeWith("");
+                const onCancelEvent = event => {
+                    event.preventDefault();
+                    closeWith("");
+                };
+
+                onlyBtn.addEventListener("click", onOnly);
+                allBtn.addEventListener("click", onAll);
+                cancelBtn.addEventListener("click", onCancelClick);
+                closeBtn.addEventListener("click", onCancelClick);
+                dialog.addEventListener("cancel", onCancelEvent);
+
+                applyTexts();
+                dialog.showModal();
+            });
+        }
+
         async function deleteInscription(idInscripcion, button) {
-            const ok = confirm(t("confirmDelete"));
-            if (!ok) return;
+            const current = state.myInscriptions.find(item => String(item.id_inscripcion) === String(idInscripcion));
+            const managedChildren = getManagedChildrenFor(idInscripcion);
+            let deleteScope = "single";
+
+            if (managedChildren.length) {
+                deleteScope = await chooseDeleteScope(current, managedChildren);
+                if (!deleteScope) return;
+            } else {
+                const ok = confirm(t("confirmDelete"));
+                if (!ok) return;
+            }
 
             if (button) button.disabled = true;
             try {
-                const data = await api("borrar", { ...state.myIdentity, id_inscripcion: idInscripcion });
+                const data = await api("borrar", {
+                    ...state.myIdentity,
+                    id_inscripcion: idInscripcion,
+                    delete_scope: deleteScope
+                });
                 let mensaje = t("toastDeleteOk");
-				if (data.emailQueued) {
-				    mensaje += " " + emailQueuedMessage();
-				}
-				showToast(mensaje);
+                if (data.emailQueued) {
+                    mensaje += " " + emailQueuedMessage();
+                }
+                showToast(mensaje);
                 if (data.turnos) {
                     state.shifts = data.turnos || [];
                     state.opciones = data.opciones || state.opciones || {};
