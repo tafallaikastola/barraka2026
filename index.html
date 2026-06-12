@@ -1369,14 +1369,7 @@ function getShiftTypeLabel(item) {
 			async function signup() {
     const btn = $("dlgSignupConfirm");
     const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
-	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
-
-if (!publicarNombreSelected) {
-    showToast(t("choosePublicName"));
-    return;
-}
-
-const publicarNombre = publicarNombreSelected.value;
+	
     const fullName = $("nombre").value.trim();
     const mainPerson = {
         id_turno: $("signupShiftId").value,
@@ -1406,6 +1399,16 @@ const publicarNombre = publicarNombreSelected.value;
         showToast(t("responsibleLimit", freeResponsible));
         return;
     }
+
+	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
+
+	if (!publicarNombreSelected) {
+	    showToast(t("choosePublicName"));
+	    return;
+	}
+
+	const publicarNombre = publicarNombreSelected.value;
+	mainPerson.publicar_nombre = publicarNombre;
 
     setSignupSaving(true);
 
