@@ -1,0 +1,1775 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TURNOS BARRAKA IKASTOLA / IKASTOLAKO BARRAKA TXANDAK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/index.css" />
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="lang-toggle">
+                <button id="btnEs" class="active" onclick="setLang('es')">ES</button>
+                <button id="btnEu" onclick="setLang('eu')">EU</button>
+            </div>
+
+            <h1 id="mainTitle">Turnos barraka ikastola</h1>
+
+            <div class="header-actions">
+                <button class="my-shifts-cta" onclick="scrollToMyShifts()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                    <span id="myShiftsCta">Consultar / cambiar mis turnos</span>
+                </button>
+                <a class="help-link" id="helpLink" href="mailto:barrakaikastola@gmail.com?subject=Ayuda%20turnos%20barraka">Ayuda / contacto</a>
+            </div>
+        </div>
+
+        <p class="subtitle" id="headerSubtitle">Consulta los turnos disponibles y apúntate. En cada turno aparecerá el nombre de las personas inscritas.</p>
+    </header>
+
+    <main>
+        <section class="topbar">
+            <div class="status" id="status">Cargando turnos...</div>
+            <button class="secondary mobile-tools-btn" id="mobileToolsBtn" type="button" aria-expanded="false">Filtros y resumen</button>
+            <button class="secondary" id="reloadBtn">Actualizar</button>
+        </section>
+
+        <section class="filter-panel" aria-label="Filtros de turnos">
+            <div class="filter-title" id="filterTitle">Filtrar turnos</div>
+            <div class="filter-chips" id="filterChips"></div>
+        </section>
+
+        <section class="summary-card" id="summaryCard" aria-live="polite"></section>
+        <section class="grid" id="shiftGrid"></section>
+		<section style="text-align:center; margin: 28px 0 0; color: var(--muted); font-size: .92rem;">
+            <a href="politica-privacidad.html" id="privacyFooterLink" style="color: var(--teal-dk); font-weight: 800; text-decoration: none;">
+                Política de privacidad
+            </a>
+        </section>
+    </main>
+
+    <dialog id="toast">
+        <div class="toast-inner">
+            <div id="toastmsg"></div>
+            <div class="toast-actions">
+                <button type="button" class="secondary" id="toastAccept" onclick="$('toast').close()">Aceptar</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="successDialog" aria-labelledby="successTitle">
+        <div class="modal">
+            <div class="success-message">
+                <div class="success-icon">✓</div>
+                <h3 id="successTitle">Te has apuntado correctamente</h3>
+                <div class="success-shift" id="successShiftText"></div>
+            </div>
+            <div class="actions" style="justify-content:center;">
+                <button type="button" class="secondary" id="successAnotherBtn" onclick="closeSuccessAndChooseAnother()">Apuntarme a otro turno</button>
+                <button type="button" id="successMyShiftsBtn" onclick="openMyShiftsFromSuccess()">Ver mis turnos</button>
+                <button type="button" class="secondary" id="successCloseBtn" onclick="$('successDialog').close()">Cerrar</button>
+            </div>
+        </div>
+    </dialog>
+    <dialog id="myShiftsDialog" aria-labelledby="myPanelTitle">
+        <div class="modal-inner">
+            <div class="modal-header">
+                <h2 id="myPanelTitle">Mis turnos</h2>
+                <button class="close-btn" onclick="$('myShiftsDialog').close()" aria-label="Cerrar">✕</button>
+            </div>
+            <p class="subtitle" id="myPanelSubtitle" style="margin:0 0 16px;">Introduce tu DNI para ver, cambiar o borrar tus inscripciones.</p>
+            <div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div>
+                        <label for="myDni"><span id="labelMyDni">DNI</span><span class="required-star">*</span></label>
+                        <input id="myDni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido" />
+                    </div>
+                </div>
+                <div class="actions" style="justify-content:flex-start; margin-top: 14px;">
+                    <button id="myFormBtn" onclick="loadMyShifts()">Ver mis turnos</button>
+                </div>
+            </div>
+            <div id="myShifts"></div>
+        </div>
+    </dialog>
+
+    <dialog id="deleteScopeDialog" aria-labelledby="deleteScopeTitle">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="deleteScopeTitle">Borrar inscripción</h3>
+                <button class="close-btn" id="deleteScopeCloseBtn" type="button" aria-label="Cerrar">✕</button>
+            </div>
+            <p id="deleteScopeText"></p>
+            <div class="actions" style="justify-content:flex-start;">
+                <button type="button" class="secondary" id="deleteOnlyMeBtn">Borrarme solo a mí</button>
+                <button type="button" class="danger" id="deleteAllManagedBtn">Borrar también a las personas añadidas</button>
+                <button type="button" class="secondary" id="deleteCancelBtn">Cancelar</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="signupDialog" aria-labelledby="dlgSignupTitle">
+        <div class="modal" id="signupModal">
+            <div class="modal-header">
+                <h3 id="dlgSignupTitle">Apuntarme</h3>
+                <button class="close-btn" onclick="$('signupDialog').close()" aria-label="Cerrar">✕</button>
+            </div>
+
+            <div class="confirm-box" id="signupConfirmBox">
+                <strong id="signupConfirmLabel">Turno seleccionado:</strong>
+                <span id="signupShiftText" class="shift-summary"></span>
+            </div>
+
+            <input type="hidden" id="signupShiftId" />
+            <input type="hidden" id="signupGestorId" />
+
+            <div class="signup-grid">
+                <div class="signup-field">
+                    <label for="dni"><span id="labelDni">DNI / NAN</span><span class="required-star">*</span></label>
+                    <input id="dni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido, por ejemplo 12345678Z o X1234567L" />
+                    <div class="person-lookup-hint" id="dniLookupHint"></div>
+                </div>
+                <div class="signup-field">
+                    <label for="nombre"><span id="labelnombre">Nombre y apellidos</span><span class="required-star">*</span></label>
+                    <input id="nombre" required autocomplete="name" />
+                </div>
+                <div class="signup-field">
+                    <label for="email"><span id="labelEmail">Email</span><span class="required-star">*</span></label>
+                    <input id="email" type="email" required autocomplete="email" />
+                </div>
+            </div>
+
+            <label id="labelGela">Clase</label>
+            <div id="gela_group" class="gela-options"></div>
+
+            <div class="check-card" id="signupResponsableBox">
+                <input id="responsableTurno" type="checkbox" />
+                <div>
+                    <label for="responsableTurno" class="labelResponsable" id="labelResponsableTurno">Quiero realizar la función de responsable del turno</label>
+                    <small id="responsableTurnoHelp"></small>
+                </div>
+            </div>
+			<div class="check-card privacy-choice" id="publicNameBox">
+    <div class="privacy-choice-content">
+        <div class="privacy-choice-title" id="labelPublicarNombreDecision">
+            ¿Cómo quieres aparecer en la lista pública?
+            <span class="required-star">*</span>
+        </div>
+
+        <label class="privacy-option">
+            <input type="radio" name="publicarNombre" value="si" required>
+            <span id="publicarNombreSi">Mostrar mi nombre y apellidos</span>
+        </label>
+
+        <label class="privacy-option">
+            <input type="radio" name="publicarNombre" value="no" required>
+            <span id="publicarNombreNo">No mostrar mi nombre; apareceré como privado.</span>
+        </label>
+
+        <small class="privacy-choice-help" id="publicarNombreHelp">Esta elección se aplicará también a las personas adicionales que inscribas.</small>
+    </div>
+</div>
+
+            <div class="signup-section-title">
+                <h4 id="additionalPeopleTitle">Otras personas que quieres apuntar</h4>
+                <button type="button" class="secondary" id="btnAddAdditionalPerson" onclick="addAdditionalPerson()">Añadir otra persona</button>
+            </div>
+            <div id="additionalPeople"></div>
+
+			<p style="margin: 16px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.45;">
+                <span id="privacyNoticeText">Al confirmar la inscripción, tus datos se tratarán para gestionar los turnos. Puedes consultar más información en la</span>
+                <a href="politica-privacidad.html" target="_blank" rel="noopener" id="privacyNoticeLink" style="color: var(--teal-dk); font-weight: 800;">
+                    Política de privacidad
+                </a>.
+            </p>
+
+            <div id="signupSavingMessage" class="saving-message" hidden aria-live="polite">
+                <strong id="signupSavingTitle">Guardando inscripción…</strong>
+                <span id="signupSavingText">Espera unos segundos, por favor. No cierres esta ventana.</span>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="secondary" id="dlgSignupCancel" onclick="$('signupDialog').close()">Cancelar</button>
+                <button type="button" id="dlgSignupConfirm" onclick="signup()">Confirmar inscripción</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="changeDialog" aria-labelledby="dlgChangeTitle">
+        <div class="modal" id="changeModal">
+            <div class="modal-header">
+                <h3 id="dlgChangeTitle">Cambiar turno</h3>
+                <button class="close-btn" onclick="$('changeDialog').close()" aria-label="Cerrar">✕</button>
+            </div>
+            <p id="changeShiftText"></p>
+            <input type="hidden" id="changeInscriptionId" />
+            <label for="newShiftId"><span id="labelNewShift">Nuevo turno</span><span class="required-star">*</span></label>
+            <select id="newShiftId" required></select>
+
+            <div class="check-card" id="changeResponsableBox">
+                <input id="changeResponsableTurno" type="checkbox" />
+                <div>
+                    <label for="changeResponsableTurno" id="labelChangeResponsableTurno">Quiero realizar la función de responsable del turno</label>
+                    <small id="changeResponsableTurnoHelp"></small>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="secondary" id="dlgChangeCancel" onclick="$('changeDialog').close()">Cancelar</button>
+                <button type="button" id="dlgChangeConfirm" onclick="changeInscription()">Cambiar</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        const API_BASE = "https://barraka-api.mabregoa.workers.dev";
+							
+        const FECHA_SEPARADORA = "2026-08-14";
+        const DEFAULT_SHIFT_COLOR = "#64748b";
+
+        const TRANSLATIONS_URL = "traducciones-index.json";
+        let TEXTS = { es: {}, eu: {} };
+        let SHIFT_TRANSLATIONS = { tipos: {}, dias: {} };
+        let lang = localStorage.getItem("lang") || "es";
+        const state = { shifts: [], myIdentity: null, myInscriptions: [], opciones: {}, activeFilter: "all" };
+        let didHandleInitialLink = false;
+        const $ = id => document.getElementById(id);
+
+        function interpolate(text, args) {
+            return String(text ?? "").replace(/\{(\d+)\}/g, (_, index) => args[index] ?? "");
+        }
+
+        function t(key, ...args) {
+            const dictionary = TEXTS[lang] || TEXTS.es || {};
+            let value = dictionary[key] ?? TEXTS.es?.[key] ?? key;
+
+            if (value && typeof value === "object") {
+                const firstArg = Number(args[0]);
+                if (Object.prototype.hasOwnProperty.call(value, "zero") && firstArg <= 0) value = value.zero;
+                else if (Object.prototype.hasOwnProperty.call(value, "one") && firstArg === 1) value = value.one;
+                else value = value.other ?? value.default ?? "";
+            }
+
+            return interpolate(value, args);
+        }
+
+        async function loadTranslations() {
+            try {
+                const response = await fetch(TRANSLATIONS_URL, { cache: "no-cache" });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                TEXTS = data.ui || { es: {}, eu: {} };
+                SHIFT_TRANSLATIONS = data.turnos || { tipos: data.tipos || {}, dias: data.dias || {} };
+            } catch (error) {
+                console.error("No se han podido cargar las traducciones.", error);
+            }
+        }
+
+function dataKey(value) {
+    return normalizeText(value)
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+
+function parseLocalDate(value) {
+    if (value === null || value === undefined) return null;
+
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    // D1/SQLite puede devolver fechas como YYYY-MM-DD, YYYY-MM-DD HH:mm:ss,
+    // ISO completo, DD/MM/YYYY o incluso números de serie importados desde Excel.
+    let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (match) {
+        const [, y, m, d] = match;
+        const date = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+    if (match) {
+        const [, d, m, y] = match;
+        const date = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (/^\d+(\.\d+)?$/.test(raw)) {
+        const excelSerial = Number(raw);
+        if (excelSerial > 20000 && excelSerial < 80000) {
+            const utc = Math.round((excelSerial - 25569) * 86400 * 1000);
+            const tmp = new Date(utc);
+            const date = new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate(), 12, 0, 0);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+    }
+
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+        return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 12, 0, 0);
+    }
+
+    return null;
+}
+
+function normalizeDateKey(value) {
+    const date = parseLocalDate(value);
+    if (!date) return String(value || '').trim();
+
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function getDayCodeFromDate(fecha) {
+    const date = parseLocalDate(fecha);
+
+    if (!date) return "";
+
+    return [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday"
+    ][date.getDay()];
+}
+
+function getDayLabel(item) {
+    const code = getDayCodeFromDate(item?.fecha);
+
+    if (!code) {
+        return String(item?.dia || "").trim();
+    }
+
+    return SHIFT_TRANSLATIONS.dias?.[code]?.[lang] || "";
+}
+
+function getShiftTypeCode(item) {
+    return dataKey(item?.tipo);
+}
+
+function getShiftTypeLabel(item) {
+    const original = String(item?.tipo || "").trim();
+    const code = getShiftTypeCode(item);
+
+    if (!code) return original;
+
+    return SHIFT_TRANSLATIONS.tipos?.[code]?.[lang] || original || "";
+}
+
+        function setLang(l) {
+            lang = l;
+            localStorage.setItem("lang", l);
+            applyTexts();
+            renderShifts();
+            if (state.myInscriptions.length) renderMyShifts();
+        }
+
+        function applyTexts() {
+            document.documentElement.lang = lang;
+            $("btnEs").classList.toggle("active", lang === "es");
+            $("btnEu").classList.toggle("active", lang === "eu");
+
+            const ids = [
+                "mainTitle", "headerSubtitle", "myShiftsCta", "helpLink", "mobileToolsBtn", "myPanelTitle", "myPanelSubtitle",
+                "labelMyDni", "myFormBtn",
+                "dlgSignupTitle", "signupConfirmLabel", "labelnombre", "labelEmail", "labelDni", "labelGela",
+                 "labelResponsableTurno", "labelPublicarNombreDecision", "publicarNombreSi", "publicarNombreNo", "publicarNombreHelp", "additionalPeopleTitle", "btnAddAdditionalPerson",
+                "dlgSignupCancel", "dlgSignupConfirm",
+                "dlgChangeTitle", "labelNewShift", "labelChangeResponsableTurno", "dlgChangeCancel", "dlgChangeConfirm",
+                "filterTitle", "successTitle", "successAnotherBtn", "successMyShiftsBtn", "successCloseBtn", "toastAccept",
+                "deleteScopeTitle", "deleteOnlyMeBtn", "deleteAllManagedBtn", "deleteCancelBtn",
+                "privacyFooterLink", "privacyNoticeText", "privacyNoticeLink", "signupSavingTitle", "signupSavingText"
+            ];
+
+            ids.forEach(id => {
+                const el = $(id);
+                if (el) el.textContent = t(id);
+            });
+
+            document.title = t("pageTitle");
+
+            const filterPanel = document.querySelector(".filter-panel");
+            if (filterPanel) filterPanel.setAttribute("aria-label", t("filterPanelAria"));
+
+            const myDniInput = $("myDni");
+            if (myDniInput) myDniInput.setAttribute("title", t("inputDniTitle"));
+
+            const signupDniInput = $("dni");
+            if (signupDniInput) signupDniInput.setAttribute("title", t("inputDniExampleTitle"));
+
+            $("reloadBtn").textContent = t("reloadBtn");
+            const mobileToolsBtn = $("mobileToolsBtn");
+            if (mobileToolsBtn) {
+                const open = document.body.classList.contains("mobile-tools-open");
+                mobileToolsBtn.textContent = open ? t("mobileToolsOpenBtn") : t("mobileToolsBtn");
+            }
+
+            document.querySelectorAll(".close-btn").forEach(btn => {
+                btn.setAttribute("aria-label", t("closeDialogAria"));
+            });
+
+            const s = $("status");
+            if (s && s.dataset.loaded) s.textContent = t("statusLoaded", s.dataset.count || 0);
+        }
+
+        function scrollToMyShifts({ autoLoad = false } = {}) {
+            applyTexts();
+            clearInvalidFields(["myDni"]);
+
+            if (state.myIdentity) {
+                $("myDni").value = state.myIdentity.dni || "";
+            }
+
+            $("myShiftsDialog").showModal();
+
+            if (autoLoad && state.myIdentity) {
+                loadMyShifts();
+                return;
+            }
+
+            setTimeout(() => $(state.myIdentity ? "myFormBtn" : "myDni").focus(), 80);
+        }
+
+		function emailQueuedMessage() {
+	    return t("emailQueuedMessage");
+	}
+		
+        function showToast(message) {
+            $("toastmsg").textContent = message;
+            if (!$("toast").open) $("toast").showModal();
+
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => {
+                if ($("toast").open) $("toast").close();
+            }, 3200);
+        }
+
+        function scrollToDay(fecha) {
+            const card = document.querySelector(`[data-day-card="${CSS.escape(fecha)}"]`);
+            if (!card) return;
+            card.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function normalizeText(value) {
+            return String(value || "")
+                .trim()
+                .replace(/\s+/g, " ")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLocaleLowerCase(lang === "eu" ? "eu-ES" : "es-ES");
+        }
+
+        function isValidName(nombre) {
+            const normalized = normalizeText(nombre);
+            return normalized.length >= 2 && /^[a-záéíóúüñç\s'-]+$/i.test(nombre.trim());
+        }
+
+        function clearInvalidFields(ids) {
+            ids.forEach(id => {
+                const el = $(id);
+                if (el) el.classList.remove("user-invalid");
+            });
+        }
+
+        function markInvalidFields(ids) {
+            let firstInvalid = null;
+
+            ids.forEach(id => {
+                const el = $(id);
+                if (!el) return;
+
+                const isEmpty = !String(el.value || "").trim();
+                el.classList.toggle("user-invalid", isEmpty);
+
+                if (isEmpty && !firstInvalid) firstInvalid = el;
+            });
+
+            if (firstInvalid) firstInvalid.focus();
+            return Boolean(firstInvalid);
+        }
+
+        function validateRequired(ids) {
+            if (markInvalidFields(ids)) {
+                showToast(t("fillAllFields"));
+                return false;
+            }
+            return true;
+        }
+
+        function normalizeDateLabel(value) {
+            const date = parseLocalDate(value);
+            if (!date || Number.isNaN(date.getTime())) return String(value || "");
+
+            try {
+                return new Intl.DateTimeFormat(lang === "eu" ? "eu-ES" : "es-ES", {
+                    day: "2-digit",
+                    month: "long"
+                }).format(date);
+            } catch (error) {
+                console.warn("Fecha inválida al formatear", value, error);
+                return String(value || "");
+            }
+        }
+
+		function normalizeShiftFromApi(shift) {
+            if (!shift || typeof shift !== "object") return shift;
+            const normalized = { ...shift };
+
+            // D1 usa turnos.id; el frontal original trabaja con id_turno.
+            if (normalized.id_turno === undefined && normalized.id !== undefined) normalized.id_turno = normalized.id;
+            if (normalized.id === undefined && normalized.id_turno !== undefined) normalized.id = normalized.id_turno;
+
+            // Normaliza fechas para que el frontal no falle si D1 devuelve
+            // YYYY-MM-DD HH:mm:ss, DD/MM/YYYY o un número de serie de Excel.
+            if (normalized.fecha !== undefined) normalized.fecha = normalizeDateKey(normalized.fecha);
+
+            // Compatibilidad con ocupadas/ocupadas_responsable devueltas por SQL.
+            if (normalized.plazas_ocupadas === undefined && normalized.ocupadas !== undefined) normalized.plazas_ocupadas = normalized.ocupadas;
+            if (normalized.plazas_responsable_ocupadas === undefined && normalized.ocupadas_responsable !== undefined) {
+                normalized.plazas_responsable_ocupadas = normalized.ocupadas_responsable;
+            }
+
+            normalized.cerrado = Number(normalized.cerrado || 0) === 1;
+
+            return normalized;
+        }
+
+        function normalizeInscriptionFromApi(item) {
+            if (!item || typeof item !== "object") return item;
+            const normalized = { ...item };
+
+            // D1 puede devolver id; el frontal original usa id_inscripcion.
+            if (normalized.id_inscripcion === undefined && normalized.id !== undefined) normalized.id_inscripcion = normalized.id;
+            if (normalized.id === undefined && normalized.id_inscripcion !== undefined) normalized.id = normalized.id_inscripcion;
+
+            if (normalized.fecha !== undefined) normalized.fecha = normalizeDateKey(normalized.fecha);
+
+            if (normalized.id_turno === undefined && normalized.turno_id !== undefined) normalized.id_turno = normalized.turno_id;
+
+            // D1 usa es_responsable; el frontal original usa responsable_turno.
+            if (normalized.responsable_turno === undefined && normalized.es_responsable !== undefined) {
+                normalized.responsable_turno = Number(normalized.es_responsable) ? "si" : "no";
+            }
+
+            return normalized;
+        }
+
+        function normalizeApiResponse(data) {
+            if (!data || typeof data !== "object") return data;
+
+            if (Array.isArray(data.turnos)) data.turnos = data.turnos.map(normalizeShiftFromApi);
+            if (Array.isArray(data.inscripciones)) data.inscripciones = data.inscripciones.map(normalizeInscriptionFromApi);
+            if (Array.isArray(data.misTurnos) && !Array.isArray(data.inscripciones)) {
+                data.inscripciones = data.misTurnos.map(normalizeInscriptionFromApi);
+            }
+
+            return data;
+        }
+
+        function hasTranslation(key) {
+            const dictionary = TEXTS[lang] || TEXTS.es || {};
+            return Boolean(key && Object.prototype.hasOwnProperty.call(dictionary, key));
+        }
+
+        function apiErrorMessage(data, status) {
+            const code = data?.errorCode || (status === 404 ? "routeNotFound" : "unknownError");
+
+            if (hasTranslation(code)) {
+                return t(code);
+            }
+
+            if (data?.error) {
+                return String(data.error);
+            }
+
+            if (status) {
+                return t("httpError", status);
+            }
+
+            return t("unknownError");
+        }
+
+		async function api(action, payload = {}, method = "POST") {
+            if (!API_BASE || API_BASE.includes("PON_AQUI")) {
+                throw new Error(t("configMissing"));
+            }
+
+            try {
+                let url = `${API_BASE.replace(/\/$/, "")}/api/${action}`;
+                const options = {
+                    method,
+                    headers: { "Content-Type": "application/json" }
+                };
+
+                if (method === "GET") {
+                    const params = new URLSearchParams();
+                    Object.entries(payload).forEach(([k, v]) => {
+                        if (v !== undefined && v !== null && String(v).trim() !== "") params.set(k, v);
+                    });
+                    const query = params.toString();
+                    if (query) url += `?${query}`;
+                    delete options.headers;
+                } else {
+                    options.body = JSON.stringify(payload);
+                }
+
+                const response = await fetch(url, options);
+                let data = {};
+
+                try {
+                    data = normalizeApiResponse(await response.json());
+                } catch (parseError) {
+                    data = {};
+                }
+
+				if (!response.ok || !data.ok) {
+				    throw new Error(apiErrorMessage(data, response.status));
+				}
+				
+				return data;
+            } catch (error) {
+                console.error("Error en API", { action, payload, method, error });
+                throw new Error(error.message || t("networkError"));
+            }
+        }	
+
+        async function loadData() {
+            const reloadBtn = $("reloadBtn");
+            reloadBtn.disabled = true;
+            reloadBtn.textContent = t("reloadingBtn");
+
+            try {
+                const statusEl = $("status");
+                statusEl.textContent = t("statusLoading");
+                const data = await api("getData", {}, "GET");
+                state.shifts = data.turnos || [];
+                state.opciones = data.opciones || {};
+                renderShifts();
+                statusEl.textContent = t("statusLoaded", state.shifts.length);
+                statusEl.dataset.loaded = "1";
+                statusEl.dataset.count = state.shifts.length;
+            } catch (error) {
+                $("status").textContent = error.message;
+                showToast(error.message);
+            } finally {
+                reloadBtn.disabled = false;
+                reloadBtn.textContent = t("reloadBtn");
+            }
+        }
+
+        function groupByDate(shifts) {
+            return shifts.reduce((acc, shift) => {
+                acc[shift.fecha] ||= [];
+                acc[shift.fecha].push(shift);
+                return acc;
+            }, {});
+        }
+
+        function compareDates(a, b) {
+            return String(a).localeCompare(String(b));
+        }
+
+        function getShiftColor(shift) {
+            const color = String(shift.color || "").trim();
+            return color || DEFAULT_SHIFT_COLOR;
+        }
+
+
+        function isResponsibleValue(value) {
+            if (value === true || value === 1) return true;
+            if (value === false || value === 0 || value === null || value === undefined) return false;
+            return ["si", "sí", "s", "true", "1", "yes"].includes(normalizeText(value));
+        }
+
+        function getResponsibleFree(shift) {
+            if (!shift) return 0;
+            if (shift.plazas_responsable_disponibles !== undefined) {
+                return Math.max(Number(shift.plazas_responsable_disponibles) || 0, 0);
+            }
+            const total = Number(shift.plazas_responsable) || 0;
+            const used = Number(
+                shift.plazas_responsable_ocupadas ??
+                shift.ocupadas_responsable ??
+                0
+            ) || 0;
+            return Math.max(total - used, 0);
+        }
+
+
+        function normalizeDni(value) {
+            return String(value || "")
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, "")
+                .replace(/[.\-_/]/g, "");
+        }
+
+        function isValidDniNie(value) {
+            const dni = normalizeDni(value);
+            const letters = "TRWAGMYFPDXBNJZSQVHLCKE";
+
+            let numberPart = "";
+            let letter = "";
+
+            if (/^[0-9]{8}[A-Z]$/.test(dni)) {
+                numberPart = dni.slice(0, 8);
+                letter = dni.slice(8);
+            } else if (/^[XYZ][0-9]{7}[A-Z]$/.test(dni)) {
+                const niePrefix = { X: "0", Y: "1", Z: "2" }[dni[0]];
+                numberPart = niePrefix + dni.slice(1, 8);
+                letter = dni.slice(8);
+            } else {
+                return false;
+            }
+
+            return letters[Number(numberPart) % 23] === letter;
+        }
+
+        function validateDniInput(input, hintEl) {
+            if (!input) return true;
+            const normalized = normalizeDni(input.value);
+            input.value = normalized;
+
+            const valid = isValidDniNie(normalized);
+            input.classList.toggle("user-invalid", !valid);
+
+            if (!valid) {
+                setLookupHint(hintEl, t("invalidDni"), "warn");
+                input.dataset.alreadyInShift = "0";
+            }
+
+            return valid;
+        }
+
+
+        function getFullNameFromPerson(person) {
+            return String(person.nombre).trim();
+        }
+
+
+
+        function setLookupHint(el, message, type = "") {
+            if (!el) return;
+            el.textContent = message || "";
+            el.classList.toggle("ok", type === "ok");
+            el.classList.toggle("warn", type === "warn");
+        }
+
+        async function lookupPersonByDni(dni, { hintEl, onFound, inputEl, idTurno } = {}) {
+            const normalized = normalizeDni(dni);
+            if (inputEl) inputEl.value = normalized;
+
+            if (!normalized) {
+                setLookupHint(hintEl, "");
+                if (inputEl) inputEl.dataset.alreadyInShift = "0";
+                return null;
+            }
+
+            if (!validateDniInput(inputEl || { value: normalized, classList: { toggle() {} }, dataset: {} }, hintEl)) {
+                return null;
+            }
+
+            setLookupHint(hintEl, t("dniLookupSearching"));
+            try {
+                const shiftId = idTurno || ($("signupShiftId") ? $("signupShiftId").value : "");
+                const payload = { dni: normalized };
+                if (shiftId) payload.id_turno = shiftId;
+
+                const data = await api("buscarPersonaPorDni", payload, "GET");
+
+                const alreadyRegistered = Boolean(data.alreadyRegistered || data.ya_apuntada);
+                if (inputEl) inputEl.dataset.alreadyInShift = alreadyRegistered ? "1" : "0";
+
+                const person = data.persona || data.person || null;
+                if (person && (person.nombre || person.email)) {
+                    onFound?.(person);
+                }
+
+                if (alreadyRegistered) {
+                    setLookupHint(hintEl, t("dniAlreadyInShift"), "warn");
+                    return data;
+                }
+
+                if (person && (person.nombre || person.email)) {
+                    setLookupHint(hintEl, t("dniLookupFound"), "ok");
+                    return data;
+                }
+
+                setLookupHint(hintEl, t("dniLookupNotFound"), "warn");
+                return data;
+            } catch (error) {
+                if (inputEl) inputEl.dataset.alreadyInShift = "0";
+                setLookupHint(hintEl, t("dniLookupUnavailable"), "warn");
+                return null;
+            }
+        }
+
+        function fillMainPersonFromLookup(person) {
+            const fullName = getFullNameFromPerson(person);
+            if (fullName) $("nombre").value = fullName;
+            if (person.email) $("email").value = person.email;
+        }
+
+        function fillExtraPersonFromLookup(card, person) {
+            const fullName = getFullNameFromPerson(person);
+            const fullNameInput = card.querySelector('[data-extra-field="nombre"]');
+            if (fullNameInput && fullName) fullNameInput.value = fullName;
+            
+        }
+
+        function isShiftClosed(shift) {
+            return (
+                Number(shift?.cerrado || 0) === 1 ||
+                shift?.cerrado === true ||
+                yes(shift?.cerrado)
+            );
+        }
+
+        function needsResponsible(shift) {
+            if (isShiftClosed(shift)) return false;
+            return (Number(shift.plazas_responsable) || 0) > 0 && getResponsibleFree(shift) > 0;
+        }
+
+        function getShiftFreePlaces(shift) {
+            if (!shift) return 0;
+            if (shift.plazas_disponibles !== undefined) {
+                return Math.max(Number(shift.plazas_disponibles) || 0, 0);
+            }
+            const plazas = Number(shift.plazas) || 0;
+            const inscritos = Array.isArray(shift.inscritos)
+                ? shift.inscritos.length
+                : Number(shift.plazas_ocupadas ?? shift.ocupadas ?? 0) || 0;
+            return Math.max(plazas - inscritos, 0);
+        }
+
+        function isMorningShift(shift) {
+            const text = normalizeText(`${getShiftTypeLabel(shift)} ${shift.tipo || ""} ${shift.id_turno || ""} ${shift.hora_inicio || ""}`);
+            const hour = Number(String(shift.hora_inicio || "").split(":")[0]);
+            return text.includes("mañana") || text.includes("goiz") || (!Number.isNaN(hour) && hour < 15);
+        }
+		 function isRefuerzoShift(shift) {
+            const text = normalizeText(`${shift.tipo || ""}`);
+            return text.includes("errefortzu") || text.includes("refuerzo");
+        }
+
+        function isAfternoonShift(shift) {
+            const text = normalizeText(`${getShiftTypeLabel(shift)} ${shift.tipo || ""} ${shift.id_turno || ""} ${shift.hora_inicio || ""}`);
+            const hour = Number(String(shift.hora_inicio || "").split(":")[0]);
+            return text.includes("tarde") || text.includes("arrats") || (!Number.isNaN(hour) && hour >= 15);
+        }
+
+        function isRecommendedShift(shift) {
+            if (isShiftClosed(shift)) return false;
+            const plazas = Number(shift.plazas) || 0;
+            const libres = getShiftFreePlaces(shift);
+            return libres > 0 && (libres >= 5 || (plazas > 0 && libres / plazas >= .4));
+        }
+
+        function applyShiftFilter(shifts) {
+            const filter = state.activeFilter || "all";
+            return shifts.filter(shift => {
+                if (filter === "open") return !isShiftClosed(shift) && getShiftFreePlaces(shift) > 0;
+                if (filter === "morning") return isMorningShift(shift);
+				if (filter === "refuerzo") return isRefuerzoShift(shift);
+                if (filter === "afternoon") return isAfternoonShift(shift);
+                if (filter === "responsible") return needsResponsible(shift);
+                if (filter === "recommended") return isRecommendedShift(shift);
+                return true;
+            });
+        }
+
+        function renderFilterBar() {
+            const chips = $("filterChips");
+            if (!chips) return;
+            const filters = [
+                ["all", "filterAll"],
+                ["open", "filterOpen"],
+                ["morning", "filterMorning"],
+                ["afternoon", "filterAfternoon"],
+				["refuerzo", "filterRefuerzo"],
+                ["responsible", "filterResponsible"],
+                ["recommended", "filterRecommended"]
+            ];
+            chips.innerHTML = filters.map(([key, label]) => `
+                <button type="button" class="filter-chip ${state.activeFilter === key ? "active" : ""}" data-filter="${key}">${escapeHtml(t(label))}</button>
+            `).join("");
+            chips.querySelectorAll("[data-filter]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    state.activeFilter = btn.dataset.filter;
+                    renderShifts();
+                });
+            });
+        }
+
+
+        function handleInitialShiftLink() {
+            if (didHandleInitialLink) return;
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("turno");
+            if (!id) return;
+            const card = document.querySelector(`[data-shift-card="${CSS.escape(id)}"]`);
+            if (!card) return;
+            didHandleInitialLink = true;
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            card.classList.add("linked-shift");
+            setTimeout(() => card.classList.remove("linked-shift"), 1800);
+            if (params.get("apuntar") === "1") {
+                setTimeout(() => openSignup(id), 380);
+            }
+        }
+
+       function showSignupSuccess(shift, total, emailQueued = false) {
+	    const dialog = $("successDialog");
+	    const text = $("successShiftText");
+	
+	    if (text && shift) {
+	        const resumen = `${getDayLabel(shift)} · ${normalizeDateLabel(shift.fecha)} · ${getShiftTypeLabel(shift)} · ${shift.hora_inicio || ""}–${shift.hora_fin || ""}`;
+	
+	        text.innerHTML = `
+	            <div>${escapeHtml(resumen)}</div>
+	            ${emailQueued ? `<div style="margin-top:10px; font-weight:700;">${escapeHtml(emailQueuedMessage())}</div>` : ""}
+	        `;
+	    }
+	
+	    if (dialog && !dialog.open) dialog.showModal();
+	}
+        function closeSuccessAndChooseAnother() {
+            if ($("successDialog").open) $("successDialog").close();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function openMyShiftsFromSuccess() {
+            if ($("successDialog").open) $("successDialog").close();
+            scrollToMyShifts({ autoLoad: true });
+        }
+
+        function updateSignupResponsibleAvailability(shift, allowResponsible = true) {
+            const cb = $("responsableTurno");
+            const box = $("signupResponsableBox");
+            const help = $("responsableTurnoHelp");
+            if (!cb || !box || !help) return;
+
+            const available = allowResponsible && needsResponsible(shift);
+            cb.disabled = !available;
+            if (!available) cb.checked = false;
+            box.classList.toggle("hidden", !available);
+            box.classList.remove("disabled");
+            help.textContent = available ? t("responsableAvailable", getResponsibleFree(shift)) : "";
+        }
+
+        function updateChangeResponsibleAvailability() {
+            const current = state.myInscriptions.find(i => i.id_inscripcion === $("changeInscriptionId").value);
+            const shift = state.shifts.find(s => s.id_turno === $("newShiftId").value);
+            const cb = $("changeResponsableTurno");
+            const box = $("changeResponsableBox");
+            const help = $("changeResponsableTurnoHelp");
+            if (!current || !shift || !cb || !box || !help) return;
+
+            const isCurrentResponsible = isResponsibleValue(current.responsable_turno) && current.id_turno === shift.id_turno;
+            const available = isCurrentResponsible || getResponsibleFree(shift) > 0;
+            cb.disabled = !available;
+            if (!available) cb.checked = false;
+            box.classList.toggle("hidden", !available);
+            box.classList.remove("disabled");
+            help.textContent = "";
+        }
+
+        function renderGelaOptions(container, name) {
+            container.innerHTML = "";
+            (state.opciones.gela || []).forEach(op => {
+                const label = document.createElement("label");
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.value = op;
+                cb.name = name;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(op));
+                container.appendChild(label);
+            });
+        }
+
+        function selectedGela(name) {
+            return [...document.querySelectorAll(`input[name="${CSS.escape(name)}"]:checked`)].map(cb => cb.value).join(", ");
+        }
+
+        function clearAdditionalPeople() {
+            const box = $("additionalPeople");
+            if (box) box.innerHTML = "";
+        }
+
+        function addAdditionalPerson() {
+            const box = $("additionalPeople");
+            if (!box) return;
+            const index = box.querySelectorAll(".additional-person-card").length + 1;
+            const uid = `extra_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const card = document.createElement("div");
+            card.className = "additional-person-card";
+            card.dataset.uid = uid;
+            card.innerHTML = `
+                <div class="additional-person-head">
+                    <strong>${escapeHtml(t("additionalPersonTitle", index))}</strong>
+                    <button type="button" class="secondary" data-remove-extra>${escapeHtml(t("btnRemovePerson"))}</button>
+                </div>
+                <div class="mini-grid">
+                    <div>
+                        <label>${escapeHtml(t("labelDni"))}<span class="required-star">*</span></label>
+                        <input data-extra-field="dni" required autocomplete="off" inputmode="text" maxlength="9" pattern="([0-9]{8}|[XYZxyz][0-9]{7})[A-Za-z]" title="Introduce un DNI/NIE válido" />
+                        <div class="person-lookup-hint" data-extra-hint></div>
+                    </div>
+                    <div>
+                        <label>${escapeHtml(t("labelnombre"))}<span class="required-star">*</span></label>
+                        <input data-extra-field="nombre" required autocomplete="name" />
+                    </div>
+                </div>
+                <label>${escapeHtml(t("labelGela"))}</label>
+                <div class="gela-options" data-extra-gela></div>
+            `;
+            box.appendChild(card);
+            renderGelaOptions(card.querySelector("[data-extra-gela]"), `${uid}_gela`);
+            card.querySelector("[data-remove-extra]").addEventListener("click", () => card.remove());
+            const dniInput = card.querySelector('[data-extra-field="dni"]');
+            dniInput.addEventListener("blur", () => lookupPersonByDni(dniInput.value, {
+                hintEl: card.querySelector("[data-extra-hint]"),
+                onFound: person => fillExtraPersonFromLookup(card, person),
+                inputEl: dniInput,
+                idTurno: $("signupShiftId").value
+            }));
+        }
+
+        function getAdditionalPeopleData() {
+            return [...document.querySelectorAll("#additionalPeople .additional-person-card")].map(card => {
+                const get = field => card.querySelector(`[data-extra-field="${field}"]`);
+				const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
+
+				if (!publicarNombreSelected) {
+				    showToast(t("choosePublicName"));
+				    return;
+				}
+				
+				const publicarNombre = publicarNombreSelected.value;
+                const full = get("nombre").value.trim();
+                return {
+                    nombre: full,
+                    dni: normalizeDni(get("dni").value),
+                    gela: [...card.querySelectorAll('[data-extra-gela] input:checked')].map(cb => cb.value).join(", "),
+                    responsable_turno: "no",
+					publicar_nombre: publicarNombre,
+                    _card: card
+                };
+            });
+        }
+
+        function validateAdditionalPeople(people) {
+            for (const person of people) {
+                const fields = ["dni", "nombre"];
+                let firstInvalid = null;
+                fields.forEach(field => {
+                    const input = person._card.querySelector(`[data-extra-field="${field}"]`);
+                    const invalid = !String(input.value || "").trim();
+                    input.classList.toggle("user-invalid", invalid);
+                    if (invalid && !firstInvalid) firstInvalid = input;
+                });
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    showToast(t("fillAllFields"));
+                    return false;
+                }
+
+                const dniInput = person._card.querySelector('[data-extra-field="dni"]');
+                const hintEl = person._card.querySelector("[data-extra-hint]");
+                if (!validateDniInput(dniInput, hintEl)) {
+                    dniInput.focus();
+                    showToast(t("invalidDni"));
+                    return false;
+                }
+                if (dniInput.dataset.alreadyInShift === "1") {
+                    dniInput.focus();
+                    showToast(t("dniAlreadyInShift"));
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+        function getGestorIdForNewPerson(item) {
+            return String(item.id_inscripcion_gestor || item.id_inscripcion || "").trim();
+        }
+
+        function getMyShiftMeta(item) {
+            const parts = [];
+            const name = [item.nombre].filter(Boolean).join(" ");
+            if (name) parts.push(name);
+            if (isResponsibleValue(item.responsable_turno)) parts.push(t("responsibleLabel"));
+            if (item.id_inscripcion_gestor && item.id_inscripcion_gestor !== item.id_inscripcion) parts.push(t("managedByMeLabel"));
+            return parts.length ? `<div class="my-shift-meta">${parts.map(escapeHtml).join(" · ")}</div>` : "";
+        }
+
+        function getShiftStats() {
+            return state.shifts.reduce((acc, shift) => {
+                const plazas = Number(shift.plazas) || 0;
+                const inscritos = Array.isArray(shift.inscritos)
+                    ? shift.inscritos.length
+                    : Number(shift.plazas_ocupadas ?? shift.ocupadas ?? 0) || 0;
+                const libresReales = getShiftFreePlaces(shift);
+                const cerrado = isShiftClosed(shift);
+                const libresPendientes = cerrado ? 0 : libresReales;
+
+                acc.turnos += 1;
+                acc.plazasLibres += libresPendientes;
+                acc.inscritos += inscritos;
+                if (cerrado) acc.cerrados += 1;
+
+                if (!acc.dias[shift.fecha]) {
+                    acc.dias[shift.fecha] = {
+                        fecha: shift.fecha,
+                        dia: getDayLabel(shift),
+                        turnos: 0,
+                        libres: 0,
+                        inscritos: 0,
+                        cerrados: 0
+                    };
+                }
+
+                acc.dias[shift.fecha].turnos += 1;
+                acc.dias[shift.fecha].libres += libresPendientes;
+                acc.dias[shift.fecha].inscritos += inscritos;
+                if (cerrado) acc.dias[shift.fecha].cerrados += 1;
+
+                return acc;
+            }, {
+                turnos: 0,
+                plazasLibres: 0,
+                inscritos: 0,
+                cerrados: 0,
+                dias: {}
+            });
+        }
+
+        function renderSummary() {
+            const summary = $("summaryCard");
+            const stats = getShiftStats();
+            const dias = Object.values(stats.dias).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+
+            if (!stats.turnos) {
+                summary.classList.remove("show");
+                summary.innerHTML = "";
+                return;
+            }
+
+            summary.classList.add("show");
+            summary.innerHTML = `
+                <div class="summary-main">
+                    <div class="summary-item">
+                        <span class="summary-value">${stats.turnos}</span>
+                        <span class="summary-label">${t("summaryTurns")}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-value">${stats.plazasLibres}</span>
+                        <span class="summary-label">${t("summaryFree")}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-value">${stats.inscritos}</span>
+                        <span class="summary-label">${t("summaryPeople")}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-value">${dias.length}</span>
+                        <span class="summary-label">${t("summaryDays")}</span>
+                    </div>
+                </div>
+                <div class="summary-days">
+                    ${dias.map(day => `
+                        <button type="button" class="summary-day" data-scroll-day="${escapeHtml(day.fecha)}">
+                            ${normalizeDateLabel(day.fecha)} <br> ${escapeHtml(day.dia)}
+                            <span>
+                                ${day.libres <= 0
+                                    ? t("summaryDayFull")
+                                    : t("summaryDayMissing", day.libres)}
+                            </span>
+                        </button>
+                    `).join("")}
+                </div>
+            `;
+
+            summary.querySelectorAll("[data-scroll-day]").forEach(button => {
+                button.addEventListener("click", () => scrollToDay(button.dataset.scrollDay));
+            });
+        }
+
+        function getBadgeClass(free) {
+            if (free <= 0) return "full";
+            if (free <= 2) return "low";
+            return "";
+        }
+
+        function renderShifts() {
+            const grid = $("shiftGrid");
+            grid.innerHTML = "";
+            renderFilterBar();
+
+            const filteredShifts = applyShiftFilter(state.shifts);
+            const grouped = groupByDate(filteredShifts);
+            const entries = Object.entries(grouped).sort(([fechaA], [fechaB]) => compareDates(fechaA, fechaB));
+
+            renderSummary();
+
+            if (!entries.length) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🍺</div>
+                        <p><strong>${t("emptyStateTitle")}</strong></p>
+                        <p>${t("emptyStateText")}</p>
+                    </div>`;
+                return;
+            }
+
+            entries.forEach(([fecha, shifts], cardIndex) => {
+                shifts.sort((a, b) => String(a.hora_inicio).localeCompare(String(b.hora_inicio)));
+
+                const card = document.createElement("article");
+                card.className = "card";
+                card.dataset.dayCard = fecha;
+                card.style.animationDelay = `${cardIndex * 60}ms`;
+
+                card.innerHTML = `
+                    <div class="day-title">
+                        <h2>${escapeHtml(getDayLabel(shifts[0]))} <span class="date">${normalizeDateLabel(fecha)}</span></h2>
+                    </div>
+                    <div class="shifts-row"></div>
+                `;
+
+                const shiftsRow = card.querySelector(".shifts-row");
+
+                shifts.forEach(shift => {
+                    const inscritos = Array.isArray(shift.inscritos) ? shift.inscritos : [];
+                    const plazas = Number(shift.plazas) || 0;
+                    const ocupadas = Number(shift.plazas_ocupadas ?? shift.ocupadas ?? inscritos.length) || 0;
+                    const libresReales = getShiftFreePlaces(shift);
+                    const cerradoManual = isShiftClosed(shift);
+                    const full = cerradoManual || libresReales <= 0;
+                    const pctReal = plazas > 0 ? Math.round(((plazas - libresReales) / plazas) * 100) : 0;
+                    const pct = cerradoManual ? 100 : pctReal;
+                    const counterClass = full ? 'full' : libresReales >= 5 || (plazas > 0 && libresReales / plazas >= .4) ? 'urgent' : '';
+                    const recommended = isRecommendedShift(shift);
+                    const responsibleNeeded = needsResponsible(shift);
+
+                    const people = inscritos.length
+                        ? `<p class="names-label">${t("namesLabel")}</p>
+                           <ul class="names">
+                               ${inscritos.map(p => `<li>${escapeHtml(p.nombre)} ${isResponsibleValue(p.responsable_turno) ? " ⭐" : ""}</li>`).join("")}
+                           </ul>`
+                        : `<p class="empty">${t("noSignups")}</p>`;
+
+                    const badgeClass = getBadgeClass(cerradoManual ? 0 : libresReales);
+                    const color = getShiftColor(shift);
+
+                    const div = document.createElement("div");
+                    div.className = "shift";
+                    div.dataset.shiftCard = shift.id_turno;
+                    div.style.setProperty("--shift-color", color);
+
+                    div.innerHTML = `
+                        <div class="shift-head">
+                           <div class="shift-title-line">
+                                <div class="shift-name">${escapeHtml(getShiftTypeLabel(shift))}</div>
+                                <div class="time">${escapeHtml(shift.hora_inicio)}–${escapeHtml(shift.hora_fin)}</div>
+                            </div>
+                            <span class="badge ${badgeClass}">
+                                ${full ? t("badgeFull") : t("badgeFew", libresReales, shift.plazas)}
+                            </span>
+                        </div>
+                        <div class="shift-progress-wrap" aria-label="${t("shiftCoverageLabel")}">
+                            <div class="progress-bar-bg"><div class="progress-bar-fill ${badgeClass}" style="--progress:${pct}%"></div></div>
+                            <div class="progress-label">${ocupadas} / ${plazas} · ${cerradoManual ? `${pctReal}%` : `${pct}%`}</div>
+                        </div>
+                        <div class="missing-counter ${counterClass}">
+                            <span>${full ? '✅' : '👥'} ${cerradoManual ? t("badgeFull") : t("missingCounter", libresReales, plazas)}</span>
+                            <small>${full ? t("badgeFull") : t("missingCounterHelp")}</small>
+                        </div>
+                        ${(recommended || responsibleNeeded) ? `<div class="shift-tags">
+                            ${recommended ? `<span class="recommended-tag">★ ${t("recommendedLabel")}</span>` : ""}
+                            ${responsibleNeeded ? `<span class="responsible-needed-tag">⚠ ${t("responsibleNeededLabel")}</span>` : ""}
+                        </div>` : ""}
+                        ${people}
+                        <button ${full ? "disabled" : ""} data-signup="${shift.id_turno}">
+                            ${full ? t("btnFull") : t("btnSignup")}
+                        </button>
+                    `;
+
+                    shiftsRow.appendChild(div);
+                });
+
+                grid.appendChild(card);
+            });
+
+            document.querySelectorAll("[data-signup]").forEach(button => {
+                button.addEventListener("click", () => openSignup(button.dataset.signup));
+            });
+            handleInitialShiftLink();
+        }
+
+        function openSignup(idTurno, idGestor = "") {
+            const shift = state.shifts.find(s => s.id_turno === idTurno);
+            if (!shift) return;
+
+            if (isShiftClosed(shift) || getShiftFreePlaces(shift) <= 0) {
+                showToast(t("btnFull"));
+                return;
+            }
+
+            clearInvalidFields(["nombre", "email", "dni"]);
+            clearAdditionalPeople();
+            setSignupSaving(false);
+
+            const isAddingManagedPerson = Boolean(String(idGestor || "").trim());
+            $("signupShiftId").value = idTurno;
+            $("signupGestorId").value = idGestor || "";
+            $("responsableTurno").checked = false;
+            $("dni").dataset.alreadyInShift = "0";
+            setLookupHint($("dniLookupHint"), "");
+            document.querySelectorAll('input[name="publicarNombre"]').forEach(radio => {
+                radio.checked = false;
+            });
+            const emailFieldWrapper = $("email") ? $("email").closest(".signup-field") : null;
+            if (emailFieldWrapper) emailFieldWrapper.style.display = isAddingManagedPerson ? "none" : "";
+            $("email").value = isAddingManagedPerson && state.myIdentity ? state.myIdentity.email : "";
+            $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
+            updateSignupResponsibleAvailability(shift, !idGestor);
+            $("signupShiftText").innerHTML = `
+                <span class="shift-summary-row"><span>${t("signupDay")}:</span><span>${escapeHtml(getDayLabel(shift))}, ${normalizeDateLabel(shift.fecha)}</span></span>
+                <span class="shift-summary-row"><span>${t("signupShift")}:</span><span>${escapeHtml(getShiftTypeLabel(shift))}</span></span>
+                <span class="shift-summary-row"><span>${t("signupTime")}:</span><span>${escapeHtml(shift.hora_inicio)}–${escapeHtml(shift.hora_fin)}</span></span>
+            `;
+
+            ["nombre", "dni"].forEach(id => $(id).value = "");
+            if (!isAddingManagedPerson) $("email").value = "";
+            setLookupHint($("dniLookupHint"), "");
+            renderGelaOptions($("gela_group"), "gela");
+
+            applyTexts();
+            $("dlgSignupTitle").textContent = isAddingManagedPerson ? t("signupAddPersonTitle") : t("dlgSignupTitle");
+            $("signupDialog").showModal();
+			$("dni")?.focus();
+        }
+
+        function setSignupSaving(isSaving) {
+            const modal = $("signupModal");
+            const message = $("signupSavingMessage");
+            const confirmBtn = $("dlgSignupConfirm");
+
+            if (message) message.hidden = !isSaving;
+
+            if (confirmBtn) {
+                confirmBtn.textContent = isSaving ? t("signupSavingBtn") : t("dlgSignupConfirm");
+            }
+
+            if (!modal) return;
+
+            modal.querySelectorAll("input, select, button").forEach(el => {
+                if (isSaving) {
+                    el.dataset.disabledBeforeSaving = el.disabled ? "1" : "0";
+                    el.disabled = true;
+                } else {
+                    const wasDisabled = el.dataset.disabledBeforeSaving === "1";
+                    el.disabled = wasDisabled;
+                    delete el.dataset.disabledBeforeSaving;
+                }
+            });
+        }
+
+			async function signup() {
+    const btn = $("dlgSignupConfirm");
+    const shift = state.shifts.find(s => s.id_turno === $("signupShiftId").value);
+	const publicarNombreSelected = document.querySelector('input[name="publicarNombre"]:checked');
+
+if (!publicarNombreSelected) {
+    showToast(t("choosePublicName"));
+    return;
+}
+
+const publicarNombre = publicarNombreSelected.value;
+    const fullName = $("nombre").value.trim();
+    const mainPerson = {
+        id_turno: $("signupShiftId").value,
+        nombre: fullName,
+        email: $("email").value.trim(),
+        dni: normalizeDni($("dni").value),
+        gela: selectedGela("gela"),
+        responsable_turno: $("responsableTurno") && $("responsableTurno").checked ? "si" : "no",
+        es_responsable: $("responsableTurno") && $("responsableTurno").checked ? 1 : 0,
+		publicar_nombre: publicarNombre
+    };
+
+    const extraPeople = getAdditionalPeopleData();
+
+    const isAddingManagedPerson = Boolean($("signupGestorId").value.trim());
+    if (!validateRequired(isAddingManagedPerson ? ["dni", "nombre"] : ["dni", "nombre", "email"])) return;
+    if (!validateDniInput($("dni"), $("dniLookupHint"))) return showToast(t("invalidDni"));
+    if ($("dni").dataset.alreadyInShift === "1") return showToast(t("dniAlreadyInShift"));
+    if (!isAddingManagedPerson && !isValidEmail(mainPerson.email)) return showToast(t("invalidEmail"));
+    if (isAddingManagedPerson && state.myIdentity) mainPerson.email = state.myIdentity.email;
+    if (!validateAdditionalPeople(extraPeople)) return;
+
+    const requestedResponsible = mainPerson.responsable_turno === "si" ? 1 : 0;
+    const freeResponsible = getResponsibleFree(shift);
+
+    if (requestedResponsible > freeResponsible) {
+        showToast(t("responsibleLimit", freeResponsible));
+        return;
+    }
+
+    setSignupSaving(true);
+
+    try {
+        const existingGestorId = $("signupGestorId").value.trim();
+
+        const personasAdicionales = extraPeople.map(person => {
+            const { _card, ...payload } = person;
+
+            return {
+                nombre: payload.nombre,
+                email: payload.email,
+                dni: payload.dni,
+                gela: payload.gela,
+                responsable_turno: "no",
+                es_responsable: 0,
+                publicar_nombre: publicarNombre
+            };
+        });
+
+        const response = await api("inscribir", {
+            ...mainPerson,
+            id_inscripcion_gestor: existingGestorId,
+            gestor_email: state.myIdentity ? state.myIdentity.email : mainPerson.email,
+            gestor_nombre: state.myIdentity ? state.myIdentity.nombreVisible : mainPerson.nombre,
+            gestor_dni: state.myIdentity ? state.myIdentity.dni : mainPerson.dni,
+            personas_adicionales: personasAdicionales
+        });
+
+        const total = response.total || (1 + personasAdicionales.length);
+
+        $("signupDialog").close();
+
+        state.myIdentity = {
+            email: mainPerson.email,
+            dni: mainPerson.dni,
+            nombre: normalizeText(mainPerson.nombre),
+            nombreVisible: mainPerson.nombre
+        };
+        $("myDni").value = state.myIdentity.dni;
+
+        if (response.turnos) {
+            state.shifts = response.turnos || [];
+            state.opciones = response.opciones || state.opciones || {};
+            renderShifts();
+            const statusEl = $("status");
+            statusEl.textContent = t("statusLoaded", state.shifts.length);
+            statusEl.dataset.loaded = "1";
+            statusEl.dataset.count = state.shifts.length;
+        } else {
+            await loadData();
+        }
+
+        state.myInscriptions = response.inscripciones || [];
+        renderMyShifts();
+
+        showSignupSuccess(shift, total, response.emailQueued);
+    } catch (error) {
+        showToast(error.message);
+    } finally {
+        setSignupSaving(false);
+    }
+}
+        async function loadMyShifts() {
+            const btn = $("myFormBtn");
+            const dni = normalizeDni($("myDni").value.trim());
+
+            if (!validateRequired(["myDni"])) return;
+            if (!validateDniInput($("myDni"))) return showToast(t("invalidDni"));
+
+            $("myDni").value = dni;
+            state.myIdentity = { dni };
+            btn.disabled = true;
+
+            try {
+                const data = await api("misTurnos", {  dni});
+                state.myInscriptions = data.inscripciones || [];
+                renderMyShifts();
+            } catch (error) {
+                showToast(error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderMyShifts() {
+            const box = $("myShifts");
+            if (!state.myInscriptions.length) {
+                box.innerHTML = `<p class="empty">${t("noMyShifts")}</p>`;
+                return;
+            }
+
+            box.innerHTML = state.myInscriptions.map(item => `
+                <div class="my-shift">
+                    <div>
+                        <strong>${escapeHtml(getDayLabel(item))}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(getShiftTypeLabel(item))}</strong><br />
+                        <span class="time">${escapeHtml(item.hora_inicio)}–${escapeHtml(item.hora_fin)}</span>
+                        ${getMyShiftMeta(item)}
+                    </div>
+                    <button class="secondary" data-add-person="${item.id_inscripcion}">${t("btnAddPerson")}</button>
+                    <button class="secondary" data-change="${item.id_inscripcion}">${t("btnChange")}</button>
+                    <button class="danger" data-delete="${item.id_inscripcion}">${t("btnDelete")}</button>
+                </div>
+            `).join("");
+
+            document.querySelectorAll("[data-add-person]").forEach(b =>
+                b.addEventListener("click", () => openAddPerson(b.dataset.addPerson)));
+            document.querySelectorAll("[data-change]").forEach(b =>
+                b.addEventListener("click", () => openChange(b.dataset.change)));
+            document.querySelectorAll("[data-delete]").forEach(b =>
+                b.addEventListener("click", () => deleteInscription(b.dataset.delete, b)));
+        }
+
+        function openAddPerson(idInscripcion) {
+            const current = state.myInscriptions.find(i => i.id_inscripcion === idInscripcion);
+            if (!current) return;
+            openSignup(current.id_turno, getGestorIdForNewPerson(current));
+        }
+
+        function openChange(idInscripcion) {
+            const current = state.myInscriptions.find(i => i.id_inscripcion === idInscripcion);
+            if (!current) return;
+
+            $("changeInscriptionId").value = idInscripcion;
+            $("changeInscriptionId").dataset.dni = current.dni || "";
+            $("changeShiftText").textContent = `${t("changePrefix")} ${getDayLabel(current)}, ${normalizeDateLabel(current.fecha)} · ${getShiftTypeLabel(current)}`;
+
+            const options = state.shifts
+                .filter(s => s.id_turno === current.id_turno || (!isShiftClosed(s) && getShiftFreePlaces(s) > 0))
+                .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora_inicio).localeCompare(String(b.hora_inicio)))
+                .map(s => `<option value="${s.id_turno}" ${s.id_turno === current.id_turno ? "selected" : ""}>${getDayLabel(s)}, ${normalizeDateLabel(s.fecha)} · ${getShiftTypeLabel(s)} · ${s.hora_inicio}–${s.hora_fin}</option>`)
+                .join("");
+
+            const hasOptions = Boolean(options);
+            $("newShiftId").innerHTML = options || `<option value="">${t("noAvailable")}</option>`;
+            $("changeResponsableTurno").checked = isResponsibleValue(current.responsable_turno);
+            $("dlgChangeConfirm").disabled = !hasOptions;
+            $("newShiftId").onchange = updateChangeResponsibleAvailability;
+            updateChangeResponsibleAvailability();
+            applyTexts();
+            $("changeDialog").showModal();
+        }
+
+        async function changeInscription() {
+            const btn = $("dlgChangeConfirm");
+            if (!$("newShiftId").value) return;
+
+            btn.disabled = true;
+            try {
+                const data = await api("cambiar", {
+                    ...state.myIdentity,
+                    id_inscripcion: $("changeInscriptionId").value,
+                    id_turno_nuevo: $("newShiftId").value,
+                    responsable_turno: $("changeResponsableTurno").checked ? "si" : "no",
+                    es_responsable: $("changeResponsableTurno").checked ? 1 : 0
+                });
+                $("changeDialog").close();
+                let mensaje = t("toastChangeOk");
+				if (data.emailQueued) {
+				    mensaje += " " + emailQueuedMessage();
+				}
+				showToast(mensaje);
+                if (data.turnos) {
+                    state.shifts = data.turnos || [];
+                    state.opciones = data.opciones || state.opciones || {};
+                    renderShifts();
+                } else {
+                    await loadData();
+                }
+                state.myInscriptions = data.inscripciones || [];
+                renderMyShifts();
+            } catch (error) {
+                showToast(error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function getManagedChildrenFor(idInscripcion) {
+            return state.myInscriptions.filter(item =>
+                String(item.id_inscripcion_gestor || "") === String(idInscripcion || "") &&
+                String(item.id_inscripcion || "") !== String(idInscripcion || "")
+            );
+        }
+
+        function chooseDeleteScope(current, managedChildren) {
+            return new Promise(resolve => {
+                const dialog = $("deleteScopeDialog");
+
+                if (!dialog) {
+                    resolve(confirm(t("confirmDelete")) ? "single" : "");
+                    return;
+                }
+
+                const closeWith = value => {
+                    onlyBtn.removeEventListener("click", onOnly);
+                    allBtn.removeEventListener("click", onAll);
+                    cancelBtn.removeEventListener("click", onCancelClick);
+                    closeBtn.removeEventListener("click", onCancelClick);
+                    dialog.removeEventListener("cancel", onCancelEvent);
+                    if (dialog.open) dialog.close();
+                    resolve(value);
+                };
+
+                const onlyBtn = $("deleteOnlyMeBtn");
+                const allBtn = $("deleteAllManagedBtn");
+                const cancelBtn = $("deleteCancelBtn");
+                const closeBtn = $("deleteScopeCloseBtn");
+                const text = $("deleteScopeText");
+                const personName = current?.nombre ? String(current.nombre).trim() : "";
+
+                if (text) {
+                    text.textContent = personName
+                        ? t("deleteScopeTextWithName", personName, managedChildren.length)
+                        : t("deleteScopeText", managedChildren.length);
+                }
+
+                const onOnly = () => closeWith("single");
+                const onAll = () => closeWith("managed");
+                const onCancelClick = () => closeWith("");
+                const onCancelEvent = event => {
+                    event.preventDefault();
+                    closeWith("");
+                };
+
+                onlyBtn.addEventListener("click", onOnly);
+                allBtn.addEventListener("click", onAll);
+                cancelBtn.addEventListener("click", onCancelClick);
+                closeBtn.addEventListener("click", onCancelClick);
+                dialog.addEventListener("cancel", onCancelEvent);
+
+                applyTexts();
+                dialog.showModal();
+            });
+        }
+
+        async function deleteInscription(idInscripcion, button) {
+            const current = state.myInscriptions.find(item => String(item.id_inscripcion) === String(idInscripcion));
+            const managedChildren = getManagedChildrenFor(idInscripcion);
+            let deleteScope = "single";
+
+            if (managedChildren.length) {
+                deleteScope = await chooseDeleteScope(current, managedChildren);
+                if (!deleteScope) return;
+            } else {
+                const ok = confirm(t("confirmDelete"));
+                if (!ok) return;
+            }
+
+            if (button) button.disabled = true;
+            try {
+                const data = await api("borrar", {
+                    ...state.myIdentity,
+                    id_inscripcion: idInscripcion,
+                    delete_scope: deleteScope
+                });
+                let mensaje = t("toastDeleteOk");
+                if (data.emailQueued) {
+                    mensaje += " " + emailQueuedMessage();
+                }
+                showToast(mensaje);
+                if (data.turnos) {
+                    state.shifts = data.turnos || [];
+                    state.opciones = data.opciones || state.opciones || {};
+                    renderShifts();
+                } else {
+                    await loadData();
+                }
+                state.myInscriptions = data.inscripciones || [];
+                renderMyShifts();
+            } catch (error) {
+                showToast(error.message);
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        document.addEventListener("input", event => {
+            const el = event.target;
+            if (el && el.classList && el.classList.contains("user-invalid") && String(el.value || "").trim()) {
+                el.classList.remove("user-invalid");
+            }
+        });
+
+        function toggleMobileTools() {
+            const open = !document.body.classList.contains("mobile-tools-open");
+            document.body.classList.toggle("mobile-tools-open", open);
+            const btn = $("mobileToolsBtn");
+            if (btn) {
+                btn.setAttribute("aria-expanded", open ? "true" : "false");
+                btn.textContent = open ? t("mobileToolsOpenBtn") : t("mobileToolsBtn");
+            }
+        }
+
+        $("reloadBtn").addEventListener("click", loadData);
+        $("mobileToolsBtn").addEventListener("click", toggleMobileTools);
+
+const mainDniInput = $("dni");
+
+if (mainDniInput) {
+  mainDniInput.addEventListener("blur", () => {
+    lookupPersonByDni(mainDniInput.value, {
+      hintEl: $("dniLookupHint"),
+      onFound: fillMainPersonFromLookup,
+      inputEl: mainDniInput,
+      idTurno: $("signupShiftId").value
+    });
+  });
+
+  mainDniInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      lookupPersonByDni(mainDniInput.value, {
+        hintEl: $("dniLookupHint"),
+        onFound: fillMainPersonFromLookup
+      });
+    }
+  });
+}
+
+        async function initApp() {
+            await loadTranslations();
+            applyTexts();
+            await loadData();
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
