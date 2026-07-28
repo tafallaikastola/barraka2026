@@ -834,14 +834,15 @@ function getShiftTypeLabel(item) {
             
         }
 
-        function isShiftClosed(shift) {
-            return (
-                Number(shift?.cerrado || 0) === 1 ||
-                shift?.cerrado === true ||
-                yes(shift?.cerrado)
-            );
-        }
-
+    function isShiftClosed(shift) {
+	    const value = String(shift?.cerrado ?? '').trim().toLowerCase();
+	
+	    return (
+	        Number(shift?.cerrado || 0) === 1 ||
+	        shift?.cerrado === true ||
+	        ['si', 'sí', 's', 'true', '1', 'yes'].includes(value)
+	    );
+	}
         function needsResponsible(shift) {
             if (isShiftClosed(shift)) return false;
             return (Number(shift.plazas_responsable) || 0) > 0 && getResponsibleFree(shift) > 0;
