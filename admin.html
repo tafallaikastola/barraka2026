@@ -189,13 +189,9 @@
     return days;
   }
 
-  function isShiftClosed(t) {
-    return (
-      Number(t?.cerrado || 0) === 1 ||
-      t?.cerrado === true ||
-      yes(t?.cerrado)
-    );
-  }
+  function isShiftClosed(shift) {
+    return Number(shift?.cerrado || 0) === 1;
+}
 
   function getStats(turnos) {
     const total = turnos.reduce((sum, t) => sum + (Number(t.plazas) || 0), 0);
