@@ -49,6 +49,11 @@ export default {
         return json(await getAdminData(env, body.pwd), 200, request);
       }
 
+      if (url.pathname === "/api/setTurnoCerrado" && request.method === "POST") {
+        const body = await request.json();
+       return json(await setTurnoCerrado(env, body), 200, request);
+      }
+
       if (url.pathname === "/api/getEmailLogs" && request.method === "POST") {
         const body = await request.json();
         return json(await getEmailLogs(env, body.pwd, body.limit || "100"), 200, request);
@@ -283,6 +288,80 @@ function fechaParaCliente(value) {
 	return raw;
 }
 
+function fechaHoraActualMadrid() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map(part => [part.type, part.value])
+  );
+
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+}
+
+function turnoYaComenzado(turno) {
+  const fecha = fechaParaCliente(turno?.fecha);
+  const horaInicio = texto(turno?.hora_inicio).slice(0, 5);
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(fecha) ||
+    !/^\d{2}:\d{2}$/.test(horaInicio)
+  ) {
+    return false;
+  }
+
+  return `${fecha}T${horaInicio}` <= fechaHoraActualMadrid();
+}
+
+function sumarDiasFecha(fecha, dias) {
+  const date = new Date(`${fecha}T00:00:00Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return fecha;
+  }
+
+  date.setUTCDate(date.getUTCDate() + dias);
+
+  return date.toISOString().slice(0, 10);
+}
+
+function turnoYaFinalizado(turno) {
+  const fecha = fechaParaCliente(turno?.fecha);
+  const horaInicio = texto(turno?.hora_inicio).slice(0, 5);
+  const horaFin = texto(turno?.hora_fin).slice(0, 5);
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(fecha) ||
+    !/^\d{2}:\d{2}$/.test(horaFin)
+  ) {
+    return turnoYaComenzado(turno);
+  }
+
+  // Si termina antes de la hora de inicio, termina al día siguiente.
+  const fechaFin =
+    /^\d{2}:\d{2}$/.test(horaInicio) && horaFin <= horaInicio
+      ? sumarDiasFecha(fecha, 1)
+      : fecha;
+
+  return `${fechaFin}T${horaFin}` <= fechaHoraActualMadrid();
+}
+
+function assertTurnoNoComenzado(turno) {
+  if (turnoYaComenzado(turno)) {
+    throw appError(
+      "shiftAlreadyStarted",
+      "Este turno ya ha comenzado y no admite inscripciones ni modificaciones."
+    );
+  }
+}
+
 function dniSqlExpr(columnName = "dni") {
   return `
     REPLACE(
@@ -304,6 +383,9 @@ function turnoParaCliente(row) {
     plazas_responsable: Number(row.plazas_responsable || 0),
     plazas_ocupadas: Number(row.plazas_ocupadas ?? row.ocupadas ?? 0),
     plazas_responsable_ocupadas: Number(row.plazas_responsable_ocupadas ?? row.ocupadas_responsable ?? 0),
+    cerrado: Number(row.cerrado),
+    iniciado: turnoYaComenzado(row),
+    finalizado: turnoYaFinalizado(row),
     inscritos: Array.isArray(row.inscritos) ? row.inscritos : []
   };
 }
@@ -344,8 +426,8 @@ async function getData(env) {
         WHEN i.estado = 'activa'
          AND COALESCE(i.es_responsable, 0) = 1
         THEN 1 ELSE 0
-      END) AS plazas_responsable_ocupadas
-
+      END) AS plazas_responsable_ocupadas,
+t.cerrado
     FROM turnos t
     LEFT JOIN inscripciones i
       ON i.id_turno = t.id
@@ -402,7 +484,7 @@ async function getData(env) {
       plazas_responsable_disponibles: Math.max(plazasResponsable - responsablesOcupadas, 0),
       permite_responsable_turno: responsablesOcupadas < plazasResponsable
     };
-  });
+  }).filter(turno => !turno.iniciado);
 
   return {
     ok: true,
@@ -594,7 +676,8 @@ async function misTurnos(env, body) {
       t.hora_fin,
       t.plazas,
       t.plazas_responsable,
-      t.activo
+      t.activo,
+      t.cerrado
 
     FROM inscripciones i
     JOIN turnos t
@@ -612,7 +695,10 @@ async function misTurnos(env, body) {
     fecha: fechaParaCliente(row.fecha),
     id_inscripcion: row.id_inscripcion || row.id,
     id_turno: row.id_turno || row.turno_id,
-    responsable_turno: row.responsable_turno || (Number(row.es_responsable) ? "si" : "no")
+    responsable_turno: row.responsable_turno || (Number(row.es_responsable) ? "si" : "no"),
+    cerrado: Number(row.cerrado),
+  iniciado: turnoYaComenzado(row),
+  finalizado: turnoYaFinalizado(row)
   }));
 
   return {
@@ -649,7 +735,8 @@ async function inscribir(env, body, ctx) {
       hora_fin,
       plazas,
       plazas_responsable,
-      activo
+      activo,
+   cerrado
     FROM turnos
     WHERE id = ?
       AND activo = 1
@@ -659,6 +746,16 @@ async function inscribir(env, body, ctx) {
   if (!turno) {
     throw appError("shiftNotFound", "No se ha encontrado el turno o no está activo.");
   }
+
+  if (Number(turno.cerrado) === 1) {
+  throw appError(
+    "shiftClosed",
+    "Este turno ha sido cerrado y ya no admite más inscripciones."
+  );
+}
+
+assertTurnoNoComenzado(turno);
+
 
   let gestor = null;
 
@@ -1046,7 +1143,8 @@ async function cambiar(env, body, ctx) {
       hora_fin,
       plazas,
       plazas_responsable,
-      activo
+      activo,
+      cerrado
     FROM turnos
     WHERE id = ?
       AND activo = 1
@@ -1056,6 +1154,16 @@ async function cambiar(env, body, ctx) {
   if (!nuevoTurno) {
     throw appError("shiftNotFound", "No se ha encontrado el turno o no está activo.");
   }
+
+  if (Number(nuevoTurno.cerrado) === 1) {
+  throw appError(
+    "shiftClosed",
+    "El turno seleccionado está cerrado."
+  );
+}
+
+assertTurnoNoComenzado(nuevoTurno);
+
 
   const cambiaTurno = item.id_turno !== nuevoIdTurno;
   const cambiaResp = Object.prototype.hasOwnProperty.call(body, "responsable_turno");
@@ -1141,6 +1249,14 @@ async function borrar(env, body, ctx) {
 
   const item = await findManagedInscription(env, body);
   const idTurnoBorrado = item.id_turno;
+
+  const turnoActual = await findTurnoD1(
+  database,
+  idTurnoBorrado
+);
+
+assertTurnoNoComenzado(turnoActual);
+
   const requestedScope = texto(
     body.delete_scope ||
     body.deleteScope ||
@@ -1530,6 +1646,56 @@ function requireAdminPassword(env, pwd) {
   }
 }
 
+async function setTurnoCerrado(env, body) {
+  requireAdminPassword(env, body?.pwd);
+
+  const database = db(env);
+
+  if (!database) {
+    throw appError(
+      "serverError",
+      "No hay binding D1"
+    );
+  }
+
+  const idTurno = texto(body?.id_turno);
+
+  if (!idTurno) {
+    throw appError(
+      "missingShift",
+      "Falta el turno."
+    );
+  }
+
+  const cerrado =
+    body?.cerrado === true ||
+    body?.cerrado === 1 ||
+    String(body?.cerrado).toLowerCase() === "true";
+
+  const result = await database.prepare(`
+    UPDATE turnos
+    SET cerrado = ?
+    WHERE id = ?
+      AND activo = 1
+  `).bind(
+    cerrado ? 1 : 0,
+    idTurno
+  ).run();
+
+  if (!Number(result?.meta?.changes || 0)) {
+    throw appError(
+      "shiftNotFound",
+      "No se ha encontrado el turno activo."
+    );
+  }
+
+  return {
+    ok: true,
+    turnos: await getAdminTurnos(env),
+    opciones: await getOpciones(env)
+  };
+}
+
 async function getAdminData(env, pwd) {
   requireAdminPassword(env, pwd);
 
@@ -1557,7 +1723,8 @@ async function getAdminTurnos(env) {
       t.hora_fin,
       t.plazas,
       t.plazas_responsable,
-      t.activo
+      t.activo,
+      t.cerrado
     FROM turnos t
     WHERE t.activo = 1
     ORDER BY t.fecha, t.hora_inicio, t.tipo
