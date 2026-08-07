@@ -189,9 +189,21 @@
     return days;
   }
 
-  function isShiftClosed(shift) {
+  function isShiftManuallyClosed(shift) {
     return Number(shift?.cerrado || 0) === 1;
-}
+  }
+
+  function isShiftFinalized(shift) {
+    return shift?.finalizado === true || Number(shift?.finalizado || 0) === 1;
+  }
+
+  function isShiftStarted(shift) {
+    return shift?.iniciado === true || Number(shift?.iniciado || 0) === 1;
+  }
+
+  function isShiftClosed(shift) {
+    return isShiftManuallyClosed(shift) || isShiftStarted(shift);
+  }
 
   function getStats(turnos) {
     const total = turnos.reduce((sum, t) => sum + (Number(t.plazas) || 0), 0);
@@ -349,17 +361,20 @@
   const libresReales = Number(t.plazas_disponibles) || 0;
 
   // Puede venir como 1, true, "1" o "si".
-  const cerradoManual = isShiftClosed(t);
+  const cerradoManual = isShiftManuallyClosed(t);
+  const iniciado = isShiftStarted(t);
+  const finalizado = isShiftFinalized(t);
+  const cerradoEfectivo = cerradoManual || iniciado;
 
   // Para la interfaz, un turno cerrado se considera cubierto.
-  const libres = cerradoManual ? 0 : libresReales;
+  const libres = cerradoEfectivo ? 0 : libresReales;
 
   const pctReal = plazas > 0
     ? Math.round((ocupadas / plazas) * 100)
     : 0;
 
   // Si está cerrado manualmente, la barra se muestra completa.
-  const pct = cerradoManual ? 100 : pctReal;
+  const pct = cerradoEfectivo ? 100 : pctReal;
 
   const fillClass = pct < 50
     ? 'danger'
@@ -370,10 +385,10 @@
   const plazasResp = Number(t.plazas_responsable) || 0;
 
   // Un turno cerrado ya no aparece como necesitado.
-  const needsPeople = !cerradoManual && libresReales > 0;
-  const needsResp = !cerradoManual && needsResponsible(t);
+  const needsPeople = !cerradoEfectivo && libresReales > 0;
+  const needsResp = !cerradoEfectivo && needsResponsible(t);
 
-  const statusClass = cerradoManual
+  const statusClass = cerradoEfectivo
     ? 'ok'
     : needsResp
       ? 'danger'
@@ -381,8 +396,12 @@
         ? 'warn'
         : 'ok';
 
-  const statusText = cerradoManual
-    ? 'Cubierto'
+  const statusText = finalizado
+    ? 'Finalizado'
+    : iniciado
+    ? 'En curso'
+    : cerradoManual
+    ? 'Cerrado'
     : needsResp
       ? 'Falta responsable'
       : needsPeople
@@ -471,18 +490,22 @@
     `;
   }).join('');
 
-  const respCubierto = cerradoManual ||
+  const respCubierto = cerradoEfectivo ||
     (plazasResp > 0 && !needsResp);
 
   const searchable = buildShiftSearchText(t);
 
-  const counterClass = cerradoManual || libresReales <= 0
+  const counterClass = cerradoEfectivo || libresReales <= 0
     ? 'ok'
     : libresReales >= 5
       ? 'danger'
       : '';
 
-  const counterText = cerradoManual
+  const counterText = finalizado
+    ? '✓ Turno finalizado'
+    : iniciado
+    ? '● Turno en curso'
+    : cerradoManual
     ? '✔ Turno cerrado manualmente'
     : libresReales <= 0
       ? '✔ Turno completo'
@@ -490,10 +513,10 @@
 
   return `
     <div
-      class="shift-col ${needsResp ? 'need-resp' : ''} ${cerradoManual ? 'shift-closed' : ''}"
+      class="shift-col ${needsResp ? 'need-resp' : ''} ${cerradoEfectivo ? 'shift-closed' : ''}"
       data-needs-people="${needsPeople ? '1' : '0'}"
       data-needs-responsible="${needsResp ? '1' : '0'}"
-      data-closed="${cerradoManual ? '1' : '0'}"
+      data-closed="${cerradoEfectivo ? '1' : '0'}"
       data-search="${escAttr(searchable)}"
     >
       <div class="shift-head">
@@ -519,7 +542,7 @@
         <div class="progress-label">
           ${ocupadas} / ${plazas} personas
           ·
-          ${cerradoManual ? `${pctReal}% real` : `${pct}%`}
+          ${cerradoEfectivo ? `${pctReal}% real` : `${pct}%`}
         </div>
       </div>
 
@@ -546,14 +569,36 @@
           : ''
       }
 
-      <div class="shift-actions">
-        <button class="copy-btn ${cerradoManual ? '' : 'primary'}" onclick="toggleShiftClosed('${escAttr(t.id_turno)}', ${cerradoManual ? 'false' : 'true'}, this)">
-          ${cerradoManual ? 'Reabrir turno' : 'Cerrar turno'}
-        </button>
-      </div>
+      ${iniciado ? '' : `
+        <div class="shift-actions">
+          <button class="copy-btn ${cerradoManual ? '' : 'primary'}" onclick="toggleShiftClosed('${escAttr(t.id_turno)}', ${cerradoManual ? 'false' : 'true'}, this)">
+            ${cerradoManual ? 'Reabrir turno' : 'Cerrar turno'}
+          </button>
+        </div>
+      `}
       <div class="shift-footer">
         ${
-          cerradoManual
+          finalizado
+            ? `
+              <span class="ok">
+                Estado: <strong>Finalizado</strong>
+              </span>
+
+              <span>
+                Libres al finalizar: <strong>${libresReales}</strong>
+              </span>
+            `
+            : iniciado
+            ? `
+              <span class="ok">
+                Estado: <strong>En curso</strong>
+              </span>
+
+              <span>
+                Libres al comenzar: <strong>${libresReales}</strong>
+              </span>
+            `
+            : cerradoManual
             ? `
               <span class="ok">
                 Estado: <strong>Cerrado manualmente</strong>

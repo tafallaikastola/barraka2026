@@ -547,6 +547,8 @@ function getShiftTypeLabel(item) {
             }
 
             normalized.cerrado = Number(normalized.cerrado || 0) === 1;
+            normalized.iniciado = normalized.iniciado === true || Number(normalized.iniciado || 0) === 1;
+            normalized.finalizado = normalized.finalizado === true || Number(normalized.finalizado || 0) === 1;
 
             return normalized;
         }
@@ -567,6 +569,10 @@ function getShiftTypeLabel(item) {
             if (normalized.responsable_turno === undefined && normalized.es_responsable !== undefined) {
                 normalized.responsable_turno = Number(normalized.es_responsable) ? "si" : "no";
             }
+
+            normalized.cerrado = Number(normalized.cerrado || 0) === 1;
+            normalized.iniciado = normalized.iniciado === true || Number(normalized.iniciado || 0) === 1;
+            normalized.finalizado = normalized.finalizado === true || Number(normalized.finalizado || 0) === 1;
 
             return normalized;
         }
@@ -837,6 +843,18 @@ function getShiftTypeLabel(item) {
     function isShiftClosed(shift) {
     	return Number(shift?.cerrado || 0) === 1;
 		}
+
+        function isShiftFinalized(shift) {
+            return shift?.finalizado === true || Number(shift?.finalizado || 0) === 1;
+        }
+
+        function isShiftStarted(shift) {
+            return shift?.iniciado === true || Number(shift?.iniciado || 0) === 1;
+        }
+
+        function finalizedLabel() {
+            return lang === "eu" ? "Amaituta" : "Finalizado";
+        }
 		
         function needsResponsible(shift) {
             if (isShiftClosed(shift)) return false;
@@ -1522,18 +1540,41 @@ const publicarNombre = publicarNombreSelected.value;
                 return;
             }
 
-            box.innerHTML = state.myInscriptions.map(item => `
+            const pendientes = state.myInscriptions.filter(item => !isShiftStarted(item));
+            const enCurso = state.myInscriptions.filter(item => isShiftStarted(item) && !isShiftFinalized(item));
+            const finalizados = state.myInscriptions.filter(isShiftFinalized);
+
+            const renderItem = item => `
                 <div class="my-shift">
                     <div>
                         <strong>${escapeHtml(getDayLabel(item))}, ${normalizeDateLabel(item.fecha)} · ${escapeHtml(getShiftTypeLabel(item))}</strong><br />
                         <span class="time">${escapeHtml(item.hora_inicio)}–${escapeHtml(item.hora_fin)}</span>
                         ${getMyShiftMeta(item)}
+                        ${isShiftFinalized(item)
+                            ? `<div class="shift-tags"><span class="recommended-tag">✓ ${finalizedLabel()}</span></div>`
+                            : isShiftStarted(item)
+                                ? `<div class="shift-tags"><span class="recommended-tag">● ${lang === "eu" ? "Martxan" : "En curso"}</span></div>`
+                                : ""}
                     </div>
-                    <button class="secondary" data-add-person="${item.id_inscripcion}">${t("btnAddPerson")}</button>
-                    <button class="secondary" data-change="${item.id_inscripcion}">${t("btnChange")}</button>
-                    <button class="danger" data-delete="${item.id_inscripcion}">${t("btnDelete")}</button>
+                    ${isShiftStarted(item) ? "" : `
+                        <button class="secondary" data-add-person="${item.id_inscripcion}">${t("btnAddPerson")}</button>
+                        <button class="secondary" data-change="${item.id_inscripcion}">${t("btnChange")}</button>
+                        <button class="danger" data-delete="${item.id_inscripcion}">${t("btnDelete")}</button>
+                    `}
                 </div>
-            `).join("");
+            `;
+
+            box.innerHTML = `
+                ${pendientes.map(renderItem).join("")}
+                ${enCurso.length ? `
+                    <h3 style="margin:24px 0 10px">${lang === "eu" ? "Martxan dauden txandak" : "Turnos en curso"}</h3>
+                    ${enCurso.map(renderItem).join("")}
+                ` : ""}
+                ${finalizados.length ? `
+                    <h3 style="margin:24px 0 10px">${lang === "eu" ? "Amaitutako txandak" : "Turnos finalizados"}</h3>
+                    ${finalizados.map(renderItem).join("")}
+                ` : ""}
+            `;
 
             document.querySelectorAll("[data-add-person]").forEach(b =>
                 b.addEventListener("click", () => openAddPerson(b.dataset.addPerson)));
